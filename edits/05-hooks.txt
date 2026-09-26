@@ -1,0 +1,233 @@
+@@@ third_party/blink/renderer/core/BUILD.gn
+<<<<
+import("//third_party/blink/renderer/core/paint/build.gni")
+====
+import("//third_party/blink/renderer/core/paint/build.gni")
+import("//third_party/blink/renderer/core/render_thread/build.gni")
+>>>>
+<<<<
+  sources += rebase_path(blink_core_sources_paint, "", "paint")
+====
+  sources += rebase_path(blink_core_sources_paint, "", "paint")
+  sources += rebase_path(blink_core_sources_render_thread, "", "render_thread")
+>>>>
+@@@ third_party/blink/renderer/core/dom/document.cc
+<<<<
+#include "third_party/blink/renderer/core/page/page.h"
+====
+#include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+  compatibility_mode_ = mode;
+  GetSelectorQueryCache().Invalidate();
+====
+  compatibility_mode_ = mode;
+  GetSelectorQueryCache().Invalidate();
+  if (render_thread_journal_) {
+    render_thread_journal_->CompatibilityModeChanged();
+  }
+>>>>
+<<<<
+void Document::Initialize() {
+====
+void Document::SetRenderThreadJournal(RenderThreadJournal* journal) {
+  render_thread_journal_ = journal;
+}
+
+void Document::Initialize() {
+>>>>
+<<<<
+  if (View())
+    View()->DidAttachDocument();
+}
+====
+  if (View())
+    View()->DidAttachDocument();
+  RenderThreadJournal::MaybeAttach(*this);
+}
+>>>>
+<<<<
+  lifecycle_.AdvanceTo(DocumentLifecycle::kStopping);
+====
+  lifecycle_.AdvanceTo(DocumentLifecycle::kStopping);
+  if (render_thread_journal_) {
+    render_thread_journal_->Detach();
+    render_thread_journal_ = nullptr;
+  }
+>>>>
+<<<<
+void Document::NotifyChangeChildren(
+    const ContainerNode& container,
+    const ContainerNode::ChildrenChange& change) {
+====
+void Document::NotifyChangeChildren(
+    const ContainerNode& container,
+    const ContainerNode::ChildrenChange& change) {
+  if (render_thread_journal_) {
+    render_thread_journal_->ChildrenChanged(container, change);
+  }
+>>>>
+<<<<
+void Document::NotifyAttributeChanged(const Element& element,
+                                      const QualifiedName& name,
+                                      const AtomicString& old_value,
+                                      const AtomicString& new_value) {
+====
+void Document::NotifyAttributeChanged(const Element& element,
+                                      const QualifiedName& name,
+                                      const AtomicString& old_value,
+                                      const AtomicString& new_value) {
+  if (render_thread_journal_) {
+    render_thread_journal_->AttributeChanged(element, name, new_value);
+  }
+>>>>
+@@@ third_party/blink/renderer/core/dom/container_node.cc
+<<<<
+  const bool children_changed = ChildrenChangedAllChildrenRemovedNeedsList();
+====
+  const bool children_changed = ChildrenChangedAllChildrenRemovedNeedsList() ||
+                                GetDocument().GetRenderThreadJournal();
+>>>>
+@@@ third_party/blink/renderer/core/dom/element.cc
+<<<<
+#include "third_party/blink/renderer/core/page/page.h"
+====
+#include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+  probe::DidPushShadowRoot(this, shadow_root);
+
+  return *shadow_root;
+====
+  probe::DidPushShadowRoot(this, shadow_root);
+  if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+    journal->ShadowRootAttached(*this, *shadow_root);
+  }
+
+  return *shadow_root;
+>>>>
+<<<<
+  GetDocument().UserActionElements().SetFocused(this, now_focused);
+====
+  GetDocument().UserActionElements().SetFocused(this, now_focused);
+  if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+    journal->ElementStateChanged(*this, RenderThreadOp::ElementState::kFocused,
+                                 now_focused);
+  }
+>>>>
+<<<<
+void Element::InlineStyleChanged() {
+====
+void Element::InlineStyleChanged() {
+  if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+    journal->InlineStyleChanged(*this);
+  }
+>>>>
+<<<<
+  document.UserActionElements().SetHovered(this, hovered);
+====
+  document.UserActionElements().SetHovered(this, hovered);
+  if (auto* journal = document.GetRenderThreadJournal()) {
+    journal->ElementStateChanged(*this, RenderThreadOp::ElementState::kHovered,
+                                 hovered);
+  }
+>>>>
+<<<<
+  GetDocument().UserActionElements().SetActive(this, active);
+====
+  GetDocument().UserActionElements().SetActive(this, active);
+  if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+    journal->ElementStateChanged(*this, RenderThreadOp::ElementState::kActive,
+                                 active);
+  }
+>>>>
+@@@ third_party/blink/renderer/core/html/forms/html_input_element.cc
+<<<<
+#include "third_party/blink/renderer/core/page/page.h"
+====
+#include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+  is_checked_ = now_checked;
+====
+  is_checked_ = now_checked;
+  if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+    journal->ElementStateChanged(*this, RenderThreadOp::ElementState::kChecked,
+                                 now_checked);
+  }
+>>>>
+@@@ third_party/blink/renderer/core/css/css_style_sheet.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+====
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+  bool invalidate_matched_properties_cache = false;
+====
+  if (auto* journal = document->GetRenderThreadJournal()) {
+    journal->StyleSheetChanged(*this);
+  }
+  bool invalidate_matched_properties_cache = false;
+>>>>
+@@@ third_party/blink/renderer/core/html/link_style.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
+====
+#include "third_party/blink/renderer/platform/wtf/text/atomic_string.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+void LinkStyle::NotifyLoadedSheetAndAllCriticalSubresources(
+    Node::LoadedSheetErrorStatus error_status) {
+====
+void LinkStyle::NotifyLoadedSheetAndAllCriticalSubresources(
+    Node::LoadedSheetErrorStatus error_status) {
+  if (sheet_) {
+    if (auto* journal = GetDocument().GetRenderThreadJournal()) {
+      journal->StyleSheetChanged(*sheet_);
+    }
+  }
+>>>>
+@@@ third_party/blink/renderer/core/frame/local_frame_view.cc
+<<<<
+#include "third_party/blink/renderer/core/page/page.h"
+====
+#include "third_party/blink/renderer/core/page/page.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+  if (!frame_->GetDocument()->IsActive())
+    return false;
+
+  // If we're throttling
+====
+  if (!frame_->GetDocument()->IsActive())
+    return false;
+
+  if (target_state == DocumentLifecycle::kPaintClean &&
+      reason == DocumentUpdateReason::kBeginMainFrame &&
+      RenderThreadPresenter::UpdateMainFrame(*this)) {
+    // The main document was not brought to PaintClean. Only the independent
+    // render-thread surface was embedded. Forced layout queries still use
+    // the main document's lazy lifecycle in this first implementation.
+    return false;
+  }
+
+  // If we're throttling
+>>>>
+@@@ third_party/blink/renderer/core/loader/frame_fetch_context.cc
+<<<<
+  if (!detached && document_->IsFreezingInProgress() &&
+====
+  // Replicas currently receive stylesheet text through the DOM journal.
+  // Subresource loading is not implemented on their thread yet.
+  if (document_ && document_->IsRenderThreadReplica()) {
+    return ResourceRequestBlockedReason::kOther;
+  }
+  if (!detached && document_->IsFreezingInProgress() &&
+>>>>

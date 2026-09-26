@@ -1,0 +1,60 @@
+@@@ third_party/blink/renderer/platform/bindings/script_forbidden_scope.cc
+<<<<
+unsigned ScriptForbiddenScope::g_main_thread_counter_ = 0;
+unsigned ScriptForbiddenScope::g_blink_lifecycle_counter_ = 0;
+====
+unsigned ScriptForbiddenScope::g_main_thread_counter_ = 0;
+constinit thread_local unsigned
+    ScriptForbiddenScope::g_blink_lifecycle_counter_ = 0;
+>>>>
+@@@ third_party/blink/renderer/platform/bindings/script_forbidden_scope.h
+<<<<
+    AllowUserAgentScript() : saved_counter_(&GetMutableCounter(), 0) {
+      if (IsMainThread()) [[likely]] {
+        saved_blink_counter_.emplace(&g_blink_lifecycle_counter_, 0);
+      }
+    }
+====
+    AllowUserAgentScript() : saved_counter_(&GetMutableCounter(), 0) {
+      saved_blink_counter_.emplace(&g_blink_lifecycle_counter_, 0);
+    }
+>>>>
+@@@ third_party/blink/renderer/platform/bindings/script_forbidden_scope.h
+<<<<
+  // sources of attempted script execution during blink lifecycle.
+  static bool WillBeScriptForbidden() {
+    if (IsMainThread()) [[likely]] {
+      return g_blink_lifecycle_counter_ > 0;
+    }
+    // Blink lifecycle scope is never entered on other threads.
+    return false;
+  }
+====
+  // sources of attempted script execution during blink lifecycle.
+  static bool WillBeScriptForbidden() { return g_blink_lifecycle_counter_ > 0; }
+>>>>
+@@@ third_party/blink/renderer/platform/bindings/script_forbidden_scope.h
+<<<<
+
+  static void EnterBlinkLifecycle() {
+    DCHECK(IsMainThread());
+    ++g_blink_lifecycle_counter_;
+  }
+  static void ExitBlinkLifecycle() {
+    DCHECK(IsMainThread());
+    --g_blink_lifecycle_counter_;
+====
+
+  static void EnterBlinkLifecycle() { ++g_blink_lifecycle_counter_; }
+  static void ExitBlinkLifecycle() {
+    DCHECK(g_blink_lifecycle_counter_);
+    --g_blink_lifecycle_counter_;
+>>>>
+@@@ third_party/blink/renderer/platform/bindings/script_forbidden_scope.h
+<<<<
+  // BlinkLifecycleScopeWillBeScriptForbidden can be removed.
+  static unsigned g_blink_lifecycle_counter_;
+====
+  // BlinkLifecycleScopeWillBeScriptForbidden can be removed.
+  static thread_local unsigned g_blink_lifecycle_counter_;
+>>>>

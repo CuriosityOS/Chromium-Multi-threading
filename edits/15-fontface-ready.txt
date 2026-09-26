@@ -1,0 +1,13 @@
+@@@ third_party/blink/renderer/core/css/font_face_set_document.cc
+<<<<
+  document->UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
+
+  // These values can change during style+layout update, so check them
+====
+  // With off-main-thread rendering the main thread does not lay out.
+  if (!document->GetRenderThreadJournal()) {
+    document->UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
+  }
+
+  // These values can change during style+layout update, so check them
+>>>>

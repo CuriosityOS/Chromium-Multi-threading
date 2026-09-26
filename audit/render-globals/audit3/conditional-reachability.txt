@@ -1,0 +1,34 @@
+base/memory/scoped_refptr.h:315:  [[nodiscard]] T* release();
+base/memory/scoped_refptr.h:388:T* scoped_refptr<T>::release() {
+third_party/blink/public/platform/platform.h:757:  virtual ThreadSafeBrowserInterfaceBrokerProxy* GetBrowserInterfaceBroker();
+third_party/blink/renderer/platform/BUILD.gn:1972:  if (use_minikin_hyphenation) {
+third_party/blink/renderer/platform/BUILD.gn:1974:      "text/hyphenation/hyphenation_minikin.cc",
+third_party/blink/renderer/platform/BUILD.gn:1975:      "text/hyphenation/hyphenation_minikin.h",
+third_party/blink/renderer/platform/BUILD.gn:2558:  if (use_minikin_hyphenation) {
+third_party/blink/renderer/platform/BUILD.gn:2559:    defines += [ "USE_MINIKIN_HYPHENATION" ]
+third_party/blink/renderer/core/loader/resource/script_resource.cc:161:      isolate_if_main_thread_(IsMainThread() ? isolate : nullptr),
+third_party/blink/renderer/core/loader/resource/image_resource.cc:82:  CHECK(IsMainThread());
+third_party/blink/renderer/core/loader/resource/image_resource.cc:95:  CHECK(IsMainThread());
+third_party/blink/renderer/core/loader/resource/image_resource.cc:527:  MemoryCache::Get()->Remove(this);
+third_party/blink/renderer/core/loader/resource/css_style_sheet_resource.cc:267:  if (!MemoryCache::Get()->Contains(this)) {
+third_party/blink/renderer/core/loader/image_loader.cc:727:    Resource* resource = MemoryCache::Get()->ResourceForURL(
+third_party/blink/renderer/core/paint/timing/paint_timing.cc:590:  CHECK(IsMainThread());
+third_party/blink/renderer/core/paint/timing/paint_timing.cc:643:  CHECK(IsMainThread());
+third_party/blink/renderer/core/loader/modulescript/document_module_script_fetcher.cc:46:                        IsMainThread() ? ScriptResource::kAllowStreaming
+third_party/blink/renderer/core/loader/threaded_icon_loader.cc:43:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/loader/long_task_detector.cc:21:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/loader/long_task_detector.cc:28:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/loader/long_task_detector.cc:38:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/style_change_reason.cc:85:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.cc:34:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.cc:73:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.cc:81:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.cc:86:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/layout/custom/layout_worklet_global_scope_proxy.cc:95:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/font_face_set_document.cc:74:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/media_values_cached.cc:18:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/style_engine.cc:822:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/cssom/paint_worklet_style_property_map.cc:63:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/cssom/paint_worklet_style_property_map.cc:93:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/cssom/paint_worklet_style_property_map.cc:132:  DCHECK(IsMainThread());
+third_party/blink/renderer/core/css/cssom/paint_worklet_style_property_map.cc:162:  DCHECK(!IsMainThread());

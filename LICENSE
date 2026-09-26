@@ -1,0 +1,6 @@
+The patch and new source files are derived from and intended for Chromium, and are
+provided under the same BSD-style license as Chromium:
+https://chromium.googlesource.com/chromium/src/+/HEAD/LICENSE
+
+Copyright 2026 The Chromium Authors (for code incorporated from Chromium) and contributors.
+Use of this source code is governed by a BSD-style license.

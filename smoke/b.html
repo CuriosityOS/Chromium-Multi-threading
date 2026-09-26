@@ -1,0 +1,25 @@
+<!DOCTYPE html><html><head><style>
+body{margin:0;font:20px sans-serif;background:#eef}
+#acc{display:grid;grid-template-rows:0fr;transition:grid-template-rows 2s linear;background:#8c8;width:400px}
+#acc.open{grid-template-rows:1fr}
+#acc>div{overflow:hidden}
+#box{width:200px;height:100px;background:tomato;transition:height 2s linear}
+#box.open{height:500px}
+</style></head><body><h1 id=h>OMT queries</h1><div id=acc><div><p>line1</p><p>line2</p><p>line3</p><p>line4</p></div></div><div id=box></div>
+<script>
+function log(...a){console.log("Q", ...a)}
+setTimeout(()=>{
+  const d=document.createElement("div"); d.style.cssText="width:123px;height:45px;padding:5px;border:2px solid red"; document.body.appendChild(d);
+  log("new offsetWidth", d.offsetWidth, "clientWidth", d.clientWidth, "offsetHeight", d.offsetHeight);
+  log("bcr", JSON.stringify(d.getBoundingClientRect()));
+  log("cs width", getComputedStyle(d).width, "cs color", getComputedStyle(document.getElementById("h")).color);
+  log("h1 offsetTop", document.getElementById("h").offsetTop, "offsetParent", d.offsetParent && d.offsetParent.tagName);
+  log("efp", document.elementFromPoint(20,20)?.id, document.elementsFromPoint(20,20).map(e=>e.tagName).join(","));
+  log("innerText", JSON.stringify(document.getElementById("h").innerText));
+  const box=document.getElementById("box"), acc=document.getElementById("acc");
+  box.classList.add("open"); acc.classList.add("open");
+  const t=performance.now(); let next=0;
+  while(performance.now()-t<3000){ if(performance.now()-t>=next){ log("t", Math.round(performance.now()-t), "box h", box.offsetHeight, "acc h", acc.getBoundingClientRect().height.toFixed(1), "cs", getComputedStyle(box).height); next+=400;} }
+  log("BLOCK_DONE");
+},1000);
+</script></body></html>

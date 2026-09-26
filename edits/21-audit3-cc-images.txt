@@ -1,0 +1,147 @@
+@@@ third_party/blink/renderer/core/layout/layout_image_resource.cc
+<<<<
+#include "third_party/blink/renderer/platform/graphics/bitmap_image.h"
+#include "ui/base/resource/resource_scale_factor.h"
+====
+#include "third_party/blink/renderer/platform/graphics/bitmap_image.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "ui/base/resource/resource_scale_factor.h"
+>>>>
+@@@ third_party/blink/renderer/core/layout/layout_image_resource.cc
+<<<<
+  if (device_pixel_ratio >= 2) {
+    DEFINE_STATIC_REF(
+        Image, broken_image_hi_res,
+        (Image::LoadPlatformResource(IDR_BROKENIMAGE, ui::k200Percent)));
+    return broken_image_hi_res;
+====
+  if (device_pixel_ratio >= 2) {
+    DEFINE_PER_THREAD_STATIC_LOCAL(
+        Image*, broken_image_hi_res,
+        (Image::LoadPlatformResource(IDR_BROKENIMAGE, ui::k200Percent)
+             .release()));
+    return broken_image_hi_res;
+>>>>
+@@@ third_party/blink/renderer/core/layout/layout_image_resource.cc
+<<<<
+
+  DEFINE_STATIC_REF(Image, broken_image_lo_res,
+                    (Image::LoadPlatformResource(IDR_BROKENIMAGE)));
+  return broken_image_lo_res;
+====
+
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, broken_image_lo_res,
+      (Image::LoadPlatformResource(IDR_BROKENIMAGE).release()));
+  return broken_image_lo_res;
+>>>>
+@@@ third_party/blink/renderer/core/paint/theme_painter_default.cc
+<<<<
+#include "third_party/blink/renderer/platform/graphics/color.h"
+#include "third_party/blink/renderer/platform/graphics/graphics_context.h"
+====
+#include "third_party/blink/renderer/platform/graphics/color.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/graphics/graphics_context.h"
+>>>>
+@@@ third_party/blink/renderer/core/paint/theme_painter_default.cc
+<<<<
+
+  DEFINE_STATIC_REF(Image, cancel_image,
+                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL)));
+  DEFINE_STATIC_REF(Image, cancel_pressed_image,
+                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED)));
+  DEFINE_STATIC_REF(Image, cancel_image_dark_mode,
+                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_DARK_MODE)));
+  DEFINE_STATIC_REF(
+      Image, cancel_pressed_image_dark_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_DARK_MODE)));
+  DEFINE_STATIC_REF(
+      Image, cancel_image_hc_light_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_HC_LIGHT_MODE)));
+  DEFINE_STATIC_REF(
+      Image, cancel_pressed_image_hc_light_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_HC_LIGHT_MODE)));
+  Image* color_scheme_adjusted_cancel_image;
+====
+
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_image,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL).release()));
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_pressed_image,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED).release()));
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_image_dark_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_DARK_MODE).release()));
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_pressed_image_dark_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_DARK_MODE)
+           .release()));
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_image_hc_light_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_HC_LIGHT_MODE).release()));
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, cancel_pressed_image_hc_light_mode,
+      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_HC_LIGHT_MODE)
+           .release()));
+  Image* color_scheme_adjusted_cancel_image;
+>>>>
+@@@ third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/functional.h"
+#include "ui/accessibility/accessibility_features.h"
+====
+#include "third_party/blink/renderer/platform/wtf/functional.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "ui/accessibility/accessibility_features.h"
+>>>>
+@@@ third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+<<<<
+  if (device_scale_factor >= 2) {
+    DEFINE_STATIC_REF(blink::Image, broken_canvas_hi_res,
+                      (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS,
+                                                          ui::k200Percent)));
+    return std::make_pair(broken_canvas_hi_res, 2);
+====
+  if (device_scale_factor >= 2) {
+    DEFINE_PER_THREAD_STATIC_LOCAL(
+        Image*, broken_canvas_hi_res,
+        (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS, ui::k200Percent)
+             .release()));
+    return std::make_pair(broken_canvas_hi_res, 2);
+>>>>
+@@@ third_party/blink/renderer/core/html/canvas/html_canvas_element.cc
+<<<<
+
+  DEFINE_STATIC_REF(blink::Image, broken_canvas_lo_res,
+                    (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS)));
+  return std::make_pair(broken_canvas_lo_res, 1);
+====
+
+  DEFINE_PER_THREAD_STATIC_LOCAL(
+      Image*, broken_canvas_lo_res,
+      (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS).release()));
+  return std::make_pair(broken_canvas_lo_res, 1);
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/image.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+#include "third_party/blink/renderer/platform/wtf/shared_buffer.h"
+====
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/wtf/shared_buffer.h"
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/image.cc
+<<<<
+Image* Image::NullImage() {
+  DCHECK(IsMainThread());
+  DEFINE_STATIC_REF(Image, null_image, (BitmapImage::Create()));
+  return null_image;
+====
+Image* Image::NullImage() {
+  DEFINE_PER_THREAD_STATIC_LOCAL(Image*, null_image,
+                                 (BitmapImage::Create().release()));
+  return null_image;
+>>>>

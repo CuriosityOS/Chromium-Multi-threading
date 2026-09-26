@@ -1,0 +1,7 @@
+@@@ third_party/blink/renderer/bindings/core/v8/window_proxy_manager.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/casting.h"
+====
+#include "third_party/blink/renderer/platform/wtf/casting.h"
+#include "third_party/blink/renderer/platform/wtf/render_thread_state.h"
+>>>>

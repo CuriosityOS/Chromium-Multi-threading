@@ -1,0 +1,91 @@
+@@@ third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h
+<<<<
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+====
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+#include "third_party/blink/renderer/platform/wtf/functional.h"
+>>>>
+<<<<
+  static void SetContextProviderFactoryForTesting(ContextProviderFactory);
+====
+  static void SetContextProviderFactoryForTesting(ContextProviderFactory);
+
+  // Threads other than the main thread create their context by posting a task
+  // to the main thread and blocking until it has run. A thread that the main
+  // thread may itself block on (the Blink render thread, see
+  // core/render_thread/) installs a poster that also lets the blocked main
+  // thread run such tasks.
+  using MainThreadTaskPoster =
+      base::RepeatingCallback<void(CrossThreadOnceClosure)>;
+  static void SetMainThreadTaskPosterForCurrentThread(MainThreadTaskPoster);
+>>>>
+<<<<
+  void CreateSharedImageInterfaceProviderIfNeeded();
+====
+  void CreateSharedImageInterfaceProviderIfNeeded();
+  void PostToMainThread(CrossThreadOnceClosure task);
+
+  MainThreadTaskPoster main_thread_task_poster_;
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.cc
+<<<<
+    base::WaitableEvent waitable_event;
+    scoped_refptr<base::SingleThreadTaskRunner> task_runner =
+        Thread::MainThread()->GetTaskRunner(MainThreadTaskRunnerRestricted());
+    PostCrossThreadTask(
+        *task_runner, FROM_HERE,
+        CrossThreadBindOnce(
+            &CreateContextProviderOnMainThread, only_if_gpu_compositing,
+            CrossThreadUnretained(&is_gpu_compositing_disabled_),
+            CrossThreadUnretained(&context_provider_wrapper_),
+            CrossThreadUnretained(&waitable_event)));
+    waitable_event.Wait();
+====
+    base::WaitableEvent waitable_event;
+    PostToMainThread(CrossThreadBindOnce(
+        &CreateContextProviderOnMainThread, only_if_gpu_compositing,
+        CrossThreadUnretained(&is_gpu_compositing_disabled_),
+        CrossThreadUnretained(&context_provider_wrapper_),
+        CrossThreadUnretained(&waitable_event)));
+    waitable_event.Wait();
+>>>>
+<<<<
+    base::WaitableEvent waitable_event;
+    scoped_refptr<base::SingleThreadTaskRunner> task_runner =
+        Thread::MainThread()->GetTaskRunner(MainThreadTaskRunnerRestricted());
+    PostCrossThreadTask(
+        *task_runner, FROM_HERE,
+        CrossThreadBindOnce(&CreateGpuChannelOnMainThread,
+                            CrossThreadUnretained(&gpu_channel),
+                            CrossThreadUnretained(&waitable_event)));
+    waitable_event.Wait();
+====
+    base::WaitableEvent waitable_event;
+    PostToMainThread(CrossThreadBindOnce(&CreateGpuChannelOnMainThread,
+                                         CrossThreadUnretained(&gpu_channel),
+                                         CrossThreadUnretained(&waitable_event)));
+    waitable_event.Wait();
+>>>>
+<<<<
+// static
+void SharedGpuContext::SetContextProviderFactoryForTesting(
+====
+void SharedGpuContext::PostToMainThread(CrossThreadOnceClosure task) {
+  if (main_thread_task_poster_) {
+    main_thread_task_poster_.Run(std::move(task));
+    return;
+  }
+  PostCrossThreadTask(
+      *Thread::MainThread()->GetTaskRunner(MainThreadTaskRunnerRestricted()),
+      FROM_HERE, std::move(task));
+}
+
+// static
+void SharedGpuContext::SetMainThreadTaskPosterForCurrentThread(
+    MainThreadTaskPoster poster) {
+  GetInstanceForCurrentThread()->main_thread_task_poster_ = std::move(poster);
+}
+
+// static
+void SharedGpuContext::SetContextProviderFactoryForTesting(
+>>>>

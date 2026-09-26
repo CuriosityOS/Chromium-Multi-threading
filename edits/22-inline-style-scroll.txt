@@ -1,0 +1,125 @@
+@@@ third_party/blink/renderer/core/css/inline_css_style_declaration.cc
+<<<<
+  parent_element_->NotifyInlineStyleMutation();
+  parent_element_->ClearMutableInlineStyleIfEmpty();
+====
+  parent_element_->NotifyInlineStyleMutation();
+  parent_element_->ClearMutableInlineStyleIfEmpty();
+  if (auto* journal = parent_element_->GetDocument().GetRenderThreadJournal()) {
+    journal->InlineStyleChanged(*parent_element_);
+  }
+>>>>
+<<<<
+#include "third_party/blink/renderer/core/dom/element.h"
+====
+#include "third_party/blink/renderer/core/dom/element.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+@@@ third_party/blink/renderer/core/dom/element.cc
+<<<<
+void Element::setScrollLeft(double new_left) {
+  if (!InActiveDocument()) {
+    return;
+  }
+====
+void Element::setScrollLeft(double new_left) {
+  if (!InActiveDocument()) {
+    return;
+  }
+  // With off-main-thread rendering the render thread owns layout and scroll
+  // offsets.
+  if (RenderThreadJournal::Scroll(
+          *this, ScrollableArea::NormalizeNonFiniteScroll(new_left),
+          std::nullopt, /*relative=*/false)) {
+    return;
+  }
+>>>>
+<<<<
+void Element::setScrollTop(double new_top) {
+  if (!InActiveDocument()) {
+    return;
+  }
+====
+void Element::setScrollTop(double new_top) {
+  if (!InActiveDocument()) {
+    return;
+  }
+  if (RenderThreadJournal::Scroll(
+          *this, std::nullopt,
+          ScrollableArea::NormalizeNonFiniteScroll(new_top),
+          /*relative=*/false)) {
+    return;
+  }
+>>>>
+<<<<
+  // FIXME: This should be removed once scroll updates are processed only after
+  // the compositing update. See http://crbug.com/420741.
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+                                            DocumentUpdateReason::kJavaScript);
+
+  if (GetDocument().ScrollingElementNoLayout() == this) {
+    ScrollFrameBy(scroll_to_options, resolver);
+====
+  if (RenderThreadJournal::Scroll(
+          *this, OptionalScrollComponent(scroll_to_options->hasLeft(),
+                                         scroll_to_options->left()),
+          OptionalScrollComponent(scroll_to_options->hasTop(),
+                                  scroll_to_options->top()),
+          /*relative=*/true)) {
+    return resolver->CreateScriptPromise();
+  }
+
+  // FIXME: This should be removed once scroll updates are processed only after
+  // the compositing update. See http://crbug.com/420741.
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+                                            DocumentUpdateReason::kJavaScript);
+
+  if (GetDocument().ScrollingElementNoLayout() == this) {
+    ScrollFrameBy(scroll_to_options, resolver);
+>>>>
+<<<<
+  // FIXME: This should be removed once scroll updates are processed only after
+  // the compositing update. See http://crbug.com/420741.
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+                                            DocumentUpdateReason::kJavaScript);
+
+  if (GetDocument().ScrollingElementNoLayout() == this) {
+    return ScrollFrameTo(scroll_to_options, resolver);
+====
+  if (RenderThreadJournal::Scroll(
+          *this, OptionalScrollComponent(scroll_to_options->hasLeft(),
+                                         scroll_to_options->left()),
+          OptionalScrollComponent(scroll_to_options->hasTop(),
+                                  scroll_to_options->top()),
+          /*relative=*/false)) {
+    return true;
+  }
+
+  // FIXME: This should be removed once scroll updates are processed only after
+  // the compositing update. See http://crbug.com/420741.
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+                                            DocumentUpdateReason::kJavaScript);
+
+  if (GetDocument().ScrollingElementNoLayout() == this) {
+    return ScrollFrameTo(scroll_to_options, resolver);
+>>>>
+<<<<
+ScriptPromise<ScrollResult> Element::scrollBy(ScriptState* script_state,
+                                              double x,
+                                              double y) {
+====
+namespace {
+
+std::optional<double> OptionalScrollComponent(bool has_value, double value) {
+  if (!has_value) {
+    return std::nullopt;
+  }
+  return ScrollableArea::NormalizeNonFiniteScroll(value);
+}
+
+}  // namespace
+
+ScriptPromise<ScrollResult> Element::scrollBy(ScriptState* script_state,
+                                              double x,
+                                              double y) {
+>>>>

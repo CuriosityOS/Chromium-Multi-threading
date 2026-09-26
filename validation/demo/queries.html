@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>OMT Query validation</title>
+    <link rel="stylesheet" href="demo.css">
+    <link rel="stylesheet" href="queries.css">
+    <script src="common.js" defer></script>
+    <script src="queries.js" defer></script>
+  </head>
+  <body>
+    <h1>Synchronous queries while the main task is blocked</h1>
+    <p>Two class changes, immediate mutations/queries, then samples every ~200ms. No yielding.</p>
+    <p id="status">Preparing…</p>
+    <p>JS heartbeat: <span id="heartbeat">0</span></p>
+    <main>
+      <section class="query-proof" id="proof-height">
+        <h2>height</h2>
+        <div id="height-panel" class="query-panel height"><div class="query-fill"></div></div>
+        <div class="query-follower">Normal-flow sibling</div>
+      </section>
+      <section class="query-proof" id="proof-grid">
+        <h2>grid-template-rows</h2>
+        <div id="grid-panel" class="query-panel grid"><div class="query-fill"></div></div>
+        <div class="query-follower">Normal-flow sibling</div>
+      </section>
+    </main>
+    <div id="query-container">
+      <div id="scroll-probe"><div></div></div>
+      <div id="hit-probe">Light DOM</div>
+      <div id="shadow-host"></div>
+      <div id="query-text">Before</div>
+      <button id="input-button">Native click target</button>
+      <button id="disabled-button" disabled>Disabled</button>
+      <button id="hidden-button" hidden>Hidden</button>
+    </div>
+  </body>
+</html>

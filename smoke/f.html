@@ -1,0 +1,8 @@
+<!DOCTYPE html><html><body style="margin:8px"><p id=p style="font:20px monospace;width:200px">hello world range test text</p>
+<script>
+setTimeout(()=>{
+const t=document.getElementById("p").firstChild;const r=document.createRange();r.setStart(t,0);r.setEnd(t,5);
+const b=r.getBoundingClientRect();console.log("R bcr", b.x,b.y,b.width,b.height, "n", r.getClientRects().length);
+const r2=document.createRange();r2.selectNodeContents(document.getElementById("p"));console.log("R all rects", r2.getClientRects().length, r2.getBoundingClientRect().height);
+},1500);
+</script></body></html>

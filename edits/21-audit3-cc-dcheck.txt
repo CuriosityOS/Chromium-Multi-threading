@@ -1,0 +1,31 @@
+@@@ third_party/blink/renderer/core/dom/tree_ordered_map.cc
+<<<<
+#if DCHECK_IS_ON()
+static int g_remove_scope_level = 0;
+====
+#if DCHECK_IS_ON()
+static constinit thread_local int g_remove_scope_level = 0;
+>>>>
+@@@ third_party/blink/renderer/core/dom/tree_scope_adopter.cc
+<<<<
+#if DCHECK_IS_ON()
+static bool g_did_move_to_new_document_was_called = false;
+static Document* g_old_document_did_move_to_new_document_was_called_with =
+    nullptr;
+====
+#if DCHECK_IS_ON()
+static constinit thread_local bool g_did_move_to_new_document_was_called =
+    false;
+static constinit thread_local Document*
+    g_old_document_did_move_to_new_document_was_called_with = nullptr;
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer.cc
+<<<<
+#if DCHECK_IS_ON()
+  static bool check_no_dirty_flags = false;
+  std::optional<base::AutoReset<bool>> reset_check_no_dirty_flags;
+====
+#if DCHECK_IS_ON()
+  static constinit thread_local bool check_no_dirty_flags = false;
+  std::optional<base::AutoReset<bool>> reset_check_no_dirty_flags;
+>>>>

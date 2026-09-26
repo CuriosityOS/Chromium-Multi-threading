@@ -1,0 +1,49 @@
+@@@ third_party/blink/renderer/core/dom/document.cc
+<<<<
+  if (render_thread_journal_) {
+    render_thread_journal_->NoteMainThreadRendering("style", 0);
+  }
+  PostStyleUpdateScope post_style_update_scope(*this);
+====
+  if (render_thread_journal_ &&
+      !render_thread_journal_->NoteMainThreadRendering("style", 0)) {
+    return;
+  }
+  PostStyleUpdateScope post_style_update_scope(*this);
+>>>>
+<<<<
+  if (render_thread_journal_) {
+    render_thread_journal_->NoteMainThreadRendering("layout",
+                                                    static_cast<int>(reason));
+  }
+====
+  if (render_thread_journal_ && !render_thread_journal_->NoteMainThreadRendering(
+                                    "layout", static_cast<int>(reason))) {
+    return;
+  }
+>>>>
+<<<<
+bool Document::SetFocusedElement(Element* new_focused_element,
+                                 const FocusParams& params) {
+  DCHECK(!lifecycle_.InDetach());
+====
+bool Document::SetFocusedElement(Element* new_focused_element,
+                                 const FocusParams& params) {
+  DCHECK(!lifecycle_.InDetach());
+  // Focusability is answered by the render thread (Element::IsFocusableState).
+  RenderThreadJournal::FocusScope render_thread_focus_scope;
+>>>>
+@@@ third_party/blink/renderer/core/dom/element.cc
+<<<<
+void Element::Focus(const FocusParams& params) {
+  if (!isConnected()) {
+    return;
+  }
+====
+void Element::Focus(const FocusParams& params) {
+  if (!isConnected()) {
+    return;
+  }
+  // Focusability is answered by the render thread (IsFocusableState).
+  RenderThreadJournal::FocusScope render_thread_focus_scope;
+>>>>

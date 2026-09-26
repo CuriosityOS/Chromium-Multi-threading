@@ -1,0 +1,73 @@
+@@@ third_party/blink/renderer/core/dom/weak_identifier_map.h
+<<<<
+  static IdentifierType Next() {
+    // On overflow, skip negative values for signed IdentifierType, and 0 which
+    // is not a valid key in HashMap by default.
+    if (LastIdRef() == std::numeric_limits<IdentifierType>::max())
+        [[unlikely]] {
+      LastIdRef() = 0;
+    }
+    return ++LastIdRef();
+  }
+
+  static IdentifierType& LastIdRef() {
+    static IdentifierType last_id = 0;
+    return last_id;
+  }
+====
+  static IdentifierType Next() {
+    // Identifiers are unique across threads (the maps are per thread, see
+    // DEFINE_WEAK_IDENTIFIER_MAP). On overflow, skip negative values for
+    // signed IdentifierType, and 0 which is not a valid key in HashMap by
+    // default.
+    std::atomic<IdentifierType>& last_id = LastIdRef();
+    IdentifierType current = last_id.load(std::memory_order_relaxed);
+    IdentifierType next;
+    do {
+      next = current == std::numeric_limits<IdentifierType>::max()
+                 ? 1
+                 : current + 1;
+    } while (!last_id.compare_exchange_weak(current, next,
+                                            std::memory_order_relaxed));
+    return next;
+  }
+
+  static std::atomic<IdentifierType>& LastIdRef() {
+    static std::atomic<IdentifierType> last_id{0};
+    return last_id;
+  }
+>>>>
+<<<<
+    using RefType = WeakIdentifierMap<T, ##__VA_ARGS__>;                \
+    DEFINE_STATIC_LOCAL(                                                \
+====
+    using RefType = WeakIdentifierMap<T, ##__VA_ARGS__>;                \
+    /* Per thread: Oilpan heaps are per thread, and off-main-thread */  \
+    /* rendering replicas live on their own threads. */                 \
+    DEFINE_PER_THREAD_STATIC_LOCAL(                                     \
+>>>>
+<<<<
+#include <limits>
+====
+#include <atomic>
+#include <limits>
+>>>>
+<<<<
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+====
+#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+>>>>
+@@@ third_party/blink/renderer/core/frame/local_dom_window.cc
+<<<<
+  MainThreadDebugger::Instance(GetIsolate())
+      ->DidClearContextsForFrame(GetFrame());
+  DisconnectFromFrame();
+====
+  // Off-main-thread rendering replicas have no inspector.
+  if (!document() || !document()->IsRenderThreadReplica()) {
+    MainThreadDebugger::Instance(GetIsolate())
+        ->DidClearContextsForFrame(GetFrame());
+  }
+  DisconnectFromFrame();
+>>>>

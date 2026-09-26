@@ -1,0 +1,18 @@
+tmp/
+reference/
+babysitter-log.md
+__pycache__/
+.DS_Store
+# large audit working copies (Chromium source snapshots)
+audit/*/before/
+audit/*/context/
+audit/*/work/
+audit/*/formatted/
+# validation evidence (GBs): keep only per-run reports
+validation/results/**
+!validation/results/*/
+!validation/results/*/REPORT.md
+!validation/results/*/analysis.json
+!validation/results/*/DIAGNOSTICS.md
+validation/preflight/
+!validation/results/*/RUN-NOTES.md

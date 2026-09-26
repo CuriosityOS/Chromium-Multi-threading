@@ -1,0 +1,3678 @@
+{
+  "passed": false,
+  "failures": [
+    "baseline/height-3000: CDP timeout: Page.navigate",
+    "omt/height-3000: {\"method\":\"Inspector.targetCrashed\",\"params\":{}}",
+    "omt: Error: {\"method\":\"Inspector.targetCrashed\",\"params\":{}}\n    at WebSocket.<anonymous> (file:///root/cr153/validation/cdp.mjs:30:21)\n    at [nodejs.internal.kHybridDispatch] (node:internal/event_target:843:20)\n    at WebSocket.dispatchEvent (node:internal/event_target:776:26)\n    at fireEvent (node:internal/deps/undici/undici:13189:14)\n    at #onMessage (node:internal/deps/undici/undici:14418:9)\n    at Object.onMessage (node:internal/deps/undici/undici:14131:76)\n    at websocketMessageReceived (node:internal/deps/undici/undici:13193:15)\n    at node:internal/deps/undici/undici:13850:19\n    at node:internal/deps/undici/undici:13670:11\n    at afterWrite (node:internal/streams/writable:710:5)",
+    "omt: fatal Chromium log signatures",
+    "Missing/duplicate required cases: need baseline + omt, ('height', 'grid', 'queries'), 3s + 10s",
+    "omt: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/smoke.json'",
+    "omt/native-input: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/input/input.json'",
+    "omt/page-threads: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/page-threads/threads.json'",
+    "baseline comparison: Missing paired synchronous-query cases",
+    "height/3000: missing OMT-versus-baseline differential",
+    "height/10000: missing OMT-versus-baseline differential",
+    "grid/3000: missing OMT-versus-baseline differential",
+    "grid/10000: missing OMT-versus-baseline differential",
+    "queries/3000: missing OMT-versus-baseline differential",
+    "queries/10000: missing OMT-versus-baseline differential",
+    "baseline/height/3000: Harness milestones incomplete",
+    "baseline/height/3000: pixels: Command failed ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_frames', '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', '/root/cr153/validation/results/approved-20260926T155008Z/baseline/height-3000/capture.mkv']: /root/cr153/validation/results/approved-20260926T155008Z/baseline/height-3000/capture.mkv: No such file or directory\n",
+    "baseline/height/3000: trace: Trace milestone missing/ambiguous: mutation",
+    "baseline/height/3000: fallbacks: Missing/ambiguous trace marker block-start",
+    "omt/height/3000: Harness milestones incomplete",
+    "omt/height/3000: pixels: Final captured panel is not 264px: wrong/stale surface",
+    "omt/height/3000: trace: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/height-3000/trace-complete.json'",
+    "omt/height/3000: fallbacks: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/height-3000/trace-complete.json'"
+  ],
+  "cases": [
+    {
+      "mode": "baseline",
+      "kind": "height",
+      "ms": 3000,
+      "failures": [
+        "Harness milestones incomplete",
+        "pixels: Command failed ['ffprobe', '-v', 'error', '-select_streams', 'v:0', '-show_frames', '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'json', '/root/cr153/validation/results/approved-20260926T155008Z/baseline/height-3000/capture.mkv']: /root/cr153/validation/results/approved-20260926T155008Z/baseline/height-3000/capture.mkv: No such file or directory\n",
+        "trace: Trace milestone missing/ambiguous: mutation",
+        "fallbacks: Missing/ambiguous trace marker block-start"
+      ],
+      "passed": false
+    },
+    {
+      "mode": "baseline",
+      "kind": "grid",
+      "ms": 3000,
+      "failures": [],
+      "pixels": {
+        "roi": {
+          "x": 520,
+          "y": 407,
+          "width": 32,
+          "height": 290
+        },
+        "interiorFrames": 75,
+        "uniqueRoiHashes": 1,
+        "heightChangeSteps": 0,
+        "heightRangePx": 0,
+        "changeSpanMs": 0,
+        "interiorStartEpochMs": 1790437837622.0,
+        "interiorEndEpochMs": 1790437840089.0,
+        "maxCaptureGapMs": 34.0
+      },
+      "trace": {
+        "main": {
+          "pid": 2415818,
+          "tid": 2415818,
+          "threadName": "CrRendererMain"
+        },
+        "blockTraceUs": [
+          329100932029,
+          329103932374
+        ],
+        "enclosingMainSlices": [
+          {
+            "name": "RunTask",
+            "cat": "disabled-by-default-devtools.timeline",
+            "ts": 329100931509,
+            "dur": 3001452,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "ThreadControllerImpl::RunTask",
+            "cat": "toplevel",
+            "ts": 329100931514,
+            "dur": 3001367,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerBase::run",
+            "cat": "blink",
+            "ts": 329100931518,
+            "dur": 3001360,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerFire",
+            "cat": "devtools.timeline",
+            "ts": 329100931522,
+            "dur": 3001354,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "AsyncTask Run",
+            "cat": "blink",
+            "ts": 329100931533,
+            "dur": 3001337,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "v8.callFunction",
+            "cat": "v8",
+            "ts": 329100931542,
+            "dur": 3001308,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "FunctionCall",
+            "cat": "devtools.timeline",
+            "ts": 329100931544,
+            "dur": 3001288,
+            "pid": 2415818,
+            "tid": 2415818
+          }
+        ],
+        "renderThreads": [],
+        "threadInventory": [
+          {
+            "pid": 0,
+            "tid": 0,
+            "name": "swapper"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415757,
+            "name": "CrBrowserMain"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415767,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415768,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415769,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415770,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415771,
+            "name": "ThreadPoolSingleThreadSharedForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415772,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415774,
+            "name": "Chrome_IOThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415775,
+            "name": "MemoryInfra"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415781,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415785,
+            "name": "ThreadPoolSingleThreadForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415786,
+            "name": "CompositorTileWorker1"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415793,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415806,
+            "name": "Chrome_DevToolsHandlerThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415810,
+            "name": "CacheThread_BlockFile"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415788,
+            "name": "CrGpuMain"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415952,
+            "name": "GpuWatchdog"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415953,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415955,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415956,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415957,
+            "name": "VizCompositorThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415958,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415791,
+            "name": "network.CrUtilityMain"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415861,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415862,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415863,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415864,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415797,
+            "name": "storage.CrUtilityMain"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415802,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415805,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415811,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415813,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415814,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415815,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415816,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415817,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415841,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415842,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415846,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415847,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415848,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416295,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416297,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416298,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416299,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416300,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416301,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2416304,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415818,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415824,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415826,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415827,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415828,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415834,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416236,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416237,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416238,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415820,
+            "tid": 2415820,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415820,
+            "tid": 2415829,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415820,
+            "tid": 2415831,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415820,
+            "tid": 2415832,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415820,
+            "tid": 2415836,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415871,
+            "name": "tracing.CrUtilityMain"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415873,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415876,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415959,
+            "tid": 2415959,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415959,
+            "tid": 2415961,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415959,
+            "tid": 2415964,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415959,
+            "tid": 2415966,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415968,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415970,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415973,
+            "name": "Chrome_ChildIOThread"
+          }
+        ]
+      },
+      "fallbacks": {
+        "traceCounts": {
+          "before": 0,
+          "during": 0,
+          "after": 0
+        },
+        "traceOccurrences": [],
+        "loggedFallbacks": [],
+        "loggedCounts": {},
+        "zeroDuringBlock": true
+      },
+      "passed": true
+    },
+    {
+      "mode": "baseline",
+      "kind": "queries",
+      "ms": 3000,
+      "failures": [],
+      "pixels": {
+        "roi": {
+          "x": 520,
+          "y": 391,
+          "width": 32,
+          "height": 290
+        },
+        "interiorFrames": 75,
+        "uniqueRoiHashes": 1,
+        "heightChangeSteps": 0,
+        "heightRangePx": 0,
+        "changeSpanMs": 0,
+        "interiorStartEpochMs": 1790437847294.0,
+        "interiorEndEpochMs": 1790437849760.0,
+        "maxCaptureGapMs": 34.0,
+        "panels": {
+          "height": {
+            "roi": {
+              "x": 520,
+              "y": 391,
+              "width": 32,
+              "height": 290
+            },
+            "interiorFrames": 75,
+            "uniqueRoiHashes": 1,
+            "heightChangeSteps": 0,
+            "heightRangePx": 0,
+            "changeSpanMs": 0,
+            "interiorStartEpochMs": 1790437847294.0,
+            "interiorEndEpochMs": 1790437849760.0,
+            "maxCaptureGapMs": 34.0
+          },
+          "grid": {
+            "roi": {
+              "x": 1108,
+              "y": 391,
+              "width": 32,
+              "height": 290
+            },
+            "interiorFrames": 75,
+            "uniqueRoiHashes": 1,
+            "heightChangeSteps": 0,
+            "heightRangePx": 0,
+            "changeSpanMs": 0,
+            "interiorStartEpochMs": 1790437847294.0,
+            "interiorEndEpochMs": 1790437849760.0,
+            "maxCaptureGapMs": 34.0
+          }
+        }
+      },
+      "trace": {
+        "main": {
+          "pid": 2415818,
+          "tid": 2415818,
+          "threadName": "CrRendererMain"
+        },
+        "blockTraceUs": [
+          329110608230,
+          329113608455
+        ],
+        "enclosingMainSlices": [
+          {
+            "name": "RunTask",
+            "cat": "disabled-by-default-devtools.timeline",
+            "ts": 329110607791,
+            "dur": 3001298,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "ThreadControllerImpl::RunTask",
+            "cat": "toplevel",
+            "ts": 329110607796,
+            "dur": 3001223,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerBase::run",
+            "cat": "blink",
+            "ts": 329110607799,
+            "dur": 3001217,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerFire",
+            "cat": "devtools.timeline",
+            "ts": 329110607804,
+            "dur": 3001211,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "AsyncTask Run",
+            "cat": "blink",
+            "ts": 329110607819,
+            "dur": 3001189,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "v8.callFunction",
+            "cat": "v8",
+            "ts": 329110607832,
+            "dur": 3001160,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "FunctionCall",
+            "cat": "devtools.timeline",
+            "ts": 329110607836,
+            "dur": 3001137,
+            "pid": 2415818,
+            "tid": 2415818
+          }
+        ],
+        "renderThreads": [],
+        "threadInventory": [
+          {
+            "pid": 0,
+            "tid": 0,
+            "name": "swapper"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415757,
+            "name": "CrBrowserMain"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415767,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415768,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415769,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415770,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415771,
+            "name": "ThreadPoolSingleThreadSharedForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415774,
+            "name": "Chrome_IOThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415775,
+            "name": "MemoryInfra"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415786,
+            "name": "CompositorTileWorker1"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415793,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415806,
+            "name": "Chrome_DevToolsHandlerThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415788,
+            "name": "CrGpuMain"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415953,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415955,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415956,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415957,
+            "name": "VizCompositorThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415861,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415863,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415864,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415865,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415797,
+            "name": "storage.CrUtilityMain"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415802,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415805,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415811,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415813,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415814,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415815,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415816,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415818,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415824,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415825,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415826,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415827,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415828,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415834,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416236,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416237,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415871,
+            "name": "tracing.CrUtilityMain"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415873,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415876,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415968,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415970,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415973,
+            "name": "Chrome_ChildIOThread"
+          }
+        ]
+      },
+      "fallbacks": {
+        "traceCounts": {
+          "before": 0,
+          "during": 0,
+          "after": 0
+        },
+        "traceOccurrences": [],
+        "loggedFallbacks": [],
+        "loggedCounts": {},
+        "zeroDuringBlock": true
+      },
+      "queries": {
+        "samples": 16,
+        "assertions": 58,
+        "panels": {
+          "height": {
+            "offset": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "rect": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "computed": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            }
+          },
+          "grid": {
+            "offset": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "rect": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "computed": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            }
+          }
+        },
+        "outsideShadow": {
+          "element": "hit-probe",
+          "elements": [
+            "hit-probe",
+            "query-container",
+            "HTML"
+          ]
+        },
+        "roundtrips": {
+          "requests": 0,
+          "answers": 0
+        }
+      },
+      "passed": true
+    },
+    {
+      "mode": "baseline",
+      "kind": "height",
+      "ms": 10000,
+      "failures": [],
+      "pixels": {
+        "roi": {
+          "x": 520,
+          "y": 407,
+          "width": 32,
+          "height": 290
+        },
+        "interiorFrames": 285,
+        "uniqueRoiHashes": 1,
+        "heightChangeSteps": 0,
+        "heightRangePx": 0,
+        "changeSpanMs": 0,
+        "interiorStartEpochMs": 1790437855916.0,
+        "interiorEndEpochMs": 1790437865382.0,
+        "maxCaptureGapMs": 34.0
+      },
+      "trace": {
+        "main": {
+          "pid": 2415818,
+          "tid": 2415818,
+          "threadName": "CrRendererMain"
+        },
+        "blockTraceUs": [
+          329119230299,
+          329129230556
+        ],
+        "enclosingMainSlices": [
+          {
+            "name": "RunTask",
+            "cat": "disabled-by-default-devtools.timeline",
+            "ts": 329119229937,
+            "dur": 10001236,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "ThreadControllerImpl::RunTask",
+            "cat": "toplevel",
+            "ts": 329119229942,
+            "dur": 10001146,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerBase::run",
+            "cat": "blink",
+            "ts": 329119229948,
+            "dur": 10001139,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerFire",
+            "cat": "devtools.timeline",
+            "ts": 329119229952,
+            "dur": 10001132,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "AsyncTask Run",
+            "cat": "blink",
+            "ts": 329119229962,
+            "dur": 10001115,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "v8.callFunction",
+            "cat": "v8",
+            "ts": 329119229972,
+            "dur": 10001097,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "FunctionCall",
+            "cat": "devtools.timeline",
+            "ts": 329119229975,
+            "dur": 10001071,
+            "pid": 2415818,
+            "tid": 2415818
+          }
+        ],
+        "renderThreads": [],
+        "threadInventory": [
+          {
+            "pid": 0,
+            "tid": 0,
+            "name": "swapper"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415757,
+            "name": "CrBrowserMain"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415767,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415768,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415769,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415770,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415771,
+            "name": "ThreadPoolSingleThreadSharedForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415774,
+            "name": "Chrome_IOThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415775,
+            "name": "MemoryInfra"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415786,
+            "name": "CompositorTileWorker1"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415793,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415806,
+            "name": "Chrome_DevToolsHandlerThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415810,
+            "name": "CacheThread_BlockFile"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415788,
+            "name": "CrGpuMain"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415952,
+            "name": "GpuWatchdog"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415953,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415955,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415956,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415957,
+            "name": "VizCompositorThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415791,
+            "name": "network.CrUtilityMain"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415861,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415863,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415864,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415797,
+            "name": "storage.CrUtilityMain"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415802,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415804,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415805,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415811,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415813,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415816,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415818,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415824,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415825,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415826,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415827,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415828,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415834,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416236,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416237,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415871,
+            "name": "tracing.CrUtilityMain"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415873,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415876,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415968,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415970,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415973,
+            "name": "Chrome_ChildIOThread"
+          }
+        ]
+      },
+      "fallbacks": {
+        "traceCounts": {
+          "before": 0,
+          "during": 0,
+          "after": 0
+        },
+        "traceOccurrences": [],
+        "loggedFallbacks": [],
+        "loggedCounts": {},
+        "zeroDuringBlock": true
+      },
+      "passed": true
+    },
+    {
+      "mode": "baseline",
+      "kind": "grid",
+      "ms": 10000,
+      "failures": [],
+      "pixels": {
+        "roi": {
+          "x": 520,
+          "y": 407,
+          "width": 32,
+          "height": 290
+        },
+        "interiorFrames": 285,
+        "uniqueRoiHashes": 1,
+        "heightChangeSteps": 0,
+        "heightRangePx": 0,
+        "changeSpanMs": 0,
+        "interiorStartEpochMs": 1790437877697.0,
+        "interiorEndEpochMs": 1790437887164.0,
+        "maxCaptureGapMs": 35.0
+      },
+      "trace": {
+        "main": {
+          "pid": 2415818,
+          "tid": 2415818,
+          "threadName": "CrRendererMain"
+        },
+        "blockTraceUs": [
+          329141011105,
+          329151011245
+        ],
+        "enclosingMainSlices": [
+          {
+            "name": "RunTask",
+            "cat": "disabled-by-default-devtools.timeline",
+            "ts": 329141010890,
+            "dur": 10000874,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "ThreadControllerImpl::RunTask",
+            "cat": "toplevel",
+            "ts": 329141010910,
+            "dur": 10000772,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerBase::run",
+            "cat": "blink",
+            "ts": 329141010914,
+            "dur": 10000767,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerFire",
+            "cat": "devtools.timeline",
+            "ts": 329141010917,
+            "dur": 10000761,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "AsyncTask Run",
+            "cat": "blink",
+            "ts": 329141010925,
+            "dur": 10000746,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "v8.callFunction",
+            "cat": "v8",
+            "ts": 329141010930,
+            "dur": 10000733,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "FunctionCall",
+            "cat": "devtools.timeline",
+            "ts": 329141010933,
+            "dur": 10000710,
+            "pid": 2415818,
+            "tid": 2415818
+          }
+        ],
+        "renderThreads": [],
+        "threadInventory": [
+          {
+            "pid": 0,
+            "tid": 0,
+            "name": "swapper"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415757,
+            "name": "CrBrowserMain"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415767,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415768,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415769,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415770,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415771,
+            "name": "ThreadPoolSingleThreadSharedForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415772,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415774,
+            "name": "Chrome_IOThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415775,
+            "name": "MemoryInfra"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415786,
+            "name": "CompositorTileWorker1"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415793,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415806,
+            "name": "Chrome_DevToolsHandlerThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415788,
+            "name": "CrGpuMain"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415952,
+            "name": "GpuWatchdog"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415953,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415955,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415956,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415957,
+            "name": "VizCompositorThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415791,
+            "name": "network.CrUtilityMain"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415861,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415863,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415864,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415797,
+            "name": "storage.CrUtilityMain"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415802,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415805,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415811,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415813,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415815,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415816,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415817,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415818,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415824,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415825,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415826,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415827,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415828,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415834,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416236,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416237,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415871,
+            "name": "tracing.CrUtilityMain"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415873,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415876,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415968,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415970,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415973,
+            "name": "Chrome_ChildIOThread"
+          }
+        ]
+      },
+      "fallbacks": {
+        "traceCounts": {
+          "before": 0,
+          "during": 0,
+          "after": 0
+        },
+        "traceOccurrences": [],
+        "loggedFallbacks": [],
+        "loggedCounts": {},
+        "zeroDuringBlock": true
+      },
+      "passed": true
+    },
+    {
+      "mode": "baseline",
+      "kind": "queries",
+      "ms": 10000,
+      "failures": [],
+      "pixels": {
+        "roi": {
+          "x": 520,
+          "y": 391,
+          "width": 32,
+          "height": 290
+        },
+        "interiorFrames": 285,
+        "uniqueRoiHashes": 1,
+        "heightChangeSteps": 0,
+        "heightRangePx": 0,
+        "changeSpanMs": 0,
+        "interiorStartEpochMs": 1790437899426.0,
+        "interiorEndEpochMs": 1790437908893.0,
+        "maxCaptureGapMs": 35.0,
+        "panels": {
+          "height": {
+            "roi": {
+              "x": 520,
+              "y": 391,
+              "width": 32,
+              "height": 290
+            },
+            "interiorFrames": 285,
+            "uniqueRoiHashes": 1,
+            "heightChangeSteps": 0,
+            "heightRangePx": 0,
+            "changeSpanMs": 0,
+            "interiorStartEpochMs": 1790437899426.0,
+            "interiorEndEpochMs": 1790437908893.0,
+            "maxCaptureGapMs": 35.0
+          },
+          "grid": {
+            "roi": {
+              "x": 1108,
+              "y": 391,
+              "width": 32,
+              "height": 290
+            },
+            "interiorFrames": 285,
+            "uniqueRoiHashes": 1,
+            "heightChangeSteps": 0,
+            "heightRangePx": 0,
+            "changeSpanMs": 0,
+            "interiorStartEpochMs": 1790437899426.0,
+            "interiorEndEpochMs": 1790437908893.0,
+            "maxCaptureGapMs": 35.0
+          }
+        }
+      },
+      "trace": {
+        "main": {
+          "pid": 2415818,
+          "tid": 2415818,
+          "threadName": "CrRendererMain"
+        },
+        "blockTraceUs": [
+          329162739516,
+          329172739735
+        ],
+        "enclosingMainSlices": [
+          {
+            "name": "RunTask",
+            "cat": "disabled-by-default-devtools.timeline",
+            "ts": 329162739339,
+            "dur": 10001114,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "ThreadControllerImpl::RunTask",
+            "cat": "toplevel",
+            "ts": 329162739345,
+            "dur": 10001018,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerBase::run",
+            "cat": "blink",
+            "ts": 329162739350,
+            "dur": 10001011,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "TimerFire",
+            "cat": "devtools.timeline",
+            "ts": 329162739353,
+            "dur": 10001005,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "AsyncTask Run",
+            "cat": "blink",
+            "ts": 329162739360,
+            "dur": 10000992,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "v8.callFunction",
+            "cat": "v8",
+            "ts": 329162739366,
+            "dur": 10000979,
+            "pid": 2415818,
+            "tid": 2415818
+          },
+          {
+            "name": "FunctionCall",
+            "cat": "devtools.timeline",
+            "ts": 329162739370,
+            "dur": 10000955,
+            "pid": 2415818,
+            "tid": 2415818
+          }
+        ],
+        "renderThreads": [],
+        "threadInventory": [
+          {
+            "pid": 0,
+            "tid": 0,
+            "name": "swapper"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415757,
+            "name": "CrBrowserMain"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415767,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415768,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415769,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415770,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415771,
+            "name": "ThreadPoolSingleThreadSharedForegroundBlocking"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415774,
+            "name": "Chrome_IOThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415775,
+            "name": "MemoryInfra"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415786,
+            "name": "CompositorTileWorker1"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415793,
+            "name": "ThreadPoolSingleThreadSharedForeground"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415806,
+            "name": "Chrome_DevToolsHandlerThread"
+          },
+          {
+            "pid": 2415757,
+            "tid": 2415810,
+            "name": "CacheThread_BlockFile"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415788,
+            "name": "CrGpuMain"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415952,
+            "name": "GpuWatchdog"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415953,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415955,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415956,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415788,
+            "tid": 2415957,
+            "name": "VizCompositorThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415791,
+            "name": "network.CrUtilityMain"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415861,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415863,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415864,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415791,
+            "tid": 2415865,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415797,
+            "name": "storage.CrUtilityMain"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415802,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415797,
+            "tid": 2415805,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415811,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415813,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415815,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415811,
+            "tid": 2415816,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415818,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415824,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415825,
+            "name": "ThreadPoolServiceThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415826,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415827,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415828,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2415834,
+            "name": "Compositor"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416236,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416237,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415818,
+            "tid": 2416238,
+            "name": "ThreadPoolForegroundWorker"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415871,
+            "name": "tracing.CrUtilityMain"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415873,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415871,
+            "tid": 2415876,
+            "name": "Chrome_ChildIOThread"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415968,
+            "name": "CrRendererMain"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415970,
+            "name": "PerfettoTrace"
+          },
+          {
+            "pid": 2415968,
+            "tid": 2415973,
+            "name": "Chrome_ChildIOThread"
+          }
+        ]
+      },
+      "fallbacks": {
+        "traceCounts": {
+          "before": 0,
+          "during": 0,
+          "after": 0
+        },
+        "traceOccurrences": [],
+        "loggedFallbacks": [],
+        "loggedCounts": {},
+        "zeroDuringBlock": true
+      },
+      "queries": {
+        "samples": 51,
+        "assertions": 58,
+        "panels": {
+          "height": {
+            "offset": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "rect": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "computed": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            }
+          },
+          "grid": {
+            "offset": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "rect": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            },
+            "computed": {
+              "min": 24,
+              "max": 24,
+              "final": 24
+            }
+          }
+        },
+        "outsideShadow": {
+          "element": "hit-probe",
+          "elements": [
+            "hit-probe",
+            "query-container",
+            "HTML"
+          ]
+        },
+        "roundtrips": {
+          "requests": 0,
+          "answers": 0
+        }
+      },
+      "passed": true
+    },
+    {
+      "mode": "omt",
+      "kind": "height",
+      "ms": 3000,
+      "failures": [
+        "Harness milestones incomplete",
+        "pixels: Final captured panel is not 264px: wrong/stale surface",
+        "trace: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/height-3000/trace-complete.json'",
+        "fallbacks: [Errno 2] No such file or directory: '/root/cr153/validation/results/approved-20260926T155008Z/omt/height-3000/trace-complete.json'"
+      ],
+      "passed": false
+    }
+  ],
+  "limits": "Xvfb software-display validation, not physical GPU scanout/FPS or cross-platform correctness. CDP smoke screenshots are not block evidence.",
+  "extended": {
+    "baseline": {
+      "native-input": {
+        "startedMs": 1790437923406,
+        "logStart": 30764,
+        "completed": true,
+        "geometry": {
+          "x": 786,
+          "y": 637,
+          "expectedOffsetX": 20,
+          "expectedOffsetY": 15
+        },
+        "alignment": {
+          "x": 0,
+          "y": 148
+        },
+        "windowId": "2097155",
+        "events": [
+          {
+            "type": "mousedown",
+            "target": "input-button",
+            "offsetX": 20,
+            "offsetY": 15,
+            "clientX": 786,
+            "clientY": 637,
+            "isTrusted": true,
+            "button": 0
+          },
+          {
+            "type": "mouseup",
+            "target": "input-button",
+            "offsetX": 20,
+            "offsetY": 15,
+            "clientX": 786,
+            "clientY": 637,
+            "isTrusted": true,
+            "button": 0
+          },
+          {
+            "type": "click",
+            "target": "input-button",
+            "offsetX": 20,
+            "offsetY": 15,
+            "clientX": 786,
+            "clientY": 637,
+            "isTrusted": true,
+            "button": 0
+          }
+        ],
+        "focused": "input-button",
+        "finishedMs": 1790437924776,
+        "logEnd": 31867,
+        "fallbacks": {
+          "unthrottledTraceCount": 0,
+          "traceOccurrences": [],
+          "loggedFallbacks": [],
+          "note": "No busy-loop window in this smoke case; fallbacks reported, not treated as in-block violations."
+        },
+        "roundtrips": {
+          "requests": 0,
+          "answers": 0
+        }
+      },
+      "page-threads": {
+        "startedMs": 1790437924777,
+        "logStart": 31867,
+        "mode": "baseline",
+        "stages": [
+          {
+            "name": "one-page",
+            "logEnd": 32073,
+            "epochMs": 1790437925673,
+            "renderers": [
+              {
+                "pid": 2417135,
+                "tasks": [
+                  {
+                    "pid": 2417135,
+                    "tid": 2417135,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417136,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417142,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417143,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417144,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417145,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417146,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918616"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417149,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417150,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  }
+                ]
+              },
+              {
+                "pid": 2417133,
+                "tasks": [
+                  {
+                    "pid": 2417133,
+                    "tid": 2417133,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417134,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417137,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417138,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417139,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417140,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417141,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417147,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417148,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417151,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417152,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417153,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918622"
+                  }
+                ]
+              },
+              {
+                "pid": 2415818,
+                "tasks": [
+                  {
+                    "pid": 2415818,
+                    "tid": 2415818,
+                    "comm": "chrome",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415819,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415824,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415825,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415826,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415827,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415828,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415834,
+                    "comm": "Compositor",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415835,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416236,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416237,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416238,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416239,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  }
+                ]
+              },
+              {
+                "pid": 2415811,
+                "tasks": [
+                  {
+                    "pid": 2415811,
+                    "tid": 2415811,
+                    "comm": "chrome",
+                    "startTicks": "32907379"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415812,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907380"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415813,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415814,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415815,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415816,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415817,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415822,
+                    "comm": "Compositor",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415823,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415841,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415842,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415846,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415847,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415848,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907388"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416295,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416296,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416297,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416298,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416299,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416300,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416301,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416302,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416303,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416304,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416305,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  }
+                ]
+              }
+            ],
+            "renderThreads": []
+          },
+          {
+            "name": "two-pages",
+            "logEnd": 32263,
+            "epochMs": 1790437925884,
+            "renderers": [
+              {
+                "pid": 2417135,
+                "tasks": [
+                  {
+                    "pid": 2417135,
+                    "tid": 2417135,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417136,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417142,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417143,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417144,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417145,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417146,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918616"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417149,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417150,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  }
+                ]
+              },
+              {
+                "pid": 2417133,
+                "tasks": [
+                  {
+                    "pid": 2417133,
+                    "tid": 2417133,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417134,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417137,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417138,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417139,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417140,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417141,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417147,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417148,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417151,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417152,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417153,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918622"
+                  }
+                ]
+              },
+              {
+                "pid": 2415818,
+                "tasks": [
+                  {
+                    "pid": 2415818,
+                    "tid": 2415818,
+                    "comm": "chrome",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415819,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415824,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415825,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415826,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415827,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415828,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415834,
+                    "comm": "Compositor",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415835,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416236,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416237,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416238,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416239,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  }
+                ]
+              },
+              {
+                "pid": 2415811,
+                "tasks": [
+                  {
+                    "pid": 2415811,
+                    "tid": 2415811,
+                    "comm": "chrome",
+                    "startTicks": "32907379"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415812,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907380"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415813,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415814,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415815,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415816,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415817,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415822,
+                    "comm": "Compositor",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415823,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415841,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415842,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415846,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415847,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415848,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907388"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416295,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416296,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416297,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416298,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416299,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416300,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416301,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416302,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416303,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416304,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416305,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  }
+                ]
+              }
+            ],
+            "renderThreads": []
+          },
+          {
+            "name": "peer-closed",
+            "logEnd": 32263,
+            "epochMs": 1790437926042,
+            "renderers": [
+              {
+                "pid": 2417135,
+                "tasks": [
+                  {
+                    "pid": 2417135,
+                    "tid": 2417135,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417136,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417142,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417143,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417144,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417145,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417146,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918616"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417149,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417150,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  }
+                ]
+              },
+              {
+                "pid": 2417133,
+                "tasks": [
+                  {
+                    "pid": 2417133,
+                    "tid": 2417133,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417134,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417137,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417138,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417139,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417140,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417141,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417147,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417148,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417151,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417152,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417153,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918622"
+                  }
+                ]
+              },
+              {
+                "pid": 2415818,
+                "tasks": [
+                  {
+                    "pid": 2415818,
+                    "tid": 2415818,
+                    "comm": "chrome",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415819,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415824,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415825,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415826,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415827,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415828,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415834,
+                    "comm": "Compositor",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415835,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416236,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416237,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416238,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416239,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  }
+                ]
+              },
+              {
+                "pid": 2415811,
+                "tasks": [
+                  {
+                    "pid": 2415811,
+                    "tid": 2415811,
+                    "comm": "chrome",
+                    "startTicks": "32907379"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415812,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907380"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415813,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415814,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415815,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415816,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415817,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415822,
+                    "comm": "Compositor",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415823,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415841,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415842,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415846,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415847,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415848,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907388"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416295,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416296,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416297,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416298,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416299,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416300,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416301,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416302,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416303,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416304,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416305,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  }
+                ]
+              }
+            ],
+            "renderThreads": []
+          },
+          {
+            "name": "owner-navigated",
+            "logEnd": 32469,
+            "epochMs": 1790437926934,
+            "renderers": [
+              {
+                "pid": 2417135,
+                "tasks": [
+                  {
+                    "pid": 2417135,
+                    "tid": 2417135,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417136,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417142,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417143,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417144,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417145,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417146,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918616"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417149,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417135,
+                    "tid": 2417150,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  }
+                ]
+              },
+              {
+                "pid": 2417133,
+                "tasks": [
+                  {
+                    "pid": 2417133,
+                    "tid": 2417133,
+                    "comm": "chrome",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417134,
+                    "comm": "HangWatcher",
+                    "startTicks": "32918614"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417137,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417138,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417139,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417140,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417141,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918615"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417147,
+                    "comm": "Compositor",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417148,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32918617"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417151,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417152,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918621"
+                  },
+                  {
+                    "pid": 2417133,
+                    "tid": 2417153,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32918622"
+                  }
+                ]
+              },
+              {
+                "pid": 2415818,
+                "tasks": [
+                  {
+                    "pid": 2415818,
+                    "tid": 2415818,
+                    "comm": "chrome",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415819,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415824,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415825,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415826,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415827,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415828,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907383"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415834,
+                    "comm": "Compositor",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2415835,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907384"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416236,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416237,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909898"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416238,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  },
+                  {
+                    "pid": 2415818,
+                    "tid": 2416239,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32909901"
+                  }
+                ]
+              },
+              {
+                "pid": 2415811,
+                "tasks": [
+                  {
+                    "pid": 2415811,
+                    "tid": 2415811,
+                    "comm": "chrome",
+                    "startTicks": "32907379"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415812,
+                    "comm": "HangWatcher",
+                    "startTicks": "32907380"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415813,
+                    "comm": "PerfettoTrace",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415814,
+                    "comm": "ThreadPoolServi",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415815,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415816,
+                    "comm": "Chrome_ChildIOT",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415817,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907381"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415822,
+                    "comm": "Compositor",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415823,
+                    "comm": "ThreadPoolSingl",
+                    "startTicks": "32907382"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415841,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415842,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415846,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415847,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907387"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2415848,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32907388"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416295,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416296,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416297,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416298,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416299,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416300,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416301,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416302,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416303,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416304,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  },
+                  {
+                    "pid": 2415811,
+                    "tid": 2416305,
+                    "comm": "ThreadPoolForeg",
+                    "startTicks": "32910402"
+                  }
+                ]
+              }
+            ],
+            "renderThreads": []
+          }
+        ],
+        "completed": true,
+        "urlA": "http://127.0.0.1:34359/a.html?page=owner-a",
+        "urlPeer": "http://127.0.0.1:34359/a.html?page=peer",
+        "urlB": "http://127.0.0.1:34359/b.html?page=owner-b",
+        "peerCloseStartedMs": 1790437925885,
+        "navigationStartedMs": 1790437926042,
+        "finishedMs": 1790437927446,
+        "logEnd": 32469,
+        "fallbacks": {
+          "unthrottledTraceCount": 0,
+          "traceOccurrences": [],
+          "loggedFallbacks": [],
+          "note": "No busy-loop window in this smoke case; fallbacks reported, not treated as in-block violations."
+        }
+      }
+    }
+  },
+  "pairs": [
+    {
+      "kind": "height",
+      "ms": 3000,
+      "omtMinusBaselineHeightRangePx": 0
+    },
+    {
+      "kind": "height",
+      "ms": 10000,
+      "omtMinusBaselineHeightRangePx": 0
+    },
+    {
+      "kind": "grid",
+      "ms": 3000,
+      "omtMinusBaselineHeightRangePx": 0
+    },
+    {
+      "kind": "grid",
+      "ms": 10000,
+      "omtMinusBaselineHeightRangePx": 0
+    },
+    {
+      "kind": "queries",
+      "ms": 3000,
+      "omtMinusBaselineHeightRangePx": 0
+    },
+    {
+      "kind": "queries",
+      "ms": 10000,
+      "omtMinusBaselineHeightRangePx": 0
+    }
+  ]
+}

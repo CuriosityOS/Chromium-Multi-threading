@@ -1,0 +1,57 @@
+@@@ third_party/blink/renderer/core/dom/element.h
+<<<<
+ public:
+  Element(const QualifiedName& tag_name,
+          Document*,
+          ConstructionType = kCreateElement);
+====
+ public:
+  Element(const QualifiedName& tag_name,
+          Document*,
+          ConstructionType = kCreateElement);
+  // Lets the render thread (core/render_thread/) evaluate focusability of
+  // replica elements.
+  friend class RenderThreadReplicaAccess;
+>>>>
+@@@ third_party/blink/renderer/core/dom/element.cc
+<<<<
+FocusableState Element::IsFocusableState(UpdateBehavior update_behavior) const {
+  if (!isConnected() || !IsFocusableStyle(update_behavior)) {
+====
+FocusableState Element::IsFocusableState(UpdateBehavior update_behavior) const {
+  // Focusability depends on style and layout, which the render thread owns.
+  if (isConnected()) {
+    if (auto answer = RenderThreadJournal::QueryNumber(
+            *this, RenderThreadQuery::Type::kFocusableState)) {
+      return static_cast<FocusableState>(*answer);
+    }
+  }
+  if (!isConnected() || !IsFocusableStyle(update_behavior)) {
+>>>>
+@@@ third_party/blink/renderer/core/input/mouse_event_manager.cc
+<<<<
+  // The layout needs to be up to date to determine if an element is focusable.
+  frame_->GetDocument()->UpdateStyleAndLayout(DocumentUpdateReason::kFocus);
+====
+  // The layout needs to be up to date to determine if an element is focusable.
+  // (With off-main-thread rendering, focusability is answered by the render
+  // thread instead.)
+  if (!frame_->GetDocument()->GetRenderThreadJournal()) {
+    frame_->GetDocument()->UpdateStyleAndLayout(DocumentUpdateReason::kFocus);
+  }
+>>>>
+@@@ third_party/blink/renderer/core/editing/frame_selection.cc
+<<<<
+  if (GetDocument().GetLayoutView()) {
+    layout_selection_->InvalidateStyleAndPaintForSelection();
+  }
+  GetDocument().UpdateStyleAndLayoutTree();
+====
+  if (GetDocument().GetLayoutView()) {
+    layout_selection_->InvalidateStyleAndPaintForSelection();
+  }
+  // With off-main-thread rendering the render thread owns style.
+  if (!GetDocument().GetRenderThreadJournal()) {
+    GetDocument().UpdateStyleAndLayoutTree();
+  }
+>>>>

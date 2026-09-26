@@ -1,0 +1,710 @@
+--- before/animation/animation.cc
++++ after/animation/animation.cc
+@@ -30,6 +30,7 @@
+ 
+ #include "third_party/blink/renderer/core/animation/animation.h"
+ 
++#include <atomic>
+ #include <limits>
+ #include <memory>
+ #include <utility>
+@@ -103,9 +104,9 @@
+ #define VERIFY_PAINT_CLEAN_LOG_ONCE()                                         \
+   if (VLOG_IS_ON(1)) {                                                        \
+     if (document_->Lifecycle().GetState() < DocumentLifecycle::kPaintClean) { \
+-      static bool first_call = true;                                          \
+-      bool was_first_call = first_call;                                       \
+-      first_call = false;                                                     \
++      static constinit std::atomic<bool> first_call{true};                    \
++      bool was_first_call =                                                   \
++          first_call.exchange(false, std::memory_order_relaxed);              \
+       if (was_first_call) {                                                   \
+         VLOG(1) << __PRETTY_FUNCTION__                                        \
+                 << " called during style, layout or paint";                   \
+@@ -146,8 +147,8 @@
+ };
+ 
+ unsigned NextSequenceNumber() {
+-  static unsigned next = 0;
+-  return ++next;
++  static constinit std::atomic<unsigned> next{0};
++  return next.fetch_add(1, std::memory_order_relaxed) + 1;
+ }
+ 
+ PseudoPriority ConvertPseudoIdtoPriority(const PseudoId& pseudo) {
+--- before/animation/animation_clock.cc
++++ after/animation/animation_clock.cc
+@@ -40,10 +40,11 @@
+ constexpr base::TimeDelta kApproximateFrameTime = base::Seconds(1 / 60.0);
+ }  // namespace
+ 
+-unsigned AnimationClock::currently_running_task_ = 0;
++constinit std::atomic<unsigned> AnimationClock::currently_running_task_{0};
+ 
+ void AnimationClock::UpdateTime(base::TimeTicks time) {
+-  task_for_which_time_was_calculated_ = currently_running_task_;
++  task_for_which_time_was_calculated_ =
++      currently_running_task_.load(std::memory_order_relaxed);
+ 
+   // TODO(crbug.com/985770): Change this to a DCHECK_GE(time, time_) when
+   // VR no longer sends historical timestamps.
+@@ -63,8 +64,10 @@
+   // should never dynamically advance time inside a single task, as otherwise a
+   // single long-running JavaScript function could see multiple different times
+   // from document.timeline.currentTime.
+-  if (task_for_which_time_was_calculated_ == currently_running_task_)
++  if (task_for_which_time_was_calculated_ ==
++      currently_running_task_.load(std::memory_order_relaxed)) {
+     return time_;
++  }
+ 
+   // Otherwise, we may need to dynamically update our own time. Again see the
+   // comments on |SetAllowedToDynamicallyUpdateTime|.
+--- before/animation/animation_clock.h
++++ after/animation/animation_clock.h
+@@ -31,6 +31,7 @@
+ #ifndef THIRD_PARTY_BLINK_RENDERER_CORE_ANIMATION_ANIMATION_CLOCK_H_
+ #define THIRD_PARTY_BLINK_RENDERER_CORE_ANIMATION_ANIMATION_CLOCK_H_
+ 
++#include <atomic>
+ #include <limits>
+ 
+ #include "base/time/default_tick_clock.h"
+@@ -83,7 +84,9 @@
+   // within a single setInterval callback). To achieve this we track the task in
+   // which the time was last updated, and don't update it again until we are in
+   // a new task.
+-  static void NotifyTaskStart() { ++currently_running_task_; }
++  static void NotifyTaskStart() {
++    currently_running_task_.fetch_add(1, std::memory_order_relaxed);
++  }
+ 
+   void ResetTimeForTesting();
+   // The caller owns the passed in clock, which must outlive the AnimationClock.
+@@ -98,7 +101,7 @@
+ 
+   // See |NotifyTaskStart| documentation for these members.
+   unsigned task_for_which_time_was_calculated_;
+-  static unsigned currently_running_task_;
++  static constinit std::atomic<unsigned> currently_running_task_;
+ };
+ 
+ }  // namespace blink
+--- before/css/post_style_update_scope.cc
++++ after/css/post_style_update_scope.cc
+@@ -13,7 +13,8 @@
+ 
+ namespace blink {
+ 
+-PostStyleUpdateScope* PostStyleUpdateScope::current_ = nullptr;
++constinit thread_local PostStyleUpdateScope* PostStyleUpdateScope::current_ =
++    nullptr;
+ 
+ PostStyleUpdateScope::AnimationData*
+ PostStyleUpdateScope::CurrentAnimationData() {
+--- before/css/post_style_update_scope.h
++++ after/css/post_style_update_scope.h
+@@ -131,7 +131,7 @@
+     return nullify_pseudo_data_ ? nullptr : &pseudo_data_;
+   }
+ 
+-  static PostStyleUpdateScope* current_;
++  static constinit thread_local PostStyleUpdateScope* current_;
+ };
+ 
+ }  // namespace blink
+--- before/css/style_attribute_mutation_scope.cc
++++ after/css/style_attribute_mutation_scope.cc
+@@ -44,10 +44,13 @@
+ 
+ }  // namespace
+ 
+-unsigned StyleAttributeMutationScope::scope_count_ = 0;
+-Element* StyleAttributeMutationScope::current_element_ = nullptr;
+-bool StyleAttributeMutationScope::should_notify_inspector_ = false;
+-bool StyleAttributeMutationScope::should_deliver_ = false;
++constinit thread_local unsigned StyleAttributeMutationScope::scope_count_ = 0;
++constinit thread_local Element* StyleAttributeMutationScope::current_element_ =
++    nullptr;
++constinit thread_local bool
++    StyleAttributeMutationScope::should_notify_inspector_ = false;
++constinit thread_local bool StyleAttributeMutationScope::should_deliver_ =
++    false;
+ 
+ StyleAttributeMutationScope::StyleAttributeMutationScope(
+     AbstractPropertySetCSSStyleDeclaration* decl) {
+--- before/css/style_attribute_mutation_scope.h
++++ after/css/style_attribute_mutation_scope.h
+@@ -53,10 +53,10 @@
+  private:
+   void Initialize(Element*);
+ 
+-  static unsigned scope_count_;
+-  static Element* current_element_;
+-  static bool should_notify_inspector_;
+-  static bool should_deliver_;
++  static constinit thread_local unsigned scope_count_;
++  static constinit thread_local Element* current_element_;
++  static constinit thread_local bool should_notify_inspector_;
++  static constinit thread_local bool should_deliver_;
+ 
+   MutationObserverInterestGroup* mutation_recipients_ = nullptr;
+   MutationRecord* mutation_ = nullptr;
+--- before/dom/document.cc
++++ after/dom/document.cc
+@@ -421,6 +421,7 @@
+ #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
+ #include "third_party/blink/renderer/platform/wtf/functional.h"
+ #include "third_party/blink/renderer/platform/wtf/hash_functions.h"
++#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+ #include "third_party/blink/renderer/platform/wtf/std_lib_extras.h"
+ #include "third_party/blink/renderer/platform/wtf/text/character_names.h"
+ #include "third_party/blink/renderer/platform/wtf/text/character_visitor.h"
+@@ -449,8 +450,9 @@
+ 
+ WeakDocumentSet& LiveDocumentSet() {
+   using WeakDocumentSetHolder = blink::DisallowNewWrapper<WeakDocumentSet>;
+-  DEFINE_STATIC_LOCAL(blink::Persistent<WeakDocumentSetHolder>, holder,
+-                      (blink::MakeGarbageCollected<WeakDocumentSetHolder>()));
++  DEFINE_PER_THREAD_STATIC_LOCAL(
++      blink::Persistent<WeakDocumentSetHolder>, holder,
++      (blink::MakeGarbageCollected<WeakDocumentSetHolder>()));
+   return holder->Value();
+ }
+ #endif
+@@ -744,7 +746,7 @@
+   return element.GetDocument().GetFrame() && RootEditableElement(element);
+ }
+ 
+-uint64_t Document::global_tree_version_ = 0;
++constinit std::atomic<uint64_t> Document::global_tree_version_{0};
+ 
+ static bool g_force_synchronous_parsing_for_testing = false;
+ 
+@@ -995,7 +997,8 @@
+           GetTaskRunner(TaskType::kInternalUserInteraction),
+           this,
+           &Document::ClearFocusedElementTimerFired),
+-      dom_tree_version_(++global_tree_version_),
++      dom_tree_version_(
++          global_tree_version_.fetch_add(1, std::memory_order_relaxed) + 1),
+       // https://html.spec.whatwg.org/multipage/dom.html#current-document-readiness
+       // says the ready state starts as 'loading' if there's an associated
+       // parser and 'complete' otherwise. We don't know whether there's an
+--- before/dom/document.h
++++ after/dom/document.h
+@@ -30,6 +30,7 @@
+ #ifndef THIRD_PARTY_BLINK_RENDERER_CORE_DOM_DOCUMENT_H_
+ #define THIRD_PARTY_BLINK_RENDERER_CORE_DOM_DOCUMENT_H_
+ 
++#include <atomic>
+ #include <memory>
+ #include <optional>
+ 
+@@ -1518,7 +1519,8 @@
+ 
+   void IncDOMTreeVersion() {
+     DCHECK(lifecycle_.StateAllowsTreeMutations());
+-    dom_tree_version_ = ++global_tree_version_;
++    dom_tree_version_ =
++        global_tree_version_.fetch_add(1, std::memory_order_relaxed) + 1;
+   }
+   uint64_t DomTreeVersion() const { return dom_tree_version_; }
+ 
+@@ -2843,7 +2845,7 @@
+   double overscroll_accumulated_delta_y_ = 0;
+ 
+   uint64_t dom_tree_version_;
+-  static uint64_t global_tree_version_;
++  static constinit std::atomic<uint64_t> global_tree_version_;
+ 
+   uint64_t style_version_ = 0;
+ 
+--- before/dom/document_lifecycle.cc
++++ after/dom/document_lifecycle.cc
+@@ -38,8 +38,8 @@
+ 
+ namespace blink {
+ 
+-static DocumentLifecycle::DeprecatedTransition* g_deprecated_transition_stack =
+-    nullptr;
++static constinit thread_local DocumentLifecycle::DeprecatedTransition*
++    g_deprecated_transition_stack = nullptr;
+ 
+ DocumentLifecycle::Scope::Scope(DocumentLifecycle& lifecycle,
+                                 LifecycleState final_state)
+--- before/dom/dom_node_ids.cc
++++ after/dom/dom_node_ids.cc
+@@ -3,6 +3,9 @@
+ // found in the LICENSE file.
+ 
+ #include "third_party/blink/renderer/core/dom/dom_node_ids.h"
++
++#include <atomic>
++#include <limits>
+ 
+ #include "third_party/blink/renderer/core/dom/node-inl.h"
+ #include "third_party/blink/renderer/core/dom/node.h"
+@@ -16,14 +19,20 @@
+ 
+ namespace {
+ 
+-DOMNodeId g_last_id = 0;
++constinit std::atomic<DOMNodeId> g_last_id{0};
+ 
+-// See WeakIdentifierMap::Next().
++// See WeakIdentifierMap::Next(). Keep wraparound and allocation in the same
++// atomic operation so a concurrent allocation cannot be lost by a reset.
+ DOMNodeId NextId() {
+-  if (g_last_id == std::numeric_limits<DOMNodeId>::max()) [[unlikely]] {
+-    g_last_id = 0;
++  DOMNodeId last = g_last_id.load(std::memory_order_relaxed);
++  for (;;) {
++    DOMNodeId next =
++        last == std::numeric_limits<DOMNodeId>::max() ? 1 : last + 1;
++    if (g_last_id.compare_exchange_weak(last, next,
++                                        std::memory_order_relaxed)) {
++      return next;
++    }
+   }
+-  return ++g_last_id;
+ }
+ 
+ GCedHeapHashMap<DOMNodeId, WeakMember<Node>>& IdToNodeMap() {
+@@ -63,7 +72,7 @@
+ 
+ // static
+ void DOMNodeIds::SetLastIdForTesting(DOMNodeId id) {
+-  g_last_id = id;
++  g_last_id.store(id, std::memory_order_relaxed);
+ }
+ 
+ // static
+--- before/dom/events/event_dispatch_forbidden_scope.cc
++++ after/dom/events/event_dispatch_forbidden_scope.cc
+@@ -7,7 +7,7 @@
+ namespace blink {
+ 
+ #if DCHECK_IS_ON()
+-unsigned EventDispatchForbiddenScope::count_ = 0;
++constinit thread_local unsigned EventDispatchForbiddenScope::count_ = 0;
+ #endif  // DECHECK_IS_ON()
+ 
+ }  // namespace blink
+--- before/dom/events/event_dispatch_forbidden_scope.h
++++ after/dom/events/event_dispatch_forbidden_scope.h
+@@ -9,7 +9,6 @@
+ #include "base/dcheck_is_on.h"
+ #include "third_party/blink/renderer/core/core_export.h"
+ #include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+-#include "third_party/blink/renderer/platform/wtf/wtf.h"
+ 
+ namespace blink {
+ 
+@@ -19,31 +18,23 @@
+   STACK_ALLOCATED();
+ 
+  public:
+-  EventDispatchForbiddenScope() {
+-    DCHECK(IsMainThread());
+-    ++count_;
+-  }
++  EventDispatchForbiddenScope() { ++count_; }
+   EventDispatchForbiddenScope(const EventDispatchForbiddenScope&) = delete;
+   EventDispatchForbiddenScope& operator=(const EventDispatchForbiddenScope&) =
+       delete;
+ 
+   ~EventDispatchForbiddenScope() {
+-    DCHECK(IsMainThread());
+     DCHECK(count_);
+     --count_;
+   }
+ 
+-  static bool IsEventDispatchForbidden() {
+-    if (!IsMainThread())
+-      return false;
+-    return count_;
+-  }
++  static bool IsEventDispatchForbidden() { return count_; }
+ 
+   class AllowUserAgentEvents {
+     STACK_ALLOCATED();
+ 
+    public:
+-    AllowUserAgentEvents() : change_(&count_, 0) { DCHECK(IsMainThread()); }
++    AllowUserAgentEvents() : change_(&count_, 0) {}
+ 
+     ~AllowUserAgentEvents() { DCHECK(!count_); }
+ 
+@@ -51,7 +42,7 @@
+   };
+ 
+  private:
+-  CORE_EXPORT static unsigned count_;
++  CORE_EXPORT static constinit thread_local unsigned count_;
+ };
+ 
+ #else
+--- before/dom/events/scoped_event_queue.cc
++++ after/dom/events/scoped_event_queue.cc
+@@ -30,16 +30,12 @@
+ 
+ #include "third_party/blink/renderer/core/dom/events/scoped_event_queue.h"
+ 
+-#include <memory>
+-
+-#include "base/memory/ptr_util.h"
+ #include "third_party/blink/renderer/core/dom/events/event.h"
+ #include "third_party/blink/renderer/core/dom/events/event_dispatcher.h"
+ #include "third_party/blink/renderer/core/dom/events/event_target.h"
++#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+ 
+ namespace blink {
+-
+-ScopedEventQueue* ScopedEventQueue::instance_ = nullptr;
+ 
+ ScopedEventQueue::ScopedEventQueue()
+     : queued_events_(MakeGarbageCollected<GCedHeapVector<Member<Event>>>()),
+@@ -48,13 +44,6 @@
+ ScopedEventQueue::~ScopedEventQueue() {
+   DCHECK(!scoping_level_);
+   DCHECK(!queued_events_->size());
+-}
+-
+-void ScopedEventQueue::Initialize() {
+-  DCHECK(!instance_);
+-  std::unique_ptr<ScopedEventQueue> instance =
+-      base::WrapUnique(new ScopedEventQueue);
+-  instance_ = instance.release();
+ }
+ 
+ void ScopedEventQueue::EnqueueEvent(Event& event) {
+@@ -79,10 +68,8 @@
+ }
+ 
+ ScopedEventQueue* ScopedEventQueue::Instance() {
+-  if (!instance_)
+-    Initialize();
+-
+-  return instance_;
++  DEFINE_PER_THREAD_STATIC_LOCAL(ScopedEventQueue, instance, ());
++  return &instance;
+ }
+ 
+ void ScopedEventQueue::IncrementScopingLevel() {
+--- before/dom/events/scoped_event_queue.h
++++ after/dom/events/scoped_event_queue.h
+@@ -56,14 +56,11 @@
+ 
+  private:
+   ScopedEventQueue();
+-  static void Initialize();
+   void DispatchAllEvents();
+   void DispatchEvent(Event&) const;
+ 
+   Persistent<GCedHeapVector<Member<Event>>> queued_events_;
+   unsigned scoping_level_;
+-
+-  static ScopedEventQueue* instance_;
+ };
+ 
+ class EventQueueScope {
+--- before/dom/node_child_removal_tracker.cc
++++ after/dom/node_child_removal_tracker.cc
+@@ -28,6 +28,7 @@
+ 
+ namespace blink {
+ 
+-NodeChildRemovalTracker* NodeChildRemovalTracker::last_;
++constinit thread_local NodeChildRemovalTracker* NodeChildRemovalTracker::last_ =
++    nullptr;
+ 
+ }  // namespace
+--- before/dom/node_child_removal_tracker.h
++++ after/dom/node_child_removal_tracker.h
+@@ -49,7 +49,7 @@
+   // Using raw pointers are safe because these NodeChildRemovalTrackers are
+   // guaranteed to be on a stack.
+   NodeChildRemovalTracker* previous_;
+-  static NodeChildRemovalTracker* last_;
++  static constinit thread_local NodeChildRemovalTracker* last_;
+ };
+ 
+ inline NodeChildRemovalTracker::NodeChildRemovalTracker(const Node& node)
+--- before/dom/range.cc
++++ after/dom/range.cc
+@@ -117,22 +117,22 @@
+   }
+ 
+  private:
+-  static int scope_count_;
++  static constinit thread_local int scope_count_;
+ #if DCHECK_IS_ON()
+   // This raw pointer is safe because
+   //  - s_currentRange has a valid pointer only if RangeUpdateScope instance is
+   //  live.
+   //  - RangeUpdateScope is used only in Range member functions.
+-  static Range* current_range_;
++  static constinit thread_local Range* current_range_;
+ #endif
+   Range* range_ = nullptr;
+   Document* old_document_ = nullptr;
+ 
+ };
+ 
+-int RangeUpdateScope::scope_count_ = 0;
++constinit thread_local int RangeUpdateScope::scope_count_ = 0;
+ #if DCHECK_IS_ON()
+-Range* RangeUpdateScope::current_range_;
++constinit thread_local Range* RangeUpdateScope::current_range_ = nullptr;
+ #endif
+ 
+ Range::Range(Document& owner_document)
+--- before/frame/page_dismissal_scope.cc
++++ after/frame/page_dismissal_scope.cc
+@@ -5,24 +5,21 @@
+ #include "third_party/blink/renderer/core/frame/page_dismissal_scope.h"
+ 
+ #include "base/check.h"
+-#include "third_party/blink/renderer/platform/wtf/wtf.h"
+ 
+ namespace blink {
+ 
+-static unsigned page_dismissal_scope_count = 0;
++static constinit thread_local unsigned page_dismissal_scope_count = 0;
+ 
+ PageDismissalScope::PageDismissalScope() {
+-  DCHECK(IsMainThread());
+   ++page_dismissal_scope_count;
+ }
+ 
+ PageDismissalScope::~PageDismissalScope() {
+-  DCHECK(IsMainThread());
++  DCHECK(page_dismissal_scope_count);
+   --page_dismissal_scope_count;
+ }
+ 
+ bool PageDismissalScope::IsActive() {
+-  DCHECK(IsMainThread());
+   return page_dismissal_scope_count > 0;
+ }
+ 
+--- before/html/html_element.cc
++++ after/html/html_element.cc
+@@ -830,10 +830,9 @@
+        &HTMLElement::OnRoleAttrChanged},
+   });
+ 
+-  static bool registered_triggers = false;
+-  if (!registered_triggers) {
+-    registered_triggers = true;
+-
++  // The static initializer blocks other threads until every index is
++  // registered.
++  [[maybe_unused]] static const bool registered_triggers = [] {
+     for (unsigned index = 0, index_end = attribute_triggers.size();
+          index != index_end; ++index) {
+       const AttributeTriggers& trigger = attribute_triggers[index];
+@@ -842,7 +841,8 @@
+              "they would not match for different prefixes";
+       trigger.attribute.RegisterHTMLAttributeTriggersIndex(index);
+     }
+-  }
++    return true;
++  }();
+ 
+   std::optional<unsigned> index = attr_name.HTMLAttributeTriggersIndex();
+   if (!index) {
+--- before/layout/custom/custom_layout_scope.cc
++++ after/layout/custom/custom_layout_scope.cc
+@@ -6,6 +6,7 @@
+ 
+ namespace blink {
+ 
+-CustomLayoutScope* CustomLayoutScope::current_scope_ = nullptr;
++constinit thread_local CustomLayoutScope* CustomLayoutScope::current_scope_ =
++    nullptr;
+ 
+ }  // namespace blink
+--- before/layout/custom/custom_layout_scope.h
++++ after/layout/custom/custom_layout_scope.h
+@@ -62,7 +62,7 @@
+   CustomLayoutToken* Token() { return token_; }
+ 
+  private:
+-  static CustomLayoutScope* current_scope_;
++  static constinit thread_local CustomLayoutScope* current_scope_;
+ 
+   CustomLayoutScope* prev_scope_;
+   CustomLayoutWorkQueue queue_;
+--- before/layout/disable_layout_side_effects_scope.cc
++++ after/layout/disable_layout_side_effects_scope.cc
+@@ -6,6 +6,6 @@
+ 
+ namespace blink {
+ 
+-unsigned DisableLayoutSideEffectsScope::count_ = 0;
++constinit thread_local unsigned DisableLayoutSideEffectsScope::count_ = 0;
+ 
+ }  // namespace blink
+--- before/layout/disable_layout_side_effects_scope.h
++++ after/layout/disable_layout_side_effects_scope.h
+@@ -27,7 +27,7 @@
+   static bool IsDisabled() { return count_; }
+ 
+  private:
+-  static unsigned count_;
++  static constinit thread_local unsigned count_;
+ };
+ 
+ }  // namespace blink
+--- before/layout/ink_overflow.cc
++++ after/layout/ink_overflow.cc
+@@ -55,7 +55,7 @@
+ //
+ // #define DISALLOW_READING_UNSET
+ 
+-unsigned InkOverflow::read_unset_as_none_ = 0;
++constinit thread_local unsigned InkOverflow::read_unset_as_none_ = 0;
+ 
+ InkOverflow::~InkOverflow() {
+   // Because |Type| is kept outside of the instance, callers must call |Reset|
+--- before/layout/ink_overflow.h
++++ after/layout/ink_overflow.h
+@@ -285,7 +285,7 @@
+ #if DCHECK_IS_ON()
+   Type type_ = Type::kNotSet;
+ 
+-  static unsigned read_unset_as_none_;
++  static constinit thread_local unsigned read_unset_as_none_;
+ #endif
+ };
+ 
+--- before/layout/inline/abstract_inline_text_box.cc
++++ after/layout/inline/abstract_inline_text_box.cc
+@@ -13,6 +13,7 @@
+ #include "third_party/blink/renderer/platform/fonts/character_range.h"
+ #include "third_party/blink/renderer/platform/fonts/shaping/shape_result_view.h"
+ #include "third_party/blink/renderer/platform/text/text_break_iterator.h"
++#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+ #include "third_party/blink/renderer/platform/wtf/wtf_size_t.h"
+ 
+ namespace blink {
+@@ -27,8 +28,10 @@
+ class AbstractInlineTextBoxCache final {
+  public:
+   static AbstractInlineTextBox* GetOrCreate(const InlineCursor& cursor) {
+-    if (!s_instance_)
+-      s_instance_ = new AbstractInlineTextBoxCache();
++    if (!s_instance_) {
++      DEFINE_PER_THREAD_STATIC_LOCAL(AbstractInlineTextBoxCache, instance, ());
++      s_instance_ = &instance;
++    }
+     return s_instance_->GetOrCreateInternal(cursor);
+   }
+ 
+@@ -75,13 +78,14 @@
+     return MapKey(&cursor.Items(), ItemIndex(cursor));
+   }
+ 
+-  static AbstractInlineTextBoxCache* s_instance_;
++  static constinit thread_local AbstractInlineTextBoxCache* s_instance_;
+ 
+   using MapType = GCedHeapHashMap<MapKey, Member<AbstractInlineTextBox>>;
+   Persistent<MapType> map_;
+ };
+ 
+-AbstractInlineTextBoxCache* AbstractInlineTextBoxCache::s_instance_ = nullptr;
++constinit thread_local AbstractInlineTextBoxCache*
++    AbstractInlineTextBoxCache::s_instance_ = nullptr;
+ 
+ }  // namespace
+ 
+--- before/layout/layout_shift_tracker.cc
++++ after/layout/layout_shift_tracker.cc
+@@ -37,10 +37,11 @@
+ namespace blink {
+ 
+ using ReattachHookScope = LayoutShiftTracker::ReattachHookScope;
+-ReattachHookScope* ReattachHookScope::top_ = nullptr;
++constinit thread_local ReattachHookScope* ReattachHookScope::top_ = nullptr;
+ 
+ using ContainingBlockScope = LayoutShiftTracker::ContainingBlockScope;
+-ContainingBlockScope* ContainingBlockScope::top_ = nullptr;
++constinit thread_local ContainingBlockScope* ContainingBlockScope::top_ =
++    nullptr;
+ 
+ namespace {
+ 
+--- before/layout/layout_shift_tracker.h
++++ after/layout/layout_shift_tracker.h
+@@ -117,7 +117,7 @@
+ 
+    private:
+     ReattachHookScope* outer_;
+-    static ReattachHookScope* top_;
++    static constinit thread_local ReattachHookScope* top_;
+     struct Geometry {
+       PhysicalOffset paint_offset;
+       PhysicalSize size;
+@@ -156,7 +156,7 @@
+    private:
+     friend class LayoutShiftTracker;
+     ContainingBlockScope* outer_;
+-    static ContainingBlockScope* top_;
++    static constinit thread_local ContainingBlockScope* top_;
+     PhysicalSize old_size_;
+     PhysicalSize new_size_;
+     PhysicalRect old_rect_;
+--- before/layout/physical_box_fragment.cc
++++ after/layout/physical_box_fragment.cc
+@@ -44,7 +44,8 @@
+ namespace blink {
+ 
+ #if DCHECK_IS_ON()
+-unsigned PhysicalBoxFragment::AllowPostLayoutScope::allow_count_ = 0;
++constinit thread_local unsigned
++    PhysicalBoxFragment::AllowPostLayoutScope::allow_count_ = 0;
+ #endif
+ 
+ namespace {
+--- before/layout/physical_box_fragment.h
++++ after/layout/physical_box_fragment.h
+@@ -81,7 +81,7 @@
+     static bool IsAllowed() { return allow_count_; }
+ 
+    private:
+-    static unsigned allow_count_;
++    static constinit thread_local unsigned allow_count_;
+   };
+ #endif
+ 
+--- before/page/plugin_script_forbidden_scope.cc
++++ after/page/plugin_script_forbidden_scope.cc
+@@ -5,25 +5,21 @@
+ #include "third_party/blink/renderer/core/page/plugin_script_forbidden_scope.h"
+ 
+ #include "base/check.h"
+-#include "third_party/blink/renderer/platform/wtf/wtf.h"
+ 
+ namespace blink {
+ 
+-static unsigned g_plugin_script_forbidden_count = 0;
++static constinit thread_local unsigned g_plugin_script_forbidden_count = 0;
+ 
+ PluginScriptForbiddenScope::PluginScriptForbiddenScope() {
+-  DCHECK(IsMainThread());
+   ++g_plugin_script_forbidden_count;
+ }
+ 
+ PluginScriptForbiddenScope::~PluginScriptForbiddenScope() {
+-  DCHECK(IsMainThread());
+   DCHECK(g_plugin_script_forbidden_count);
+   --g_plugin_script_forbidden_count;
+ }
+ 
+ bool PluginScriptForbiddenScope::IsForbidden() {
+-  DCHECK(IsMainThread());
+   return g_plugin_script_forbidden_count > 0;
+ }
+ 

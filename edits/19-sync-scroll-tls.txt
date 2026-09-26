@@ -1,0 +1,9 @@
+@@@ third_party/blink/renderer/core/page/scrolling/sync_scroll_attempt_heuristic.cc
+<<<<
+SyncScrollAttemptHeuristic* g_sync_scroll_attempt_heuristic = nullptr;
+====
+// Per thread: the off-main-thread rendering replica page animates on its own
+// render thread.
+constinit thread_local SyncScrollAttemptHeuristic*
+    g_sync_scroll_attempt_heuristic = nullptr;
+>>>>

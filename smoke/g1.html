@@ -1,0 +1,3 @@
+<!DOCTYPE html><html><body><h1 id=h>page one</h1><script>
+addEventListener("pageshow", e=>{console.log("PAGESHOW g1 persisted="+e.persisted+" h="+document.getElementById("h").offsetHeight); if(!e.persisted) setTimeout(()=>location.href="g2.html",1500);});
+</script></body></html>

@@ -1,0 +1,1164 @@
+third_party/blink/renderer/platform/back_forward_cache_buffer_limit_tracker.cc:23:  DEFINE_THREAD_SAFE_STATIC_LOCAL(BackForwardCacheBufferLimitTracker, instance,
+third_party/blink/renderer/core/core_initializer.cc:79:CoreInitializer* CoreInitializer::instance_ = nullptr;
+third_party/blink/renderer/core/core_initializer.cc:87:  static bool is_registered = false;
+third_party/blink/renderer/platform/fonts/linux/font_cache_linux.cc:38:  DEFINE_THREAD_SAFE_STATIC_LOCAL(AtomicString, system_font_family, ());
+third_party/blink/renderer/core/input/keyboard_event_manager.cc:655:static OverrideCapsLockState g_override_caps_lock_state;
+third_party/blink/renderer/core/ad_tracker/ad_script_identifier.cc:21:bool AdScriptIdentifier::operator==(const AdScriptIdentifier& other) const {
+third_party/blink/renderer/platform/fonts/unicode_range_set.cc:84:bool UnicodeRangeSet::operator==(const UnicodeRangeSet& other) const {
+third_party/blink/renderer/core/highlight/highlight_registry.cc:313:    DEFINE_STATIC_LOCAL(const HashSet<AtomicString>, empty_set, ());
+third_party/blink/renderer/platform/loader/web_url_request_util.cc:227:  static base::AtomicSequenceNumber sequence;
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:29:const std::array<WebFeature, 2> kApplicationFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:33:const std::array<WebFeature, 2> kTextFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:36:const std::array<WebFeature, 2> kApplicationOctetStreamFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:41:const std::array<WebFeature, 2> kApplicationXmlFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:46:const std::array<WebFeature, 2> kTextHtmlFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:51:const std::array<WebFeature, 2> kTextPlainFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:56:const std::array<WebFeature, 2> kTextXmlFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:61:const std::array<WebFeature, 2> kJsonFeatures = {
+third_party/blink/renderer/platform/loader/allowed_by_nosniff.cc:66:const std::array<WebFeature, 2> kUnknownFeatures = {
+third_party/blink/renderer/platform/fonts/font_palette.cc:84:bool FontPalette::operator==(const FontPalette& other) const {
+third_party/blink/renderer/platform/fonts/font_global_context.cc:19:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<FontGlobalContext>>,
+third_party/blink/renderer/platform/wtf/wtf.h:40:WTF_EXPORT extern base::PlatformThreadId g_main_thread_identifier;
+third_party/blink/renderer/platform/fonts/fuchsia/font_cache_fuchsia.cc:33:  DEFINE_THREAD_SAFE_STATIC_LOCAL(AtomicString, system_font_family, ());
+third_party/blink/renderer/core/input/context_menu_allowed_scope.cc:11:static unsigned g_context_menu_allowed_count = 0;
+third_party/blink/renderer/platform/weborigin/referrer.cc:41:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, client_referrer_string,
+third_party/blink/renderer/platform/fonts/web_font_render_style.cc:17:SkFontHinting g_skia_hinting = SkFontHinting::kNormal;
+third_party/blink/renderer/platform/fonts/web_font_render_style.cc:18:bool g_use_skia_auto_hint = true;
+third_party/blink/renderer/platform/fonts/web_font_render_style.cc:19:bool g_use_skia_bitmaps = true;
+third_party/blink/renderer/platform/fonts/web_font_render_style.cc:20:bool g_use_skia_anti_alias = true;
+third_party/blink/renderer/platform/fonts/web_font_render_style.cc:21:bool g_use_skia_subpixel_rendering = false;
+third_party/blink/renderer/platform/fonts/font_variant_alternates.cc:218:bool FontVariantAlternates::operator==(
+third_party/blink/renderer/platform/exported/web_security_origin.cc:121:WebSecurityOrigin& WebSecurityOrigin::operator=(
+third_party/blink/renderer/platform/exported/web_security_origin.cc:144:bool WebSecurityOrigin::operator==(const WebSecurityOrigin& other) const {
+third_party/blink/renderer/platform/loader/fetch/memory_cache.cc:135:static Persistent<MemoryCache>* g_memory_cache;
+third_party/blink/renderer/platform/wtf/threading.h:93:  static ThreadSpecific<Threading>* static_data_;
+third_party/blink/renderer/platform/fonts/script_run_iterator.cc:100:    DEFINE_STATIC_LOCAL(ScriptRunIterator::UScriptCodeList, han_scripts,
+third_party/blink/renderer/platform/fonts/script_run_iterator.cc:227:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const ICUScriptData, icu_script_data_instance,
+third_party/blink/renderer/platform/weborigin/security_policy.cc:60:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/platform/weborigin/security_policy.cc:65:  DEFINE_THREAD_SAFE_STATIC_LOCAL(network::cors::OriginAccessList,
+third_party/blink/renderer/platform/wtf/type_traits.h:53:  static T* t_;
+third_party/blink/renderer/platform/wtf/type_traits.h:70:  static T* t_;
+third_party/blink/renderer/platform/wtf/type_traits.h:87:  static T* t_;
+third_party/blink/renderer/platform/wtf/type_traits.h:104:  static T* t_;
+third_party/blink/renderer/platform/wtf/type_traits.h:114:concept IsTraceableV = IsTraceable<T>::value;
+third_party/blink/renderer/platform/wtf/type_traits.h:121:concept IsGarbageCollectedTypeV = IsGarbageCollectedType<T>::value;
+third_party/blink/renderer/platform/wtf/type_traits.h:127:concept IsWeakV = IsWeak<T>::value;
+third_party/blink/renderer/platform/wtf/type_traits.h:176:concept IsDisallowNew = requires { typename T::IsDisallowNewMarker; };
+third_party/blink/renderer/platform/wtf/type_traits.h:233:concept IsStackAllocatedTypeV = IsStackAllocatedType<T>::value;
+third_party/blink/renderer/platform/weborigin/scheme_registry.cc:121:    DEFINE_THREAD_SAFE_STATIC_LOCAL(URLSchemesRegistry, schemes, ());
+third_party/blink/renderer/platform/wtf/stack_util.h:28:WTF_EXPORT extern uintptr_t g_main_thread_stack_start;
+third_party/blink/renderer/platform/wtf/stack_util.h:29:WTF_EXPORT extern uintptr_t g_main_thread_underestimated_stack_size;
+third_party/blink/renderer/platform/exported/web_url.cc:51:WebURL& WebURL::operator=(const KURL& url) {
+third_party/blink/renderer/platform/weborigin/known_ports.cc:42:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/platform/exported/mediastream/web_media_stream_track.cc:47:WebMediaStreamTrack& WebMediaStreamTrack::operator=(
+third_party/blink/renderer/platform/exported/mediastream/web_media_stream_source.cc:48:WebMediaStreamSource& WebMediaStreamSource::operator=(
+third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc:289:  DEFINE_THREAD_SAFE_STATIC_LOCAL(bool, priority_observer_map_created, (false));
+third_party/blink/renderer/platform/loader/fetch/resource_fetcher.cc:299:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<PriorityObserverMap>, map, ());
+third_party/blink/renderer/platform/widget/compositing/layer_tree_settings.cc:137:  static bool client_hard_limit_bytes_overridden =
+third_party/blink/renderer/platform/exported/mediastream/web_media_stream.cc:67:WebMediaStream& WebMediaStream::operator=(
+third_party/blink/renderer/platform/fonts/font_performance.h:102:  static base::TimeDelta primary_font_;
+third_party/blink/renderer/platform/fonts/font_performance.h:103:  static base::TimeDelta primary_font_in_style_;
+third_party/blink/renderer/platform/fonts/font_performance.h:104:  static base::TimeDelta system_fallback_;
+third_party/blink/renderer/platform/fonts/font_performance.h:105:  static size_t system_fallback_count_;
+third_party/blink/renderer/platform/fonts/font_performance.h:106:  static base::TimeDelta system_fallback_initial_duration_;
+third_party/blink/renderer/platform/fonts/font_performance.h:107:  static uint32_t shape_cache_hit_count_;
+third_party/blink/renderer/platform/fonts/font_performance.h:108:  static uint32_t shape_cache_miss_count_;
+third_party/blink/renderer/platform/fonts/font_performance.h:109:  static unsigned in_style_;
+third_party/blink/renderer/platform/widget/compositing/blink_categorized_worker_pool_delegate.cc:24:  static base::NoDestructor<BlinkCategorizedWorkerPoolDelegate> delegate;
+third_party/blink/renderer/platform/weborigin/security_origin.cc:726:  DEFINE_STATIC_LOCAL(const KURL, url, ("data:,"));
+third_party/blink/renderer/core/xml/xpath_parser.cc:49:Parser* Parser::current_parser_ = nullptr;
+third_party/blink/renderer/core/xml/xpath_parser.cc:101:  DEFINE_STATIC_LOCAL(AxisNamesMap, axis_names, ());
+third_party/blink/renderer/core/xml/xpath_parser.cc:114:  DEFINE_STATIC_LOCAL(HashSet<String>, node_type_names,
+third_party/blink/renderer/platform/fonts/font_platform_data.cc:142:bool FontPlatformData::operator==(const FontPlatformData& a) const {
+third_party/blink/renderer/core/sanitizer/sanitizer_builtins.cc:51:  DEFINE_STATIC_LOCAL(SanitizerNameSet, non_replaceable_elements_,
+third_party/blink/renderer/platform/exported/web_thread_safe_data.cc:78:WebThreadSafeData& WebThreadSafeData::operator=(
+third_party/blink/renderer/platform/exported/web_thread_safe_data.cc:81:WebThreadSafeData& WebThreadSafeData::operator=(scoped_refptr<RawData> data) {
+third_party/blink/renderer/core/editing/spellcheck/spell_checker.cc:84:  DEFINE_STATIC_LOCAL(EmptySpellCheckPanelHostClient, client, ());
+third_party/blink/renderer/platform/weborigin/kurl.cc:182:  DEFINE_THREAD_SAFE_STATIC_LOCAL(KURL, blank_url,
+third_party/blink/renderer/platform/weborigin/kurl.cc:188:  DEFINE_THREAD_SAFE_STATIC_LOCAL(KURL, srcdoc_url,
+third_party/blink/renderer/platform/weborigin/kurl.cc:219:  DEFINE_THREAD_SAFE_STATIC_LOCAL(KURL, static_null_url, ());
+third_party/blink/renderer/platform/weborigin/kurl.cc:303:KURL& KURL::operator=(const KURL& other) {
+third_party/blink/renderer/core/xml/xpath_functions.cc:75:static HashMap<String, FunctionRec>* g_function_map;
+third_party/blink/renderer/platform/exported/web_http_body.cc:167:WebHTTPBody& WebHTTPBody::operator=(scoped_refptr<EncodedFormData> data) {
+third_party/blink/renderer/platform/fonts/font_description.h:606:  static bool use_subpixel_text_positioning_;
+third_party/blink/renderer/platform/fonts/generic_font_family_settings.cc:50:GenericFontFamilySettings& GenericFontFamilySettings::operator=(
+third_party/blink/renderer/platform/fonts/generic_font_family_settings.cc:151:  DEFINE_THREAD_SAFE_STATIC_LOCAL(AtomicString, kOsaka, ("Osaka"));
+third_party/blink/renderer/platform/fonts/generic_font_family_settings.cc:152:  DEFINE_THREAD_SAFE_STATIC_LOCAL(AtomicString, kOsakaMono, ("Osaka-Mono"));
+third_party/blink/renderer/platform/exported/web_url_request.cc:93:WebURLRequest& WebURLRequest::operator=(WebURLRequest&& src) {
+third_party/blink/renderer/core/xml/xpath_parser.h:108:  static Parser* current_parser_;
+third_party/blink/renderer/core/editing/editing_style.cc:119:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+third_party/blink/renderer/core/editing/editing_style.cc:131:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+third_party/blink/renderer/core/editing/editing_style.cc:816:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+third_party/blink/renderer/platform/image-decoders/avif/avif_image_decoder.cc:210:  DEFINE_STATIC_LOCAL(const AtomicString, avif_mime_type, ("image/avif"));
+third_party/blink/renderer/platform/exported/web_string.cc:161:WebString& WebString::operator=(const String& s) {
+third_party/blink/renderer/platform/exported/web_string.cc:178:WebString& WebString::operator=(const AtomicString& s) {
+third_party/blink/renderer/platform/widget/widget_base.cc:81:uint32_t g_next_layer_tree_frame_sink_id = 1;
+third_party/blink/renderer/platform/widget/widget_base.cc:86:const gpu::SchedulingPriority kGpuStreamPriorityDefault =
+third_party/blink/renderer/platform/exported/web_data.cc:84:WebData& WebData::operator=(scoped_refptr<SharedBuffer> buffer) {
+third_party/blink/renderer/core/geometry/dom_matrix_read_only.cc:460:  DEFINE_STATIC_LOCAL(String, identity_matrix2d, ("matrix(1, 0, 0, 1, 0, 0)"));
+third_party/blink/renderer/platform/image-decoders/image_frame.cc:45:ImageFrame& ImageFrame::operator=(const ImageFrame& other) {
+third_party/blink/renderer/platform/fonts/font_cache.h:311:  static WebFontPrewarmer* prewarmer_;
+third_party/blink/renderer/platform/fonts/font_cache.h:315:  static bool antialiased_text_enabled_;
+third_party/blink/renderer/platform/fonts/font_cache.h:316:  static bool lcd_text_enabled_;
+third_party/blink/renderer/platform/fonts/font_cache.h:318:  static AtomicString* menu_font_family_name_;
+third_party/blink/renderer/platform/fonts/font_cache.h:319:  static int32_t menu_font_height_;
+third_party/blink/renderer/platform/fonts/font_cache.h:320:  static AtomicString* small_caption_font_family_name_;
+third_party/blink/renderer/platform/fonts/font_cache.h:321:  static int32_t small_caption_font_height_;
+third_party/blink/renderer/platform/fonts/font_cache.h:322:  static AtomicString* status_font_family_name_;
+third_party/blink/renderer/platform/fonts/font_cache.h:323:  static int32_t status_font_height_;
+third_party/blink/renderer/platform/fonts/font_cache.h:327:  static float device_scale_factor_;
+third_party/blink/renderer/core/xml/parser/xml_document_parser.cc:579:static int g_global_descriptor = 0;
+third_party/blink/renderer/core/xml/parser/xml_document_parser.cc:782:  static bool did_init = false;
+third_party/blink/renderer/core/xml/parser/xml_document_parser.cc:1626:static xmlChar g_shared_xhtml_entity_result[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+third_party/blink/renderer/core/xml/parser/xml_document_parser.cc:1629:  static xmlEntity entity;
+third_party/blink/renderer/core/editing/markers/suggestion_marker.h:59:  static int32_t current_tag_;
+third_party/blink/renderer/platform/loader/fetch/resource.cc:179:const base::Clock* g_clock_for_testing = nullptr;
+third_party/blink/renderer/platform/exported/web_url_response.cc:275:WebURLResponse& WebURLResponse::operator=(const WebURLResponse& r) {
+third_party/blink/renderer/core/render_thread/render_thread.cc:907:  static std::atomic<int> next_id{1};
+third_party/blink/renderer/platform/exported/interface_registry.cc:26:  DEFINE_STATIC_LOCAL(EmptyInterfaceRegistry, empty_interface_registry, ());
+third_party/blink/renderer/platform/image-decoders/jpeg/jpeg_image_decoder.cc:90:const unsigned g_scale_denominator = 8;
+third_party/blink/renderer/platform/image-decoders/jpeg/jpeg_image_decoder.cc:840:  DEFINE_STATIC_LOCAL(const AtomicString, jpeg_mime_type, ("image/jpeg"));
+third_party/blink/renderer/platform/loader/fetch/resource_loader_options.cc:50:ResourceLoaderOptions& ResourceLoaderOptions::operator=(
+third_party/blink/renderer/platform/loader/fetch/resource_loader_options.cc:56:ResourceLoaderOptions& ResourceLoaderOptions::operator=(
+third_party/blink/renderer/platform/image-decoders/jpeg/jpeg_rust_image_decoder.cc:23:  DEFINE_STATIC_LOCAL(const AtomicString, jpeg_mime_type, ("image/jpeg"));
+third_party/blink/renderer/core/xml/parser/xml_document_parser_scope.h:49:  static Document* current_document_;
+third_party/blink/renderer/platform/exported/platform.cc:126:static Platform* g_platform = nullptr;
+third_party/blink/renderer/platform/exported/platform.cc:128:static bool did_initialize_blink_ = false;
+third_party/blink/renderer/platform/exported/platform.cc:256:  DEFINE_STATIC_LOCAL(DefaultBrowserInterfaceBrokerProxy, proxy, ());
+third_party/blink/renderer/core/xml/parser/xml_document_parser_scope.cc:30:Document* XMLDocumentParserScope::current_document_ = nullptr;
+third_party/blink/renderer/core/editing/markers/suggestion_marker_replacement_scope.h:27:  static bool currently_in_scope_;
+third_party/blink/renderer/core/editing/markers/suggestion_marker_properties.cc:12:SuggestionMarkerProperties& SuggestionMarkerProperties::operator=(
+third_party/blink/renderer/core/script_tools/model_context.cc:953:  DEFINE_STATIC_LOCAL(AtomicString, name, ("ModelContext"));
+third_party/blink/renderer/platform/image-decoders/png/png_image_decoder.cc:20:  DEFINE_STATIC_LOCAL(const AtomicString, png_mime_type, ("image/png"));
+third_party/blink/renderer/core/xml/xslt_unicode_sort.cc:183:  DEFINE_STATIC_LOCAL(std::unique_ptr<UCollatorHolder>, cached_collator, ());
+third_party/blink/renderer/platform/loader/fetch/resource_request.cc:88:const base::TimeDelta ResourceRequestHead::default_timeout_interval_ =
+third_party/blink/renderer/platform/loader/fetch/resource_request.cc:137:ResourceRequestHead& ResourceRequestHead::operator=(
+third_party/blink/renderer/platform/loader/fetch/resource_request.cc:142:ResourceRequestHead& ResourceRequestHead::operator=(ResourceRequestHead&&) =
+third_party/blink/renderer/platform/loader/fetch/resource_request.cc:162:ResourceRequestBody& ResourceRequestBody::operator=(ResourceRequestBody&& src) =
+third_party/blink/renderer/platform/wtf/text/case_map.cc:163:const char* CaseMap::Locale::turkic_or_azeri_ = "tr";
+third_party/blink/renderer/platform/wtf/text/case_map.cc:164:const char* CaseMap::Locale::greek_ = "el";
+third_party/blink/renderer/platform/wtf/text/case_map.cc:165:const char* CaseMap::Locale::lithuanian_ = "lt";
+third_party/blink/renderer/platform/wtf/text/case_map.cc:166:const char* CaseMap::Locale::dutch_ = "nl";
+third_party/blink/renderer/platform/image-decoders/jxl/jxl_image_decoder.cc:67:  DEFINE_STATIC_LOCAL(const AtomicString, jxl_mime_type, ("image/jxl"));
+third_party/blink/renderer/platform/fonts/font_performance.cc:12:base::TimeDelta FontPerformance::primary_font_;
+third_party/blink/renderer/platform/fonts/font_performance.cc:13:base::TimeDelta FontPerformance::primary_font_in_style_;
+third_party/blink/renderer/platform/fonts/font_performance.cc:14:base::TimeDelta FontPerformance::system_fallback_;
+third_party/blink/renderer/platform/fonts/font_performance.cc:15:size_t FontPerformance::system_fallback_count_ = 0;
+third_party/blink/renderer/platform/fonts/font_performance.cc:16:base::TimeDelta FontPerformance::system_fallback_initial_duration_;
+third_party/blink/renderer/platform/fonts/font_performance.cc:17:uint32_t FontPerformance::shape_cache_hit_count_ = 0;
+third_party/blink/renderer/platform/fonts/font_performance.cc:18:uint32_t FontPerformance::shape_cache_miss_count_ = 0;
+third_party/blink/renderer/platform/fonts/font_performance.cc:19:unsigned FontPerformance::in_style_ = 0;
+third_party/blink/renderer/platform/fonts/font_performance.cc:71:  static base::NoDestructor<std::map<ScriptKey, size_t>> map;
+third_party/blink/renderer/platform/wtf/text/text_encoding_registry.cc:72:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/platform/wtf/text/text_encoding_registry.cc:76:static TextEncodingNameMap* g_text_encoding_name_map;
+third_party/blink/renderer/platform/wtf/text/text_encoding_registry.cc:77:static TextCodecMap* g_text_codec_map;
+third_party/blink/renderer/platform/wtf/text/text_encoding_registry.cc:80:static std::atomic_bool g_did_extend_text_codec_maps{false};
+third_party/blink/renderer/platform/widget/input/widget_input_handler_manager.cc:71:const base::TimeDelta kEventCountsTimerDelay = base::Milliseconds(500);
+third_party/blink/renderer/platform/fonts/font.cc:79:bool Font::operator==(const Font& other) const {
+third_party/blink/renderer/platform/image-decoders/skia/segment_stream.cc:22:SegmentStream& SegmentStream::operator=(SegmentStream&& rhs) {
+third_party/blink/renderer/platform/image-decoders/gif/gif_image_decoder.cc:42:  DEFINE_STATIC_LOCAL(const AtomicString, gif_mime_type, ("image/gif"));
+third_party/blink/renderer/core/html/track/vtt/vtt_cue.cc:90:  DEFINE_STATIC_LOCAL(const String, verticalrl, ("rl"));
+third_party/blink/renderer/core/html/track/vtt/vtt_cue.cc:95:  DEFINE_STATIC_LOCAL(const String, verticallr, ("lr"));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:37:  DEFINE_STATIC_LOCAL(QualifiedName, c_tag, (AtomicString("c")));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:38:  DEFINE_STATIC_LOCAL(QualifiedName, v_tag, (AtomicString("v")));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:39:  DEFINE_STATIC_LOCAL(QualifiedName, lang_tag,
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:41:  DEFINE_STATIC_LOCAL(QualifiedName, b_tag, (html_names::kBTag.LocalName()));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:42:  DEFINE_STATIC_LOCAL(QualifiedName, u_tag, (html_names::kUTag.LocalName()));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:43:  DEFINE_STATIC_LOCAL(QualifiedName, i_tag, (html_names::kITag.LocalName()));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:44:  DEFINE_STATIC_LOCAL(QualifiedName, ruby_tag,
+third_party/blink/renderer/core/html/track/vtt/vtt_element.cc:46:  DEFINE_STATIC_LOCAL(QualifiedName, rt_tag, (html_names::kRtTag.LocalName()));
+third_party/blink/renderer/core/editing/markers/suggestion_marker.cc:11:int32_t SuggestionMarker::current_tag_ = 0;
+third_party/blink/renderer/core/html/track/vtt/vtt_region.cc:261:  DEFINE_STATIC_LOCAL(const AtomicString,
+third_party/blink/renderer/core/exported/web_plugin_container_impl.cc:117:const WebInputEvent::Modifiers kEditingModifier = WebInputEvent::kMetaKey;
+third_party/blink/renderer/core/exported/web_plugin_container_impl.cc:119:const WebInputEvent::Modifiers kEditingModifier = WebInputEvent::kControlKey;
+third_party/blink/renderer/core/html/track/vtt/vtt_element.h:69:    DEFINE_STATIC_LOCAL(QualifiedName, voice_attr, (AtomicString("voice")));
+third_party/blink/renderer/core/html/track/vtt/vtt_element.h:74:    DEFINE_STATIC_LOCAL(QualifiedName, attr, (AtomicString("lang")));
+third_party/blink/renderer/platform/image-decoders/webp/webp_image_decoder.cc:185:  DEFINE_STATIC_LOCAL(const AtomicString, webp_mime_type, ("image/webp"));
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:158:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:166:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:176:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:185:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:194:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:202:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:210:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/platform/fonts/skia/font_cache_skia.cc:219:    DEFINE_THREAD_SAFE_STATIC_LOCAL(const FontFaceCreationParams,
+third_party/blink/renderer/core/exported/web_document.cc:88:  static unsigned counter = 0;
+third_party/blink/renderer/core/exported/web_document.cc:385:WebDocument& WebDocument::operator=(Document* elem) {
+third_party/blink/renderer/core/xml/xpath_value.cc:42:const Value::AdoptTag Value::kAdopt = {};
+third_party/blink/renderer/core/exported/web_option_element.cc:65:WebOptionElement& WebOptionElement::operator=(HTMLOptionElement* elem) {
+third_party/blink/renderer/core/exported/web_blob.cc:97:WebBlob& WebBlob::operator=(Blob* blob) {
+third_party/blink/renderer/platform/image-decoders/bmp/bmp_image_decoder.cc:35:  DEFINE_STATIC_LOCAL(const AtomicString, bmp_mime_type, ("image/bmp"));
+third_party/blink/renderer/platform/image-decoders/ico/ico_rust_image_decoder.cc:20:  DEFINE_STATIC_LOCAL(const AtomicString, ico_mime_type, ("image/x-icon"));
+third_party/blink/renderer/core/exported/web_form_control_element.cc:308:WebFormControlElement& WebFormControlElement::operator=(
+third_party/blink/renderer/core/exported/web_custom_element.cc:44:int g_embedder_names_allowed_count = 0;
+third_party/blink/renderer/core/xml/xslt_processor_libxslt.cc:99:static XSLTProcessor* g_global_processor = nullptr;
+third_party/blink/renderer/core/xml/xslt_processor_libxslt.cc:100:static ResourceFetcher* g_global_resource_fetcher = nullptr;
+third_party/blink/renderer/platform/image-decoders/bmp/bmp_rust_image_decoder.cc:28:  DEFINE_STATIC_LOCAL(const AtomicString, bmp_mime_type, ("image/bmp"));
+third_party/blink/renderer/core/exported/web_content_holder.cc:16:WebContentHolder& WebContentHolder::operator=(const WebContentHolder& other) {
+third_party/blink/renderer/platform/loader/fetch/url_loader/sync_load_response.cc:17:SyncLoadResponse& SyncLoadResponse::operator=(SyncLoadResponse&& other) =
+third_party/blink/renderer/platform/loader/fetch/resource_response.cc:115:ResourceResponse& ResourceResponse::operator=(const ResourceResponse&) =
+third_party/blink/renderer/platform/loader/fetch/resource_response.cc:451:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, multiple_value,
+third_party/blink/renderer/platform/loader/fetch/resource_response.cc:453:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, unknown_value,
+third_party/blink/renderer/platform/image-decoders/ico/ico_image_decoder.cc:38:  DEFINE_STATIC_LOCAL(const AtomicString, ico_mime_type,
+third_party/blink/renderer/platform/fonts/shaping/han_kerning.cc:36:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<uint32_t>, tags,
+third_party/blink/renderer/platform/wtf/text/string_builder.h:53:concept IsAppendableStringType = std::is_convertible_v<T, StringView>;
+third_party/blink/renderer/platform/image-decoders/image_decoder.h:626:  DEFINE_THREAD_SAFE_STATIC_LOCAL(                                           \
+third_party/blink/renderer/platform/image-decoders/image_decoder.h:644:  static std::array<CustomCountHistogram* const, 9> density_histogram_small = {
+third_party/blink/renderer/platform/image-decoders/image_decoder.h:664:  static std::array<CustomCountHistogram* const, 13> density_histogram_big = {
+third_party/blink/renderer/core/html/track/text_track_cue.h:49:    DEFINE_STATIC_LOCAL(const AtomicString, cue, ("cue"));
+third_party/blink/renderer/core/html/track/video_track.cc:38:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("alternative"));
+third_party/blink/renderer/core/html/track/video_track.cc:43:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("captions"));
+third_party/blink/renderer/core/html/track/video_track.cc:48:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("main"));
+third_party/blink/renderer/core/html/track/video_track.cc:53:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("sign"));
+third_party/blink/renderer/core/html/track/video_track.cc:58:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("subtitles"));
+third_party/blink/renderer/core/html/track/video_track.cc:63:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("commentary"));
+third_party/blink/renderer/platform/fonts/shaping/harfbuzz_face.cc:423:    DEFINE_THREAD_SAFE_STATIC_LOCAL(HarfBuzzSkiaFontFuncs, shared_hb_funcs, ());
+third_party/blink/renderer/core/editing/markers/suggestion_marker_replacement_scope.cc:9:bool SuggestionMarkerReplacementScope::currently_in_scope_ = false;
+third_party/blink/renderer/core/exported/web_dev_tools_agent_impl.cc:310:  static ClientMessageLoopAdapter* instance_;
+third_party/blink/renderer/core/exported/web_dev_tools_agent_impl.cc:313:ClientMessageLoopAdapter* ClientMessageLoopAdapter::instance_ = nullptr;
+third_party/blink/renderer/platform/media/key_system_config_selector.cc:1029:  static bool has_reported_encrypted_media_enabled_uma = false;
+third_party/blink/renderer/core/html/track/text_track.cc:47:  DEFINE_STATIC_LOCAL(const AtomicString, subtitles, ("subtitles"));
+third_party/blink/renderer/core/html/track/text_track.cc:52:  DEFINE_STATIC_LOCAL(const AtomicString, captions, ("captions"));
+third_party/blink/renderer/core/html/track/text_track.cc:57:  DEFINE_STATIC_LOCAL(const AtomicString, descriptions, ("descriptions"));
+third_party/blink/renderer/core/html/track/text_track.cc:62:  DEFINE_STATIC_LOCAL(const AtomicString, chapters, ("chapters"));
+third_party/blink/renderer/core/html/track/text_track.cc:67:  DEFINE_STATIC_LOCAL(const AtomicString, metadata, ("metadata"));
+third_party/blink/renderer/core/exported/web_page_popup_impl.cc:168:  static WebPagePopup::Handle::Generator generator;
+third_party/blink/renderer/core/exported/web_view_impl.cc:251:const double WebView::kMinTextSizeMultiplier = 0.5;
+third_party/blink/renderer/core/exported/web_view_impl.cc:252:const double WebView::kMaxTextSizeMultiplier = 3.0;
+third_party/blink/renderer/core/exported/web_view_impl.cc:256:  DEFINE_STATIC_LOCAL(HashSet<WebViewImpl*>, all_instances, ());
+third_party/blink/renderer/core/exported/web_view_impl.cc:454:  static bool is_first_run = true;
+third_party/blink/renderer/core/exported/web_form_element.cc:80:WebFormElement& WebFormElement::operator=(HTMLFormElement* e) {
+third_party/blink/renderer/core/exported/web_array_buffer.cc:60:WebArrayBuffer& WebArrayBuffer::operator=(DOMArrayBuffer* buffer) {
+third_party/blink/renderer/core/exported/web_label_element.cc:48:WebLabelElement& WebLabelElement::operator=(HTMLLabelElement* elem) {
+third_party/blink/renderer/core/exported/web_node.cc:111:WebNode& WebNode::operator=(const WebNode& n) {
+third_party/blink/renderer/core/exported/web_node.cc:358:WebNode& WebNode::operator=(Node* node) {
+third_party/blink/renderer/core/html/track/audio_track.cc:40:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("alternative"));
+third_party/blink/renderer/core/html/track/audio_track.cc:45:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("descriptions"));
+third_party/blink/renderer/core/html/track/audio_track.cc:50:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("main"));
+third_party/blink/renderer/core/html/track/audio_track.cc:55:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("main-desc"));
+third_party/blink/renderer/core/html/track/audio_track.cc:60:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("translation"));
+third_party/blink/renderer/core/html/track/audio_track.cc:65:  DEFINE_STATIC_LOCAL(const AtomicString, keyword, ("commentary"));
+third_party/blink/renderer/core/exported/web_language_detection_details.cc:41:  DEFINE_STATIC_LOCAL(const AtomicString, google, ("google"));
+third_party/blink/renderer/core/exported/web_plugin_document.cc:55:WebPluginDocument& WebPluginDocument::operator=(PluginDocument* elem) {
+third_party/blink/renderer/core/exported/web_performance_metrics_for_reporting.cc:325:WebPerformanceMetricsForReporting& WebPerformanceMetricsForReporting::operator=(
+third_party/blink/renderer/core/exported/web_select_element.cc:84:WebSelectElement& WebSelectElement::operator=(HTMLSelectElement* element) {
+third_party/blink/renderer/platform/fonts/shaping/harfbuzz_shaper.cc:128:    DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Pool>, pool, ());
+third_party/blink/renderer/core/page/page.cc:124:bool g_limit_max_frames_to_ten_for_testing = false;
+third_party/blink/renderer/core/exported/web_date_time_suggestion.cc:38:WebDateTimeSuggestion& WebDateTimeSuggestion::operator=(
+third_party/blink/renderer/core/exported/web_history_item.cc:93:WebHistoryItem& WebHistoryItem::operator=(HistoryItem* item) {
+third_party/blink/renderer/core/exported/web_meta_element.cc:23:WebMetaElement& WebMetaElement::operator=(HTMLMetaElement* element) {
+third_party/blink/renderer/core/exported/web_element_collection.cc:52:WebElementCollection& WebElementCollection::operator=(HTMLCollection* col) {
+third_party/blink/renderer/platform/media/web_encrypted_media_client_impl.cc:178:  static base::NoDestructor<PerProcessReporterMap> per_process_reporters_map;
+third_party/blink/renderer/core/exported/web_serialized_script_value.cc:134:WebSerializedScriptValue& WebSerializedScriptValue::operator=(
+third_party/blink/renderer/core/exported/web_input_element.cc:122:WebInputElement& WebInputElement::operator=(HTMLInputElement* elem) {
+third_party/blink/renderer/core/exported/web_element.cc:721:WebElement& WebElement::operator=(Element* elem) {
+third_party/blink/renderer/platform/fonts/shaping/shape_result.cc:1847:bool ShapeResult::operator==(const ShapeResult& other) const {
+third_party/blink/renderer/core/page/scoped_page_pauser.cc:35:unsigned g_suspension_count = 0;
+third_party/blink/renderer/platform/scheduler/common/post_cancellable_task.cc:109:TaskHandle& TaskHandle::operator=(TaskHandle&& other) {
+third_party/blink/renderer/core/page/scoped_browsing_context_group_pauser.cc:20:  DEFINE_STATIC_LOCAL(BrowsingContextGroupMap, counts, ());
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:43:#define DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, allow_cross_thread)   \
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:60:#define DEFINE_STATIC_LOCAL(Type, Name, Arguments) \
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:61:  DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, false)
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:69:#define DEFINE_THREAD_SAFE_STATIC_LOCAL(Type, Name, Arguments) \
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:70:  DEFINE_STATIC_LOCAL_IMPL(Type, Name, Arguments, true)
+third_party/blink/renderer/platform/wtf/std_lib_extras.h:160:#define DEFINE_STATIC_REF(type, name, arguments)  \
+third_party/blink/renderer/platform/scheduler/common/thread.cc:37:  DEFINE_STATIC_LOCAL(std::unique_ptr<MainThread>, main_thread, ());
+third_party/blink/renderer/platform/scheduler/common/thread.cc:42:  DEFINE_STATIC_LOCAL(std::unique_ptr<NonMainThread>, compositor_thread, ());
+third_party/blink/renderer/platform/wtf/hash_table.h:131:template <typename Allocator, bool isGCType = Allocator::kIsGarbageCollected>
+third_party/blink/renderer/core/editing/ime/input_method_controller.cc:280:  DEFINE_STATIC_LOCAL(const AtomicString, characters, ("characters"));
+third_party/blink/renderer/core/editing/ime/input_method_controller.cc:281:  DEFINE_STATIC_LOCAL(const AtomicString, words, ("words"));
+third_party/blink/renderer/core/editing/ime/input_method_controller.cc:282:  DEFINE_STATIC_LOCAL(const AtomicString, sentences, ("sentences"));
+third_party/blink/renderer/platform/wtf/key_value_pair.h:92:template <typename T, bool NeedsStackCheck = IsTraceable<T>::value>
+third_party/blink/renderer/core/page/chrome_client_impl.cc:196:static bool g_can_browser_handle_focus = false;
+third_party/blink/renderer/platform/scheduler/common/process_state.cc:15:base::LazyInstance<ProcessState>::Leaky g_process_state =
+third_party/blink/renderer/platform/fonts/font_description.cc:76:bool FontDescription::use_subpixel_text_positioning_ = false;
+third_party/blink/renderer/platform/fonts/font_description.cc:136:bool FontDescription::operator==(const FontDescription& other) const {
+third_party/blink/renderer/platform/fonts/font_fallback_iterator.cc:286:bool FontFallbackIterator::operator==(const FontFallbackIterator& other) const {
+third_party/blink/renderer/core/html/html_capability_element_base.cc:96:const base::TimeDelta kDefaultDisableTimeout = base::Milliseconds(500);
+third_party/blink/renderer/platform/fonts/font_cache.cc:90:float FontCache::device_scale_factor_ = 1.0;
+third_party/blink/renderer/platform/fonts/font_cache.cc:94:bool FontCache::antialiased_text_enabled_ = false;
+third_party/blink/renderer/platform/fonts/font_cache.cc:95:bool FontCache::lcd_text_enabled_ = false;
+third_party/blink/renderer/platform/fonts/font_cache.cc:99:WebFontPrewarmer* FontCache::prewarmer_ = nullptr;
+third_party/blink/renderer/platform/fonts/font_cache.cc:111:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, prewarmed_families, ());
+third_party/blink/renderer/platform/fonts/font_cache.cc:348:  static bool initialized = false;
+third_party/blink/renderer/platform/fonts/win/dwrite_font_format_support.cc:71:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/scheduler/common/process_time_override_coordinator.cc:31:  static base::NoDestructor<ProcessTimeOverrideCoordinator> s_instance;
+third_party/blink/renderer/platform/audio/iir_filter.h:20:  const static size_t kMaxOrder = 19;
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:73:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:100:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const TextEncoding, global_ascii_encoding,
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:106:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const TextEncoding, global_latin1_encoding,
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:112:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:118:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:124:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const TextEncoding, global_utf8_encoding,
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:131:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/wtf/text/text_encoding.cc:137:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const TextEncoding, global_unknown_encoding,
+third_party/blink/renderer/core/editing/text_offset_mapping.cc:482:bool TextOffsetMapping::InlineContents::operator==(
+third_party/blink/renderer/platform/media/player_id_generator.cc:13:std::atomic<int> next_player_id = 0;
+third_party/blink/renderer/platform/wtf/text/wtf_string.h:731:WTF_EXPORT extern const String& g_empty_string;
+third_party/blink/renderer/platform/wtf/text/wtf_string.h:732:WTF_EXPORT extern const String& g_empty_string16_bit;
+third_party/blink/renderer/platform/wtf/text/wtf_string.h:733:WTF_EXPORT extern const String& g_xmlns_with_colon;
+third_party/blink/renderer/core/editing/visible_selection.h:42:const TextAffinity kSelDefaultAffinity = TextAffinity::kDownstream;
+third_party/blink/renderer/core/workers/worker_thread.cc:88:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/core/workers/worker_thread.cc:393:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<WorkerThread*>, threads, ());
+third_party/blink/renderer/core/workers/worker_thread.cc:398:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<WorkerThread*>, threads, ());
+third_party/blink/renderer/platform/scheduler/common/features.cc:18:bool g_intensive_wake_up_throttling_policy_override_cached_ = false;
+third_party/blink/renderer/platform/scheduler/common/features.cc:23:  static PolicyOverride policy = PolicyOverride::kNoOverride;
+third_party/blink/renderer/core/page/focus_controller.cc:1085:  DEFINE_STATIC_LOCAL(String, kCaptcha, ("captcha"));
+third_party/blink/renderer/platform/webrtc/webrtc_logging.cc:20:WebRtcLogMessageDelegate* g_webrtc_logging_delegate = nullptr;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:56:  static bool signal_handler_installed_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:57:  static struct sigaction old_signal_handler_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:59:  static std::atomic<bool> thread_exists_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:60:  static std::atomic<int> throttling_rate_percent_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:68:bool ThreadCPUThrottler::ThrottlingThread::signal_handler_installed_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:69:struct sigaction ThreadCPUThrottler::ThrottlingThread::old_signal_handler_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:71:std::atomic<int> ThreadCPUThrottler::ThrottlingThread::throttling_rate_percent_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:72:std::atomic<bool> ThreadCPUThrottler::ThrottlingThread::thread_exists_;
+third_party/blink/renderer/platform/scheduler/common/thread_cpu_throttler.cc:132:  static base::TimeTicks lastResumeTime;
+third_party/blink/renderer/platform/audio/hrtf_elevation.cc:120:  DEFINE_THREAD_SAFE_STATIC_LOCAL(AudioBusMap, audio_bus_map, ());
+third_party/blink/renderer/platform/audio/hrtf_elevation.cc:121:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:150:  static Jis0208EncodeIndex* array;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:152:  static std::once_flag flag;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:196:  static Jis0208EncodeIndex* table;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:198:  static std::once_flag once;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:212:  static Jis0212EncodeIndex* array;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:214:  static std::once_flag flag;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:260:  static EucKrEncodeIndex* array;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:262:  static std::once_flag flag;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:307:  static EucKrEncodeIndex* table;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:309:  static std::once_flag once;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:324:  static Gb18030EncodeTable* array;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:326:  static std::once_flag flag;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:386:  static Gb18030EncodeIndex* table;
+third_party/blink/renderer/platform/wtf/text/encoding_tables.cc:388:  static std::once_flag once;
+third_party/blink/renderer/core/page/page_animator.cc:89:    static TimeClamper time_clamper;
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:343:  static LockCheckMemoizationScope* memoizer_;
+third_party/blink/renderer/platform/webrtc/webrtc_video_frame_adapter.cc:355:bool WebRtcVideoFrameAdapter::ScaledBufferSize::operator==(
+third_party/blink/renderer/core/html/forms/date_time_edit_element.cc:444:  DEFINE_STATIC_LOCAL(AtomicString, text_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_edit_element.cc:728:  DEFINE_STATIC_LOCAL(AtomicString, fields_wrapper_pseudo_id,
+third_party/blink/renderer/platform/wtf/wtf.cc:48:bool g_initialized = false;
+third_party/blink/renderer/platform/wtf/wtf.cc:56:base::PlatformThreadId g_main_thread_identifier;
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:51:  DEFINE_STATIC_LOCAL(AtomicString, ampm_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:90:  DEFINE_STATIC_LOCAL(AtomicString, day_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:138:  DEFINE_STATIC_LOCAL(AtomicString, hour_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:418:  DEFINE_STATIC_LOCAL(AtomicString, millisecond_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:463:  DEFINE_STATIC_LOCAL(AtomicString, minute_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:506:  DEFINE_STATIC_LOCAL(AtomicString, month_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:550:  DEFINE_STATIC_LOCAL(AtomicString, second_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:595:  DEFINE_STATIC_LOCAL(AtomicString, month_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:641:  DEFINE_STATIC_LOCAL(AtomicString, week_pseudo_id,
+third_party/blink/renderer/core/html/forms/date_time_field_elements.cc:690:  DEFINE_STATIC_LOCAL(AtomicString, year_pseudo_id,
+third_party/blink/renderer/core/editing/commands/replace_selection_command.cc:136:  DEFINE_STATIC_LOCAL(String, interchange_newline_class_string,
+third_party/blink/renderer/core/editing/commands/replace_selection_command.cc:918:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/forms/form_controller.h:72:inline FormControlState& FormControlState::operator=(
+third_party/blink/renderer/platform/wtf/threading.cc:39:ThreadSpecific<Threading>* Threading::static_data_;
+third_party/blink/renderer/core/workers/worklet_thread_holder.h:56:    DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, holder_lock, ());
+third_party/blink/renderer/core/workers/worklet_thread_holder.h:92:  static WorkletThreadHolder<DerivedWorkletThread>* thread_holder_instance_;
+third_party/blink/renderer/core/html/forms/html_output_element.cc:54:  DEFINE_STATIC_LOCAL(const AtomicString, output, ("output"));
+third_party/blink/renderer/platform/audio/pffft/fft_frame_pffft.cc:61:  static bool first_call = true;
+third_party/blink/renderer/platform/audio/pffft/fft_frame_pffft.cc:68:  DEFINE_THREAD_SAFE_STATIC_LOCAL(FFTHashMap, fft_setups, ());
+third_party/blink/renderer/platform/audio/pffft/fft_frame_pffft.cc:71:    DEFINE_STATIC_LOCAL(base::Lock, setup_lock, ());
+third_party/blink/renderer/platform/audio/pffft/fft_frame_pffft.cc:112:    DEFINE_STATIC_LOCAL(base::Lock, setup_lock, ());
+third_party/blink/renderer/platform/image-encoders/image_encoder_utils.cc:12:const ImageEncodingMimeType ImageEncoderUtils::kDefaultEncodingMimeType =
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:34:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:39:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<v8::Isolate*>, isolates, ());
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:45:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<v8::Isolate*>, foregrounded_isolates,
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:52:  DEFINE_THREAD_SAFE_STATIC_LOCAL(v8::Isolate::Priority,
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:59:  DEFINE_THREAD_SAFE_STATIC_LOCAL(bool, battery_saver_mode_enabled, ());
+third_party/blink/renderer/core/workers/worker_backing_thread.cc:64:  DEFINE_THREAD_SAFE_STATIC_LOCAL(bool, memory_saver_mode_enabled, ());
+third_party/blink/renderer/platform/theme/web_theme_engine_helper.cc:36:  DEFINE_STATIC_LOCAL(std::unique_ptr<WebThemeEngine>, theme_engine,
+third_party/blink/renderer/platform/theme/web_theme_engine_helper.cc:57:    DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/theme/web_theme_engine_helper.cc:67:  DEFINE_STATIC_LOCAL(WebThemeEngine::ScrollbarStyle, style,
+third_party/blink/renderer/platform/transforms/transform_operations.cc:93:bool TransformOperations::operator==(const TransformOperations& o) const {
+third_party/blink/renderer/core/lcp_critical_path_predictor/element_locator.cc:99:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<const StringImpl*>, set, ());
+third_party/blink/renderer/core/lcp_critical_path_predictor/element_locator.cc:110:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<const StringImpl*>, set, ());
+third_party/blink/renderer/core/lcp_critical_path_predictor/element_locator.cc:118:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<const StringImpl*>, set, ());
+third_party/blink/renderer/core/layout/layout_theme.cc:170:    DEFINE_STATIC_REF(LayoutTheme, layout_theme_mobile,
+third_party/blink/renderer/core/layout/layout_theme.cc:177:Color LayoutTheme::active_selection_background_color_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:179:Color LayoutTheme::active_selection_foreground_color_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:181:Color LayoutTheme::inactive_selection_background_color_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:183:Color LayoutTheme::inactive_selection_foreground_color_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:185:Color LayoutTheme::active_list_box_selection_background_color_dark_mode_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:187:Color LayoutTheme::active_list_box_selection_foreground_color_dark_mode_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:189:Color LayoutTheme::inactive_list_box_selection_background_color_dark_mode_ =
+third_party/blink/renderer/core/layout/layout_theme.cc:191:Color LayoutTheme::inactive_list_box_selection_foreground_color_dark_mode_ =
+third_party/blink/renderer/core/fullscreen/fullscreen.cc:416:  static bool running_request_fullscreen_;
+third_party/blink/renderer/core/fullscreen/fullscreen.cc:419:bool RequestFullscreenScope::running_request_fullscreen_ = false;
+third_party/blink/renderer/core/fullscreen/scoped_allow_fullscreen.h:28:  static std::optional<Reason> reason_;
+third_party/blink/renderer/core/scheduler/scripted_idle_task_controller.cc:73:  static std::optional<size_t> crash_key_value;
+third_party/blink/renderer/core/fullscreen/scoped_allow_fullscreen.cc:11:std::optional<ScopedAllowFullscreen::Reason> ScopedAllowFullscreen::reason_;
+third_party/blink/renderer/core/editing/commands/smart_replace_cf.cc:37:  static CFMutableCharacterSetRef pre_smart_set = nullptr;
+third_party/blink/renderer/core/editing/commands/smart_replace_cf.cc:38:  static CFMutableCharacterSetRef post_smart_set = nullptr;
+third_party/blink/renderer/core/html/forms/date_input_type.cc:60:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/wtf/decimal.cc:254:bool Decimal::EncodedData::operator==(const EncodedData& another) const {
+third_party/blink/renderer/platform/wtf/decimal.cc:478:bool Decimal::operator==(const Decimal& rhs) const {
+third_party/blink/renderer/platform/wtf/stack_util.cc:204:uintptr_t g_main_thread_stack_start = 0;
+third_party/blink/renderer/platform/wtf/stack_util.cc:205:uintptr_t g_main_thread_underestimated_stack_size = 0;
+third_party/blink/renderer/core/editing/commands/selection_for_undo_step.cc:30:SelectionForUndoStep& SelectionForUndoStep::operator=(
+third_party/blink/renderer/core/editing/commands/selection_for_undo_step.cc:33:bool SelectionForUndoStep::operator==(const SelectionForUndoStep& other) const {
+third_party/blink/renderer/core/html/forms/html_field_set_element.cc:219:  DEFINE_STATIC_LOCAL(const AtomicString, fieldset, ("fieldset"));
+third_party/blink/renderer/platform/mediastream/media_stream_component_impl.cc:44:static int g_unique_media_stream_component_id = 0;
+third_party/blink/renderer/core/css/counter_style.cc:753:bool CounterStyle::operator==(const CounterStyle& other) const {
+third_party/blink/renderer/platform/audio/hrtf_database_loader.cc:45:  DEFINE_STATIC_LOCAL(LoaderMap*, map, (new LoaderMap));
+third_party/blink/renderer/platform/peerconnection/rtc_video_decoder_adapter.h:97:  static std::atomic<int> g_num_decoders_;
+third_party/blink/renderer/platform/wtf/vector.h:2915:template <typename Range, typename Proj = std::identity>
+third_party/blink/renderer/platform/wtf/vector.cc:19:  static std::atomic<bool> has_dumped{false};
+third_party/blink/renderer/platform/scheduler/public/feature_and_js_location_blocking_bfcache.cc:41:bool FeatureAndJSLocationBlockingBFCache::operator==(
+third_party/blink/renderer/core/html/forms/time_input_type.cc:73:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/intersection_observer/intersection_geometry.cc:259:bool IntersectionGeometry::RootGeometry::operator==(
+third_party/blink/renderer/core/html/forms/step_range.cc:70:  DEFINE_STATIC_LOCAL(const Decimal, two_power_of_float_mantissa_bits,
+third_party/blink/renderer/core/html/forms/step_range.cc:79:  DEFINE_STATIC_LOCAL(const Decimal, ten_power_of21,
+third_party/blink/renderer/core/html/forms/step_range.cc:164:  DEFINE_STATIC_LOCAL(const Decimal, two_power_of_double_mantissa_bits,
+third_party/blink/renderer/core/css/ua_counter_style_map.cc:473:  DEFINE_STATIC_LOCAL(RuleMap, ua_rules, (CollectUACounterStyleRules()));
+third_party/blink/renderer/core/editing/commands/undo_step.cc:23:uint64_t g_current_sequence_number = 0;
+third_party/blink/renderer/platform/mediastream/media_stream_descriptor.cc:47:static int g_unique_media_stream_descriptor_id = 0;
+third_party/blink/renderer/core/intersection_observer/intersection_observer.cc:226:static bool throttle_delay_enabled = true;
+third_party/blink/renderer/platform/wtf/hash_table.cc:31:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/platform/wtf/hash_table.cc:36:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashTableStats, stats, ());
+third_party/blink/renderer/core/html/forms/date_time_local_input_type.cc:73:  DEFINE_STATIC_LOCAL(const StepRange::StepDescription, step_description,
+third_party/blink/renderer/platform/mojo/browser_interface_broker_proxy_impl.cc:90:  DEFINE_THREAD_SAFE_STATIC_LOCAL(EmptyBrowserInterfaceBrokerProxy,
+third_party/blink/renderer/core/fragment_directive/text_fragment_selector.cc:48:  DEFINE_STATIC_LOCAL(const TextFragmentSelector, kInvalidSelector, (kInvalid));
+third_party/blink/renderer/core/fragment_directive/text_fragment_selector_generator.cc:124:std::optional<int> g_exactTextMaxCharsOverride;
+third_party/blink/renderer/platform/wtf/allocator/partitions.cc:55:const char* const Partitions::kAllocatedObjectPoolName =
+third_party/blink/renderer/platform/wtf/allocator/partitions.cc:65:bool Partitions::initialized_ = false;
+third_party/blink/renderer/platform/wtf/allocator/partitions.cc:69:partition_alloc::PartitionRoot* Partitions::fast_malloc_root_ = nullptr;
+third_party/blink/renderer/platform/wtf/allocator/partitions.cc:70:partition_alloc::PartitionRoot* Partitions::array_buffer_root_ = nullptr;
+third_party/blink/renderer/platform/wtf/allocator/partitions.cc:71:partition_alloc::PartitionRoot* Partitions::buffer_root_ = nullptr;
+third_party/blink/renderer/core/editing/commands/editing_commands_utilities.cc:651:  DEFINE_STATIC_LOCAL(String, non_breaking_space_string,
+third_party/blink/renderer/core/layout/layout_theme_linux.cc:18:  DEFINE_STATIC_REF(LayoutTheme, layout_theme, (LayoutThemeLinux::Create()));
+third_party/blink/renderer/platform/wtf/allocator/partitions.h:117:  static bool initialized_;
+third_party/blink/renderer/platform/wtf/allocator/partitions.h:119:  static partition_alloc::PartitionRoot* fast_malloc_root_;
+third_party/blink/renderer/platform/wtf/allocator/partitions.h:120:  static partition_alloc::PartitionRoot* array_buffer_root_;
+third_party/blink/renderer/platform/wtf/allocator/partitions.h:121:  static partition_alloc::PartitionRoot* buffer_root_;
+third_party/blink/renderer/core/html/forms/html_button_element.cc:89:      DEFINE_STATIC_LOCAL(const AtomicString, button, (keywords::kButton));
+third_party/blink/renderer/core/html/forms/html_button_element.cc:93:      DEFINE_STATIC_LOCAL(const AtomicString, submit, (keywords::kSubmit));
+third_party/blink/renderer/core/html/forms/html_button_element.cc:97:      DEFINE_STATIC_LOCAL(const AtomicString, reset, (keywords::kReset));
+third_party/blink/renderer/core/context_features/context_feature_settings.h:97:  static DECLARE_PROTECTED_DATA base::ProtectedMemory<bool> mojo_js_allowed_;
+third_party/blink/renderer/core/layout/line_clamp_data.cc:46:CORE_EXPORT LineClampData& LineClampData::operator=(const LineClampData& o) {
+third_party/blink/renderer/core/messaging/blink_transferable_message.cc:125:BlinkTransferableMessage& BlinkTransferableMessage::operator=(
+third_party/blink/renderer/platform/heap/thread_state_storage.h:84:  static ThreadStateStorage main_thread_state_storage_;
+third_party/blink/renderer/core/messaging/blink_cloneable_message.cc:13:BlinkCloneableMessage& BlinkCloneableMessage::operator=(
+third_party/blink/renderer/core/editing/commands/format_block_command.cc:178:  DEFINE_STATIC_LOCAL(HashSet<QualifiedName>, block_tags,
+third_party/blink/renderer/core/html/forms/select_mutation_observer.cc:365:  DEFINE_STATIC_LOCAL(HashSet<QualifiedName>, phrasing_content_names,
+third_party/blink/renderer/platform/peerconnection/rtc_video_decoder_adapter.cc:65:std::optional<base::TimeDelta> g_init_timeout_for_testing;
+third_party/blink/renderer/core/editing/commands/insert_paragraph_separator_command.cc:60:  DEFINE_STATIC_LOCAL(HashSet<QualifiedName>, phrasing_content_names,
+third_party/blink/renderer/platform/text/platform_locale.cc:46:Locale* g_default_locale;
+third_party/blink/renderer/platform/network/http_parsers.cc:445:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/forms/month_input_type.cc:85:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/scheduler/worker/compositor_thread_scheduler_impl.cc:22:scheduler::CompositorThreadSchedulerImpl* g_compositor_thread_scheduler =
+third_party/blink/renderer/core/html/forms/date_time_fields_state.cc:33:const unsigned DateTimeFieldsState::kEmptyValue = static_cast<unsigned>(-1);
+third_party/blink/renderer/platform/peerconnection/webrtc_encoding_info_handler.cc:26:  DEFINE_THREAD_SAFE_STATIC_LOCAL(WebrtcEncodingInfoHandler, instance, ());
+third_party/blink/renderer/core/html/forms/text_control_element.cc:730:  DEFINE_STATIC_LOCAL(const AtomicString, forward, ("forward"));
+third_party/blink/renderer/core/html/forms/text_control_element.cc:731:  DEFINE_STATIC_LOCAL(const AtomicString, backward, ("backward"));
+third_party/blink/renderer/core/html/forms/week_input_type.cc:56:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/editing/commands/smart_replace_icu.cc:55:  static USet* pre_smart_set = nullptr;
+third_party/blink/renderer/core/editing/commands/smart_replace_icu.cc:56:  static USet* post_smart_set = nullptr;
+third_party/blink/renderer/core/trustedtypes/trusted_type_policy_factory.cc:112:  DEFINE_STATIC_LOCAL(AttributeTypeVector, attribute_table_,
+third_party/blink/renderer/core/trustedtypes/trusted_type_policy_factory.cc:157:  DEFINE_STATIC_LOCAL(AttributeTypeVector, property_table_,
+third_party/blink/renderer/core/html/forms/number_input_type.cc:181:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/css/css_property_value.cc:59:bool CSSPropertyValue::operator==(const CSSPropertyValue& other) const {
+third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc:58:  DEFINE_STATIC_LOCAL(mojo::Remote<mojom::blink::Hyphenation>, service,
+third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc:204:  static LocaleFallback locale_fallback_data[] = {
+third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc:269:  DEFINE_STATIC_LOCAL(LocaleMap, locale_fallback, (CreateLocaleFallbackMap()));
+third_party/blink/renderer/core/html/forms/form_controller.cc:315:    DEFINE_STATIC_LOCAL(const AtomicString, form_key_for_no_owner,
+third_party/blink/renderer/core/html/forms/form_controller.cc:376:  DEFINE_STATIC_LOCAL(String, signature,
+third_party/blink/renderer/platform/animation/timing_function.cc:85:  DEFINE_STATIC_REF(
+third_party/blink/renderer/platform/animation/timing_function.cc:88:  DEFINE_STATIC_REF(
+third_party/blink/renderer/platform/animation/timing_function.cc:91:  DEFINE_STATIC_REF(
+third_party/blink/renderer/platform/animation/timing_function.cc:94:  DEFINE_STATIC_REF(
+third_party/blink/renderer/platform/network/mime/mime_type_registry.cc:72:  DEFINE_STATIC_LOCAL(MimeRegistryPtrHolder, registry_holder, ());
+third_party/blink/renderer/core/editing/commands/remove_format_command.cc:46:  DEFINE_STATIC_LOCAL(HashSet<QualifiedName>, elements,
+third_party/blink/renderer/platform/heap/thread_state_storage.cc:17:ThreadStateStorage ThreadStateStorage::main_thread_state_storage_;
+third_party/blink/renderer/platform/animation/timing_function.h:78:    DEFINE_STATIC_REF(LinearTimingFunction, linear,
+third_party/blink/renderer/platform/animation/timing_function.h:201:    DEFINE_STATIC_REF(StepsTimingFunction, start,
+third_party/blink/renderer/platform/animation/timing_function.h:203:    DEFINE_STATIC_REF(StepsTimingFunction, end, Create(1, StepPosition::END));
+third_party/blink/renderer/core/layout/grid/grid_line_resolver.cc:407:bool GridLineResolver::operator==(const GridLineResolver& other) const {
+third_party/blink/renderer/core/layout/grid/grid_line_resolver.cc:653:  DEFINE_STATIC_LOCAL(const NamedGridLinesMap, empty, ());
+third_party/blink/renderer/core/html/forms/chooser_only_temporal_input_type_view.cc:98:  DEFINE_STATIC_LOCAL(AtomicString, value_container_pseudo,
+third_party/blink/renderer/core/html/forms/html_text_area_element.cc:92:bool g_is_default_font_prewarmed = false;
+third_party/blink/renderer/core/html/forms/html_text_area_element.cc:178:  DEFINE_STATIC_LOCAL(const AtomicString, textarea, ("textarea"));
+third_party/blink/renderer/platform/text/character_property_data_generator.cc:66:  static std::vector<uint8_t> icu_data;
+third_party/blink/renderer/core/paint/highlight_overlay.cc:130:bool HighlightLayer::operator==(const HighlightLayer& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:161:bool HighlightRange::operator==(const HighlightRange& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:221:bool HighlightEdge::operator==(const HighlightEdge& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:245:bool HighlightDecoration::operator==(const HighlightDecoration& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:260:bool HighlightBackground::operator==(const HighlightBackground& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:275:bool HighlightTextShadow::operator==(const HighlightTextShadow& other) const {
+third_party/blink/renderer/core/paint/highlight_overlay.cc:350:bool HighlightPart::operator==(const HighlightPart& other) const {
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:134:  DEFINE_STATIC_LOCAL(const std::string, amp_reference, ("&amp;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:135:  DEFINE_STATIC_LOCAL(const std::string, lt_reference, ("&lt;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:136:  DEFINE_STATIC_LOCAL(const std::string, gt_reference, ("&gt;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:137:  DEFINE_STATIC_LOCAL(const std::string, quot_reference, ("&quot;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:138:  DEFINE_STATIC_LOCAL(const std::string, nbsp_reference, ("&nbsp;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:139:  DEFINE_STATIC_LOCAL(const std::string, tab_reference, ("&#9;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:140:  DEFINE_STATIC_LOCAL(const std::string, line_feed_reference, ("&#10;"));
+third_party/blink/renderer/core/editing/serializers/markup_formatter.cc:141:  DEFINE_STATIC_LOCAL(const std::string, carriage_return_reference, ("&#13;"));
+third_party/blink/renderer/core/layout/grid/grid_track_collection.cc:484:bool GridLayoutTrackCollection::operator==(
+third_party/blink/renderer/core/events/current_input_event.cc:9:const WebInputEvent* CurrentInputEvent::current_input_event_ = nullptr;
+third_party/blink/renderer/core/layout/layout_image_resource.cc:176:    DEFINE_STATIC_REF(
+third_party/blink/renderer/core/layout/layout_image_resource.cc:182:  DEFINE_STATIC_REF(Image, broken_image_lo_res,
+third_party/blink/renderer/core/paint/theme_painter_default.cc:854:  DEFINE_STATIC_REF(Image, cancel_image,
+third_party/blink/renderer/core/paint/theme_painter_default.cc:856:  DEFINE_STATIC_REF(Image, cancel_pressed_image,
+third_party/blink/renderer/core/paint/theme_painter_default.cc:858:  DEFINE_STATIC_REF(Image, cancel_image_dark_mode,
+third_party/blink/renderer/core/paint/theme_painter_default.cc:860:  DEFINE_STATIC_REF(
+third_party/blink/renderer/core/paint/theme_painter_default.cc:863:  DEFINE_STATIC_REF(
+third_party/blink/renderer/core/paint/theme_painter_default.cc:866:  DEFINE_STATIC_REF(
+third_party/blink/renderer/core/editing/serializers/styled_markup_accumulator.cc:268:  DEFINE_STATIC_LOCAL(const String, interchange_newline_string,
+third_party/blink/renderer/core/html/forms/html_select_element.cc:114:  DEFINE_STATIC_LOCAL(const AtomicString, select_multiple, ("select-multiple"));
+third_party/blink/renderer/core/html/forms/html_select_element.cc:115:  DEFINE_STATIC_LOCAL(const AtomicString, select_one, ("select-one"));
+third_party/blink/renderer/platform/bindings/frozen_array_base.cc:37:const WrapperTypeInfo& FrozenArrayBase::wrapper_type_info_ =
+third_party/blink/renderer/core/css/element_rule_collector.cc:386:  DEFINE_STATIC_LOCAL(SelectorStatisticsRuleMap, rule_map, {});
+third_party/blink/renderer/platform/peerconnection/webrtc_decoding_info_handler.cc:25:  DEFINE_THREAD_SAFE_STATIC_LOCAL(WebrtcDecodingInfoHandler, instance, ());
+third_party/blink/renderer/core/html/forms/multiple_fields_temporal_input_type_view.cc:551:  DEFINE_STATIC_LOCAL(AtomicString, datetimeformat_attr, ("datetimeformat"));
+third_party/blink/renderer/platform/text/layout_locale.cc:43:  DEFINE_THREAD_SAFE_STATIC_LOCAL(IgnoringCaseHashSet, tags,
+third_party/blink/renderer/platform/text/layout_locale.cc:68:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<PerThreadData>, data, ());
+third_party/blink/renderer/core/layout/forms/layout_text_control.cc:156:  static HashSet<AtomicString>* font_families_with_invalid_char_width_map =
+third_party/blink/renderer/platform/network/network_state_notifier.cc:75:  DEFINE_THREAD_SAFE_STATIC_LOCAL(NetworkStateNotifier, network_state_notifier,
+third_party/blink/renderer/platform/text/date_components.cc:48:const int DateComponents::kMinimumWeekNumber = 1;
+third_party/blink/renderer/platform/text/date_components.cc:51:const int DateComponents::kMaximumWeekNumber = 53;
+third_party/blink/renderer/platform/bindings/runtime_call_stats.cc:29:RuntimeCallStats* g_runtime_call_stats_for_testing = nullptr;
+third_party/blink/renderer/platform/bindings/runtime_call_stats.cc:143:  DEFINE_STATIC_LOCAL(RuntimeCallStats, s_rcs_for_testing,
+third_party/blink/renderer/platform/text/text_break_iterator_internal_icu.cc:34:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const std::string, locale,
+third_party/blink/renderer/core/editing/iterators/text_iterator_behavior.cc:149:bool TextIteratorBehavior::operator==(const TextIteratorBehavior& other) const {
+third_party/blink/renderer/platform/text/character.cc:74:  DEFINE_THREAD_SAFE_STATIC_LOCAL(base::Lock, lock, ());
+third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.cc:9:unsigned PrePaintDisableSideEffectsScope::count_ = 0;
+third_party/blink/renderer/platform/bindings/exception_state.h:160:  static CreateDOMExceptionFunction s_create_dom_exception_func_;
+third_party/blink/renderer/core/html/forms/html_form_control_element.cc:249:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, values,
+third_party/blink/renderer/core/events/event_util.cc:19:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/bindings/script_state.h:266:  static CreateCallback s_create_callback_;
+third_party/blink/renderer/core/events/ui_event_with_key_state.cc:73:bool UIEventWithKeyState::new_tab_modifier_set_from_isolated_world_ = false;
+third_party/blink/renderer/core/layout/layout_theme_fuchsia.cc:23:  DEFINE_STATIC_REF(LayoutTheme, layout_theme, (LayoutThemeFuchsia::Create()));
+third_party/blink/renderer/core/events/ui_event_with_key_state.h:92:  static bool new_tab_modifier_set_from_isolated_world_;
+third_party/blink/renderer/core/events/pointer_event_factory.cc:231:const PointerId PointerEventFactory::kReservedNonPointerId = -1;
+third_party/blink/renderer/core/events/pointer_event_factory.cc:232:const PointerId PointerEventFactory::kInvalidId = 0;
+third_party/blink/renderer/core/events/pointer_event_factory.cc:235:const PointerId PointerEventFactory::kMouseId = 1;
+third_party/blink/renderer/core/html/forms/html_input_element.cc:116:static bool is_default_font_prewarmed_ = false;
+third_party/blink/renderer/core/html/forms/html_input_element.cc:133:  DEFINE_STATIC_LOCAL(const AtomicString, kEmailVerificationToken,
+third_party/blink/renderer/core/layout/layout_theme.h:198:  static Color active_selection_background_color_;
+third_party/blink/renderer/core/layout/layout_theme.h:199:  static Color active_selection_foreground_color_;
+third_party/blink/renderer/core/layout/layout_theme.h:200:  static Color inactive_selection_background_color_;
+third_party/blink/renderer/core/layout/layout_theme.h:201:  static Color inactive_selection_foreground_color_;
+third_party/blink/renderer/core/layout/layout_theme.h:202:  static Color active_list_box_selection_background_color_dark_mode_;
+third_party/blink/renderer/core/layout/layout_theme.h:203:  static Color active_list_box_selection_foreground_color_dark_mode_;
+third_party/blink/renderer/core/layout/layout_theme.h:204:  static Color inactive_list_box_selection_background_color_dark_mode_;
+third_party/blink/renderer/core/layout/layout_theme.h:205:  static Color inactive_list_box_selection_foreground_color_dark_mode_;
+third_party/blink/renderer/core/html/forms/range_input_type.cc:151:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/forms/html_form_control_element_with_state.cc:50:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/paint/box_fragment_painter.cc:538:    DEFINE_STATIC_LOCAL(SkPath, ad_label_path, ());
+third_party/blink/renderer/core/html/forms/email_input_type.cc:146:  DEFINE_STATIC_LOCAL(const String, valid_characters, (kLocalPartCharacters));
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:119:  static unsigned g_main_thread_counter_;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:123:  static unsigned g_blink_lifecycle_counter_;
+third_party/blink/renderer/platform/text/character_break_iterator.cc:43:    DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Pool>, pool, ());
+third_party/blink/renderer/core/layout/table/table_borders.cc:316:bool TableBorders::operator==(const TableBorders& other) const {
+third_party/blink/renderer/core/layout/table/table_layout_algorithm_types.cc:415:bool TableGroupedChildrenIterator::operator==(
+third_party/blink/renderer/core/css/selector_query.cc:59:  DEFINE_STATIC_LOCAL(SelectorQuery::QueryStats, stats, ());
+third_party/blink/renderer/platform/peerconnection/h265_parameter_sets_tracker.cc:32:H265ParameterSetsTracker::PpsData& H265ParameterSetsTracker::PpsData::operator=(
+third_party/blink/renderer/platform/peerconnection/h265_parameter_sets_tracker.cc:38:H265ParameterSetsTracker::SpsData& H265ParameterSetsTracker::SpsData::operator=(
+third_party/blink/renderer/platform/peerconnection/h265_parameter_sets_tracker.cc:44:H265ParameterSetsTracker::VpsData& H265ParameterSetsTracker::VpsData::operator=(
+third_party/blink/renderer/core/css/css_property_name.cc:25:bool CSSPropertyName::operator==(const CSSPropertyName& other) const {
+third_party/blink/renderer/platform/scheduler/main_thread/web_scoped_virtual_time_pauser.cc:42:WebScopedVirtualTimePauser& WebScopedVirtualTimePauser::operator=(
+third_party/blink/renderer/platform/text/character_emoji.cc:302:  DEFINE_THREAD_SAFE_STATIC_LOCAL(icu::UnicodeSet, emojiTextSet, ());
+third_party/blink/renderer/platform/text/character_emoji.cc:308:  DEFINE_THREAD_SAFE_STATIC_LOCAL(icu::UnicodeSet, emojiEmojiSet, ());
+third_party/blink/renderer/platform/text/character_emoji.cc:314:  DEFINE_THREAD_SAFE_STATIC_LOCAL(icu::UnicodeSet, emojieModifierBaseSet, ());
+third_party/blink/renderer/platform/bindings/origin_trial_features.cc:13:InstallPropertiesPerFeatureFuncType g_install_properties_per_feature_func;
+third_party/blink/renderer/platform/geometry/calculation_value.cc:55:bool CalculationValue::operator==(const CalculationValue& other) const {
+third_party/blink/renderer/platform/bindings/binding_security_for_platform.h:37:  static ShouldAllowAccessToV8ContextFunction should_allow_access_to_v8context_;
+third_party/blink/renderer/core/css/properties/longhands/variable.h:28:    DEFINE_STATIC_LOCAL(const AtomicString, name, ("variable"));
+third_party/blink/renderer/core/clipboard/dragged_isolated_file_system.h:30:  static FileSystemIdPreparationCallback prepare_callback_;
+third_party/blink/renderer/core/html/html_iframe_element.cc:136:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/css/css_paint_image_generator.cc:11:CSSPaintImageGenerator::CSSPaintImageGeneratorCreateFunction g_create_function =
+third_party/blink/renderer/core/clipboard/data_transfer_item.cc:48:  DEFINE_STATIC_LOCAL(const String, kind_string, ("string"));
+third_party/blink/renderer/core/clipboard/data_transfer_item.cc:49:  DEFINE_STATIC_LOCAL(const String, kind_file, ("file"));
+third_party/blink/renderer/platform/text/text_break_iterator_icu.cc:50:    static ThreadSpecific<LineBreakIteratorPool>* pool =
+third_party/blink/renderer/platform/text/text_break_iterator_icu.cc:702:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<WordBreakIteratorPool>, pool,
+third_party/blink/renderer/platform/text/text_break_iterator_icu.cc:712:    DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<WordBreakIteratorPool>, pool,
+third_party/blink/renderer/platform/text/text_break_iterator_icu.cc:823:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_progress_element.cc:36:const double HTMLProgressElement::kIndeterminatePosition = -1;
+third_party/blink/renderer/core/html/html_progress_element.cc:37:const double HTMLProgressElement::kInvalidPosition = -2;
+third_party/blink/renderer/platform/geometry/path.cc:81:Path& Path::operator=(const SkPath& other) {
+third_party/blink/renderer/platform/geometry/path.cc:86:bool Path::operator==(const Path& other) const {
+third_party/blink/renderer/core/css/css_variable_data.cc:153:bool CSSVariableData::operator==(const CSSVariableData& other) const {
+third_party/blink/renderer/core/editing/finder/async_find_buffer.cc:19:base::TimeDelta g_find_buffer_timeout = kFindBufferTaskTimeout;
+third_party/blink/renderer/platform/bindings/script_state.cc:15:ScriptState::CreateCallback ScriptState::s_create_callback_ = nullptr;
+third_party/blink/renderer/platform/bindings/to_blink_string.cc:355:  DEFINE_STATIC_LOCAL(Vector<AtomicString>, low_numbers, (kLowNumbers + 1));
+third_party/blink/renderer/platform/geometry/length.h:98:PLATFORM_EXPORT extern const Length& g_auto_length;
+third_party/blink/renderer/platform/geometry/length.h:99:PLATFORM_EXPORT extern const Length& g_stretch_length;
+third_party/blink/renderer/platform/geometry/length.h:100:PLATFORM_EXPORT extern const Length& g_fit_content_length;
+third_party/blink/renderer/platform/geometry/length.h:101:PLATFORM_EXPORT extern const Length& g_max_content_length;
+third_party/blink/renderer/platform/geometry/length.h:102:PLATFORM_EXPORT extern const Length& g_min_content_length;
+third_party/blink/renderer/platform/geometry/length.h:103:PLATFORM_EXPORT extern const Length& g_min_intrinsic_length;
+third_party/blink/renderer/core/html/parser/html_document_parser.cc:116:  static bool kEnabled =
+third_party/blink/renderer/core/html/parser/html_document_parser.cc:128:  static bool kEnabled =
+third_party/blink/renderer/core/html/parser/html_document_parser.cc:142:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/text/character_variation_sequences.cc:454:  DEFINE_THREAD_SAFE_STATIC_LOCAL(icu::UnicodeSet,
+third_party/blink/renderer/platform/bindings/observable_array.cc:21:const V8PrivateProperty::SymbolKey kV8ProxyTargetToV8WrapperKey;
+third_party/blink/renderer/platform/bindings/observable_array.cc:75:const WrapperTypeInfo& ObservableArrayExoticObject::wrapper_type_info_ =
+third_party/blink/renderer/core/editing/frame_caret.cc:95:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc:3030:int PaintLayerScrollableArea::FreezeScrollbarsScope::count_ = 0;
+third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc:3051:int PaintLayerScrollableArea::DelayScrollOffsetClampScope::count_ = 0;
+third_party/blink/renderer/platform/bindings/parkable_string_manager.cc:99:const char* ParkableStringManager::kAllocatorDumpName = "parkable_strings";
+third_party/blink/renderer/platform/bindings/parkable_string_manager.cc:100:const base::TimeDelta ParkableStringManager::kFirstParkingDelay;
+third_party/blink/renderer/platform/bindings/parkable_string_manager.cc:105:  DEFINE_STATIC_LOCAL(ParkableStringManagerDumpProvider, instance, ());
+third_party/blink/renderer/platform/bindings/parkable_string_manager.cc:121:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ParkableStringManager, instance, ());
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:68:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<WorldMapWrapper>>,
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:79:unsigned DOMWrapperWorld::number_of_non_main_worlds_in_main_thread_ = 0;
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:195:  DEFINE_STATIC_LOCAL(IsolatedWorldSecurityOriginMap, map, ());
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:236:  DEFINE_STATIC_LOCAL(IsolatedWorldStableIdMap, map, ());
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:256:  DEFINE_STATIC_LOCAL(IsolatedWorldHumanReadableNameMap, map, ());
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.cc:289:      static int next_devtools_isolated_world_id =
+third_party/blink/renderer/platform/language.cc:46:const AtomicString* g_platform_language = nullptr;
+third_party/blink/renderer/platform/language.cc:56:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Vector<AtomicString>>,
+third_party/blink/renderer/platform/language.cc:65:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/bindings/extensions_registry.cc:11:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ExtensionsRegistry, instance, ());
+third_party/blink/renderer/platform/bindings/v8_histogram_accumulator.cc:15:  DEFINE_THREAD_SAFE_STATIC_LOCAL(V8HistogramAccumulator, histogram_accumulator,
+third_party/blink/renderer/platform/instrumentation/instance_counters.cc:40:int InstanceCounters::node_counter_ = 0;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.cc:9:unsigned ScriptForbiddenScope::g_main_thread_counter_ = 0;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.cc:10:unsigned ScriptForbiddenScope::g_blink_lifecycle_counter_ = 0;
+third_party/blink/renderer/platform/bindings/v8_dom_activity_logger.cc:29:  DEFINE_STATIC_LOCAL(DOMActivityLoggerMapForMainWorld, map, ());
+third_party/blink/renderer/platform/bindings/v8_dom_activity_logger.cc:36:  DEFINE_STATIC_LOCAL(DOMActivityLoggerMapForIsolatedWorld, map, ());
+third_party/blink/renderer/core/editing/set_selection_options.cc:12:SetSelectionOptions& SetSelectionOptions::operator=(
+third_party/blink/renderer/platform/instrumentation/instance_counters_memory_dump_provider.cc:15:  DEFINE_STATIC_LOCAL(InstanceCountersMemoryDumpProvider, instance, ());
+third_party/blink/renderer/platform/disk_data_allocator.cc:228:  DEFINE_THREAD_SAFE_STATIC_LOCAL(DiskDataAllocator, instance, ());
+third_party/blink/renderer/platform/instrumentation/instance_counters.h:107:  PLATFORM_EXPORT static int node_counter_;
+third_party/blink/renderer/platform/bindings/exception_messages.cc:319:  DEFINE_STATIC_LOCAL(String, read_only, ("This object is read-only."));
+third_party/blink/renderer/platform/instrumentation/memory_pressure_listener.cc:36:bool MemoryPressureListenerRegistry::is_low_end_device_ = false;
+third_party/blink/renderer/platform/bindings/dom_wrapper_world.h:224:  static unsigned number_of_non_main_worlds_in_main_thread_;
+third_party/blink/renderer/core/layout/layout_theme_mobile.cc:39:Color LayoutThemeMobile::active_selection_background_color_ =
+third_party/blink/renderer/core/layout/layout_theme_mobile.cc:41:Color LayoutThemeMobile::active_selection_foreground_color_ =
+third_party/blink/renderer/core/layout/layout_theme_mobile.cc:43:Color LayoutThemeMobile::inactive_selection_background_color_ =
+third_party/blink/renderer/core/layout/layout_theme_mobile.cc:45:Color LayoutThemeMobile::inactive_selection_foreground_color_ =
+third_party/blink/renderer/platform/instrumentation/resource_coordinator/renderer_resource_coordinator.cc:17:RendererResourceCoordinator* g_renderer_resource_coordinator = nullptr;
+third_party/blink/renderer/platform/instrumentation/resource_coordinator/renderer_resource_coordinator.cc:26:    DEFINE_THREAD_SAFE_STATIC_LOCAL(DummyRendererResourceCoordinator, instance,
+third_party/blink/renderer/core/css/font_face_set.cc:20:const int FontFaceSet::kDefaultFontSize = 10;
+third_party/blink/renderer/core/layout/block_node.cc:1566:static bool g_devtools_layout = false;
+third_party/blink/renderer/platform/instrumentation/histogram.h:88:  DEFINE_STATIC_LOCAL_IMPL(                                              \
+third_party/blink/renderer/platform/instrumentation/histogram.h:97:  DEFINE_STATIC_LOCAL_IMPL(CustomCountHistogram, scoped_us_counter,       \
+third_party/blink/renderer/core/editing/editing_behavior.cc:44:const uint32_t kCtrlKey = WebInputEvent::kControlKey;
+third_party/blink/renderer/core/editing/editing_behavior.cc:45:const uint32_t kAltKey = WebInputEvent::kAltKey;
+third_party/blink/renderer/core/editing/editing_behavior.cc:46:const uint32_t kShiftKey = WebInputEvent::kShiftKey;
+third_party/blink/renderer/core/editing/editing_behavior.cc:47:const uint32_t kMetaKey = WebInputEvent::kMetaKey;
+third_party/blink/renderer/core/editing/editing_behavior.cc:248:  static HashMap<int, const char*>* key_down_commands_map = nullptr;
+third_party/blink/renderer/core/editing/editing_behavior.cc:249:  static HashMap<int, const char*>* key_press_commands_map = nullptr;
+third_party/blink/renderer/core/layout/layout_br.cc:33:  DEFINE_STATIC_LOCAL(const String, string, ("\n"));
+third_party/blink/renderer/platform/instrumentation/memory_pressure_listener.h:74:  static bool is_low_end_device_;
+third_party/blink/renderer/core/animation/property_handle.cc:11:bool PropertyHandle::operator==(const PropertyHandle& other) const {
+third_party/blink/renderer/core/timing/performance_mark.cc:148:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/animation/document_timeline.cc:68:const double DocumentTimeline::kMinimumDelay = 0.04;
+third_party/blink/renderer/core/layout/layout_replaced.cc:67:const int LayoutReplaced::kDefaultWidth = 300;
+third_party/blink/renderer/core/layout/layout_replaced.cc:68:const int LayoutReplaced::kDefaultHeight = 150;
+third_party/blink/renderer/platform/instrumentation/tracing/memory_cache_dump_provider.cc:12:  DEFINE_STATIC_LOCAL(MemoryCacheDumpProvider, instance, ());
+third_party/blink/renderer/core/html/html_embed_element.cc:54:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/animation/underlying_value_owner.cc:41:  DEFINE_STATIC_LOCAL(NullValueWrapper, null_value_wrapper, ());
+third_party/blink/renderer/platform/instrumentation/partition_alloc_memory_dump_provider.cc:20:  DEFINE_STATIC_LOCAL(PartitionAllocMemoryDumpProvider, instance, ());
+third_party/blink/renderer/core/paint/paint_layer_painter.cc:118:  static PaintTimelineReporter* current_reporting_;
+third_party/blink/renderer/core/paint/paint_layer_painter.cc:124:PaintTimelineReporter* PaintTimelineReporter::current_reporting_ = nullptr;
+third_party/blink/renderer/core/animation/keyframe.cc:19:const double Keyframe::kNullComputedOffset =
+third_party/blink/renderer/platform/instrumentation/canvas_memory_dump_provider.cc:15:  DEFINE_STATIC_LOCAL(CanvasMemoryDumpProvider, instance, ());
+third_party/blink/renderer/core/css/parser/css_parser_context.cc:163:bool CSSParserContext::operator==(const CSSParserContext& other) const {
+third_party/blink/renderer/core/css/parser/css_parser_context.cc:176:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<CSSParserContext>>,
+third_party/blink/renderer/core/css/parser/css_parser_context.cc:178:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<CSSParserContext>>,
+third_party/blink/renderer/core/timing/soft_navigation_context.h:199:  static uint64_t last_context_id_;
+third_party/blink/renderer/core/timing/event_counts.cc:65:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/timing/soft_navigation_context.cc:25:uint64_t SoftNavigationContext::last_context_id_ = 0;
+third_party/blink/renderer/core/timing/memory_info.cc:117:  DEFINE_STATIC_LOCAL(Vector<size_t>, bucket_size_list, ());
+third_party/blink/renderer/core/animation/css/css_animations.cc:1057:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties,
+third_party/blink/renderer/core/animation/css/css_animations.cc:1059:  DEFINE_STATIC_LOCAL(StylePropertyShorthand, property_shorthand,
+third_party/blink/renderer/core/animation/css/css_animations.cc:1066:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties,
+third_party/blink/renderer/core/animation/css/css_animations.cc:1068:  DEFINE_STATIC_LOCAL(StylePropertyShorthand, property_shorthand,
+third_party/blink/renderer/core/layout/custom/layout_worklet.cc:17:const size_t LayoutWorklet::kNumGlobalScopes = 2u;
+third_party/blink/renderer/platform/graphics/canvas_2d_resource_provider.h:63:PLATFORM_EXPORT extern const base::FeatureParam<int> kMaxRecordedOpKB;
+third_party/blink/renderer/platform/graphics/canvas_2d_resource_provider.h:64:PLATFORM_EXPORT extern const base::FeatureParam<int> kMaxPinnedImageKB;
+third_party/blink/renderer/platform/graphics/scrollbar_theme_settings.cc:9:static bool g_mock_scrollbars_enabled = false;
+third_party/blink/renderer/platform/graphics/scrollbar_theme_settings.cc:10:static bool g_overlay_scrollbars_enabled = false;
+third_party/blink/renderer/platform/graphics/scrollbar_theme_settings.cc:11:static bool g_fluent_scrollbars_enabled = false;
+third_party/blink/renderer/platform/graphics/scrollbar_theme_settings.cc:12:static bool g_desktop_android_scrollbars_enabled = false;
+third_party/blink/renderer/core/paint/frame_painter.h:31:  static bool in_paint_contents_;
+third_party/blink/renderer/core/animation/css/css_animation_data.cc:69:  DEFINE_STATIC_LOCAL(const StyleTimeline, timeline, (CSSValueID::kAuto));
+third_party/blink/renderer/core/animation/css/css_animation_data.cc:74:  DEFINE_STATIC_LOCAL(const StyleTimeline, timeline_trigger_source,
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:90:  static bool kEnabled =
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:100:  static base::TimeDelta kInterval =
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:110:  static base::TimeDelta kInterval =
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:681:  static PrefixedNameToQualifiedNameMap* case_map = nullptr;
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:703:  static PrefixedNameToQualifiedNameMap* case_map = nullptr;
+third_party/blink/renderer/core/html/parser/html_tree_builder.cc:748:  static PrefixedNameToQualifiedNameMap* map = nullptr;
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:26:  DEFINE_STATIC_LOCAL(const String, svg,
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:33:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:40:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:47:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:54:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_permission_icon_element.cc:61:  DEFINE_STATIC_LOCAL(const String, kLaunchIconSVG,
+third_party/blink/renderer/core/css/css_style_declaration.cc:124:  DEFINE_STATIC_LOCAL(CSSPropertyIDMap, map, ());
+third_party/blink/renderer/core/css/css_style_declaration.cc:263:  DEFINE_STATIC_LOCAL(PreAllocatedPropertyVector, property_names, ());
+third_party/blink/renderer/core/timing/performance_entry.cc:47:static base::AtomicSequenceNumber index_seq;
+third_party/blink/renderer/core/html/parser/patch.cc:79:  DEFINE_STATIC_LOCAL(AtomicString, kNamePseudoAttr, ("name"));
+third_party/blink/renderer/core/html/parser/patch.cc:80:  DEFINE_STATIC_LOCAL(AtomicString, kMarkerTarget, ("marker"));
+third_party/blink/renderer/core/html/parser/patch.cc:81:  DEFINE_STATIC_LOCAL(AtomicString, kStartTarget, ("start"));
+third_party/blink/renderer/core/html/parser/patch.cc:82:  DEFINE_STATIC_LOCAL(AtomicString, kEndTarget, ("end"));
+third_party/blink/renderer/core/css/check_pseudo_has_argument_context.h:150:  const static size_t kDepthBits = 14;
+third_party/blink/renderer/core/css/check_pseudo_has_argument_context.h:151:  const static size_t kAdjacentBits = 14;
+third_party/blink/renderer/core/css/check_pseudo_has_argument_context.h:152:  const static size_t kTraversalScopeBits = 4;
+third_party/blink/renderer/core/css/style_color.cc:134:CORE_EXPORT bool StyleColor::UnresolvedColorFunction::operator==(
+third_party/blink/renderer/core/css/style_color.cc:186:bool StyleColor::UnresolvedContrastColor::operator==(
+third_party/blink/renderer/core/css/style_color.cc:265:bool StyleColor::UnresolvedAlphaColor::operator==(
+third_party/blink/renderer/core/css/style_color.cc:443:bool StyleColor::UnresolvedRelativeColor::operator==(
+third_party/blink/renderer/core/timing/performance_paint_timing.cc:21:      DEFINE_STATIC_LOCAL(const AtomicString, kFirstPaint, ("first-paint"));
+third_party/blink/renderer/core/timing/performance_paint_timing.cc:25:      DEFINE_STATIC_LOCAL(const AtomicString, kFirstContentfulPaint,
+third_party/blink/renderer/core/paint/timing/paint_timing_detector.h:211:  static ScopedPaintTimingDetectorBlockPaintHook* top_;
+third_party/blink/renderer/core/loader/interactive_detector.cc:28:int g_num_long_input_events = 0;
+third_party/blink/renderer/core/timing/window_performance.cc:177:  DEFINE_STATIC_LOCAL(const AtomicString, kSelfAttribution, ("self"));
+third_party/blink/renderer/core/timing/window_performance.cc:182:  DEFINE_STATIC_LOCAL(const AtomicString, kSameOriginAncestorAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:188:  DEFINE_STATIC_LOCAL(const AtomicString, kSameOriginDescendantAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:194:  DEFINE_STATIC_LOCAL(const AtomicString, kSameOriginAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:532:    DEFINE_STATIC_LOCAL(const AtomicString, kAmbiguousAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:540:    DEFINE_STATIC_LOCAL(const AtomicString, kUnknownAttribution, ("unknown"));
+third_party/blink/renderer/core/timing/window_performance.cc:567:    DEFINE_STATIC_LOCAL(const AtomicString, kCrossOriginDescendantAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:573:    DEFINE_STATIC_LOCAL(const AtomicString, kCrossOriginAncestorAttribution,
+third_party/blink/renderer/core/timing/window_performance.cc:577:  DEFINE_STATIC_LOCAL(const AtomicString, kCrossOriginAttribution,
+third_party/blink/renderer/core/loader/form_submission.cc:76:  static int64_t next_identifier =
+third_party/blink/renderer/core/css/rule_feature_set.cc:51:bool RuleFeatureSet::operator==(const RuleFeatureSet& other) const {
+third_party/blink/renderer/core/loader/image_loader.h:295:    static uint64_t s_next_request_id_;
+third_party/blink/renderer/core/css/successful_position_fallback.cc:12:bool SuccessfulPositionFallback::operator==(
+third_party/blink/renderer/core/css/style_rule_counter_style.cc:58:bool StyleRuleCounterStyle::operator==(
+third_party/blink/renderer/core/css/media_query_exp.cc:652:bool MediaQueryExp::operator==(const MediaQueryExp& other) const {
+third_party/blink/renderer/platform/graphics/image_decoding_store.cc:58:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ImageDecodingStore, store, ());
+third_party/blink/renderer/core/paint/timing/largest_contentful_paint_calculator.cc:59:  DEFINE_STATIC_LOCAL(LargestContentfulPaintTypeMap,
+third_party/blink/renderer/core/css/parser/css_parser_token.cc:161:bool CSSParserToken::operator==(const CSSParserToken& other) const {
+third_party/blink/renderer/core/paint/timing/first_meaningful_paint_detector.cc:25:const base::TickClock* g_clock = nullptr;
+third_party/blink/renderer/core/html/blocking_attribute.cc:18:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, tokens,
+third_party/blink/renderer/core/css/property_registry.cc:107:bool PropertyRegistry::Iterator::operator==(const Iterator& o) const {
+third_party/blink/renderer/core/css/css_url_data.cc:240:bool CSSUrlData::operator==(const CSSUrlData& other) const {
+third_party/blink/renderer/core/css/random_caching_key.cc:29:bool RandomCachingKey::operator==(const RandomCachingKey& other) const {
+third_party/blink/renderer/platform/graphics/parkable_image_manager.cc:30:  static base::NoDestructor<ParkableImageManager> instance;
+third_party/blink/renderer/platform/graphics/compositor_element_id.cc:12:  static UniqueObjectId counter = 0;
+third_party/blink/renderer/core/loader/anchor_element_interaction_tracker.cc:118:ModerateViewportHeuristicConfig* g_config_for_testing = nullptr;
+third_party/blink/renderer/core/loader/loader_factory_for_worker.cc:124:        static bool has_dumped_without_crashing = false;
+third_party/blink/renderer/core/css/css_value.cc:191:bool CSSValue::operator==(const CSSValue& other) const {
+third_party/blink/renderer/core/paint/timing/text_element_timing.cc:92:    DEFINE_STATIC_LOCAL(const AtomicString, kTextPaint, ("text-paint"));
+third_party/blink/renderer/core/paint/timing/image_element_timing.cc:64:  DEFINE_STATIC_LOCAL(const AtomicString, kImagePaint, ("image-paint"));
+third_party/blink/renderer/core/css/parser/css_proto_converter.cc:25:const int Converter::kAtRuleDepthLimit = 5;
+third_party/blink/renderer/core/css/parser/css_proto_converter.cc:26:const int Converter::kSupportsConditionDepthLimit = 5;
+third_party/blink/renderer/core/html/canvas/html_canvas_element.cc:470:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/canvas/html_canvas_element.cc:1094:    DEFINE_STATIC_REF(blink::Image, broken_canvas_hi_res,
+third_party/blink/renderer/core/html/canvas/html_canvas_element.cc:1100:  DEFINE_STATIC_REF(blink::Image, broken_canvas_lo_res,
+third_party/blink/renderer/core/css/parser/css_parser_fast_paths.h:62:  static CSSBitset handled_by_keyword_fast_paths_properties_;
+third_party/blink/renderer/core/css/invalidation/rule_invalidation_data.cc:36:bool RuleInvalidationData::operator==(const RuleInvalidationData& other) const {
+third_party/blink/renderer/core/timing/third_party_script_detector.cc:86:  DEFINE_STATIC_LOCAL(const Vector<Technology>,
+third_party/blink/renderer/core/css/css_math_expression_node.cc:1492:bool CSSMathExpressionNumericLiteral::operator==(
+third_party/blink/renderer/core/css/css_math_expression_node.cc:3565:bool CSSMathExpressionOperation::operator==(
+third_party/blink/renderer/core/css/css_math_expression_node.cc:4074:bool CSSMathExpressionAnchorQuery::operator==(
+third_party/blink/renderer/core/css/css_math_expression_node.cc:5599:bool CSSMathExpressionSiblingFunction::operator==(
+third_party/blink/renderer/core/css/css_math_expression_node.cc:5793:bool RandomCacheKey::operator==(const RandomCacheKey& other) const {
+third_party/blink/renderer/core/css/css_math_expression_node.cc:6114:bool CSSMathExpressionRandomFunction::operator==(
+third_party/blink/renderer/core/css/invalidation/invalidation_flags.cc:19:bool InvalidationFlags::operator==(const InvalidationFlags& other) const {
+third_party/blink/renderer/core/html/canvas/canvas_rendering_context.cc:391:    DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/canvas/canvas_rendering_context.cc:395:    DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/canvas/canvas_rendering_context.cc:549:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<CanvasPerformanceMonitor>,
+third_party/blink/renderer/core/paint/frame_painter.cc:23:bool FramePainter::in_paint_contents_ = false;
+third_party/blink/renderer/core/css/media_query.cc:134:bool MediaQuery::operator==(const MediaQuery& other) const {
+third_party/blink/renderer/core/css/style_rule.cc:1249:bool MixinParameterBindings::operator==(
+third_party/blink/renderer/platform/graphics/animation_worklet_mutator_dispatcher_impl.cc:31:int g_next_async_mutation_id = 0;
+third_party/blink/renderer/core/css/invalidation/invalidation_set.cc:79:bool InvalidationSet::operator==(const InvalidationSet& other) const {
+third_party/blink/renderer/core/css/invalidation/invalidation_set.cc:434:  DEFINE_STATIC_REF(InvalidationSet, singleton_, CreateSelfInvalidationSet());
+third_party/blink/renderer/core/css/invalidation/invalidation_set.cc:439:  DEFINE_STATIC_REF(InvalidationSet, singleton_, CreatePartInvalidationSet());
+third_party/blink/renderer/core/css/invalidation/invalidation_set.cc:444:  DEFINE_STATIC_REF(InvalidationSet, singleton_,
+third_party/blink/renderer/core/timing/background_tracing_helper.cc:183:  DEFINE_THREAD_SAFE_STATIC_LOCAL(SiteHashSet, site_hash_set_,
+third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.h:32:  static unsigned count_;
+third_party/blink/renderer/core/loader/resource/xsl_style_sheet_resource.cc:44:  DEFINE_STATIC_LOCAL(const AtomicString, accept_xslt,
+third_party/blink/renderer/core/paint/decoration_line_painter.cc:380:  DEFINE_STATIC_LOCAL(std::optional<WavyCache>, wavy_cache, (std::nullopt));
+third_party/blink/renderer/core/css/style_change_reason.h:73:extern const AtomicString& g_active;
+third_party/blink/renderer/core/css/style_change_reason.h:74:extern const AtomicString& g_active_view_transition;
+third_party/blink/renderer/core/css/style_change_reason.h:75:extern const AtomicString& g_active_view_transition_type;
+third_party/blink/renderer/core/css/style_change_reason.h:76:extern const AtomicString& g_disabled;
+third_party/blink/renderer/core/css/style_change_reason.h:77:extern const AtomicString& g_drag;
+third_party/blink/renderer/core/css/style_change_reason.h:78:extern const AtomicString& g_focus;
+third_party/blink/renderer/core/css/style_change_reason.h:79:extern const AtomicString& g_focus_visible;
+third_party/blink/renderer/core/css/style_change_reason.h:80:extern const AtomicString& g_focus_within;
+third_party/blink/renderer/core/css/style_change_reason.h:81:extern const AtomicString& g_hover;
+third_party/blink/renderer/core/css/style_change_reason.h:83:extern const AtomicString& g_past;
+third_party/blink/renderer/core/css/style_change_reason.h:84:extern const AtomicString& g_patching;
+third_party/blink/renderer/core/css/style_change_reason.h:85:extern const AtomicString& g_unresolved;
+third_party/blink/renderer/core/loader/resource/script_resource.cc:169:  static bool script_streaming_enabled =
+third_party/blink/renderer/core/loader/resource/script_resource.cc:171:  static bool script_streaming_for_non_http_enabled =
+third_party/blink/renderer/core/loader/resource/image_resource.cc:83:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/loader/resource/image_resource.cc:96:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/speculation_rules/document_speculation_rules.cc:1268:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/loader/resource/font_resource.cc:99:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/css/css_value_pool.cc:34:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<CSSValuePool>>,
+third_party/blink/renderer/core/paint/box_border_painter.cc:2106:  const static float kExtensionLength = 1e-1f;
+third_party/blink/renderer/core/timing/performance_timing.cc:353:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<NameToAttributeMap>, map, ());
+third_party/blink/renderer/core/css/css_selector.h:1092:inline CSSSelector& CSSSelector::operator=(CSSSelector&& other) {
+third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h:227:    static int count_;
+third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h:272:    static int count_;
+third_party/blink/renderer/core/paint/custom_scrollbar_theme.cc:41:  DEFINE_STATIC_LOCAL(CustomScrollbarTheme, theme, ());
+third_party/blink/renderer/core/timing/performance.cc:886:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, mark_fully_loaded,
+third_party/blink/renderer/core/timing/performance.cc:888:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, mark_fully_visible,
+third_party/blink/renderer/core/timing/performance.cc:890:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, mark_interactive,
+third_party/blink/renderer/core/timing/performance.cc:892:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, mark_feature_usage,
+third_party/blink/renderer/core/timing/performance.cc:894:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/timing/performance.cc:897:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/timing/performance.cc:1322:  static TimeClamper clamper;
+third_party/blink/renderer/core/timing/performance.cc:1458:    static size_t call_index = 0;
+third_party/blink/renderer/core/paint/paint_layer.cc:2734:  static bool check_no_dirty_flags = false;
+third_party/blink/renderer/core/paint/paint_layer.cc:2877:bool CheckAncestorPositionVisibilityScope::should_check_ = false;
+third_party/blink/renderer/core/speculation_rules/auto_speculation_rules_config.cc:22:static AutoSpeculationRulesConfig* g_override = nullptr;
+third_party/blink/renderer/core/speculation_rules/auto_speculation_rules_config.cc:116:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/paint/paint_layer.h:872:  static bool should_check_;
+third_party/blink/renderer/core/layout/exclusions/exclusion_space.cc:193:ExclusionSpaceInternal& ExclusionSpaceInternal::operator=(
+third_party/blink/renderer/core/layout/exclusions/exclusion_space.cc:808:bool ExclusionSpaceInternal::operator==(
+third_party/blink/renderer/core/paint/clip_path_clipper.cc:52:const CompositorAnimations::FailureReasons kDeferredDecisionReasons =
+third_party/blink/renderer/core/layout/exclusions/exclusion_area.cc:15:bool ExclusionArea::operator==(const ExclusionArea& other) const {
+third_party/blink/renderer/core/layout/exclusions/layout_opportunity.cc:191:bool LayoutOpportunity::operator==(const LayoutOpportunity& other) const {
+third_party/blink/renderer/core/css/cssom/cross_thread_unparsed_value.cc:15:bool CrossThreadUnparsedValue::operator==(
+third_party/blink/renderer/core/css/cssom/cross_thread_unsupported_value.cc:15:bool CrossThreadUnsupportedValue::operator==(
+third_party/blink/renderer/core/css/css_shape_value.cc:145:bool CSSShapeCommand::operator==(const CSSShapeCommand& other) const {
+third_party/blink/renderer/core/core_initializer.h:169:  static CoreInitializer* instance_;
+third_party/blink/renderer/core/layout/layout_theme_mobile.h:65:  static Color active_selection_background_color_;
+third_party/blink/renderer/core/layout/layout_theme_mobile.h:66:  static Color active_selection_foreground_color_;
+third_party/blink/renderer/core/layout/layout_theme_mobile.h:67:  static Color inactive_selection_background_color_;
+third_party/blink/renderer/core/layout/layout_theme_mobile.h:68:  static Color inactive_selection_foreground_color_;
+third_party/blink/renderer/core/css/cssom/cross_thread_color_value.cc:15:bool CrossThreadColorValue::operator==(
+third_party/blink/renderer/core/html/custom/custom_element_construction_stack.h:80:  static wtf_size_t nesting_level_;
+third_party/blink/renderer/core/html/custom/custom_element.cc:41:  DEFINE_STATIC_LOCAL(Vector<AtomicString>, names, ());
+third_party/blink/renderer/core/html/custom/custom_element.cc:74:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, hyphenated_spec_element_names,
+third_party/blink/renderer/core/html/custom/custom_element_construction_stack.cc:98:wtf_size_t CustomElementConstructionStackScope::nesting_level_ = 0;
+third_party/blink/renderer/core/layout/layout_theme_font_provider.cc:48:  DEFINE_THREAD_SAFE_STATIC_LOCAL(const AtomicString, font_face, ("Arial"));
+third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc:15:CEReactionsScope* CEReactionsScope::top_of_stack_ = nullptr;
+third_party/blink/renderer/core/html/custom/ce_reactions_scope.h:38:  static CEReactionsScope* top_of_stack_;
+third_party/blink/renderer/core/css/anchor_query.cc:12:bool AnchorQuery::operator==(const AnchorQuery& other) const {
+third_party/blink/renderer/core/css/cssom/cross_thread_unit_value.cc:15:bool CrossThreadUnitValue::operator==(
+third_party/blink/renderer/core/css/media_query_evaluator.cc:109:static FunctionMap* g_function_map;
+third_party/blink/renderer/core/css/css_selector_list.cc:42:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<CSSSelectorList>>,
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:66:  DEFINE_STATIC_LOCAL(AtomicString, kReactId, ("react-root"));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:80:  DEFINE_STATIC_LOCAL(QualifiedName, ng_version, (AtomicString("ng-version")));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:81:  DEFINE_STATIC_LOCAL(QualifiedName, data_reactroot,
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:113:  DEFINE_STATIC_LOCAL(AtomicString, vue_string, ("__vue__"));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:114:  DEFINE_STATIC_LOCAL(AtomicString, vue_app_string, ("__vue_app__"));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:115:  DEFINE_STATIC_LOCAL(AtomicString, k_string, ("__k"));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:116:  DEFINE_STATIC_LOCAL(AtomicString, reactRootContainer_string,
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:118:  DEFINE_STATIC_LOCAL(AtomicString, reactListening_string, ("_reactListening"));
+third_party/blink/renderer/core/script/detect_javascript_frameworks.cc:119:  DEFINE_STATIC_LOCAL(AtomicString, reactFiber_string, ("__reactFiber"));
+third_party/blink/renderer/core/css/css_computed_style_declaration.cc:75:  DEFINE_STATIC_LOCAL(HashSet<CSSPropertyID>, property_id_set, ());
+third_party/blink/renderer/core/css/css_computed_style_declaration.cc:106:  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+third_party/blink/renderer/core/css/cssom/cross_thread_keyword_value.cc:15:bool CrossThreadKeywordValue::operator==(
+third_party/blink/renderer/core/svg/svg_length.cc:137:bool SVGLength::operator==(const SVGLength& other) const {
+third_party/blink/renderer/core/svg/svg_length.cc:302:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/html/html_script_element.cc:69:  DEFINE_STATIC_LOCAL(AttrNameToTrustedType, attribute_map,
+third_party/blink/renderer/core/html/html_object_element.cc:65:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/layout/layout_quote.cc:92:  DEFINE_STATIC_REF(QuotesData, static_basic_quotes,
+third_party/blink/renderer/core/loader/history_item.cc:68:  static int64_t next =
+third_party/blink/renderer/core/layout/svg/svg_layout_support.h:124:  static AffineTransform current_content_transformation_;
+third_party/blink/renderer/core/svg/svg_script_element.cc:234:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/loader/frame_fetch_context.cc:170:    DEFINE_STATIC_LOCAL(AtomicString, true_value,
+third_party/blink/renderer/core/loader/frame_fetch_context.cc:174:  DEFINE_STATIC_LOCAL(AtomicString, false_value,
+third_party/blink/renderer/platform/graphics/image.cc:78:  DEFINE_STATIC_REF(Image, null_image, (BitmapImage::Create()));
+third_party/blink/renderer/platform/graphics/image.cc:90:    DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/graphics/image.cc:95:  DEFINE_THREAD_SAFE_STATIC_LOCAL(cc::SoftwareImageDecodeCache,
+third_party/blink/renderer/core/layout/svg/svg_layout_support.cc:349:AffineTransform SubtreeContentTransformScope::current_content_transformation_;
+third_party/blink/renderer/core/loader/document_loader.cc:4045:  static bool disable_code_cache_for_testing = false;
+third_party/blink/renderer/platform/graphics/paint/paint_controller.h:472:  static CounterForTesting* counter_for_testing_;
+third_party/blink/renderer/core/layout/inline/inline_cursor.cc:229:bool InlineCursor::operator==(const InlineCursor& other) const {
+third_party/blink/renderer/core/loader/image_loader.cc:1058:uint64_t ImageLoader::DecodeRequest::s_next_request_id_ = 0;
+third_party/blink/renderer/platform/graphics/paint/display_item_client.h:136:  DEFINE_STATIC_LOCAL(                                      \
+third_party/blink/renderer/core/loader/old_document_info_for_commit.h:70:  static ScopedOldDocumentInfoForCommitCapturer* current_capturer_;
+third_party/blink/renderer/core/loader/loader_factory_for_frame.cc:91:  DEFINE_STATIC_LOCAL(ThreadSpecific<Vector<String>>, cors_exempt_header_list,
+third_party/blink/renderer/core/annotation/annotation_selector.cc:18:  DEFINE_STATIC_LOCAL(std::optional<AnnotationSelector::GeneratorFunc>,
+third_party/blink/renderer/core/style/applied_text_decoration.cc:26:bool AppliedTextDecoration::operator==(const AppliedTextDecoration&) const =
+third_party/blink/renderer/core/style/style_highlight_data.cc:33:bool StyleHighlightData::operator==(const StyleHighlightData& other) const {
+third_party/blink/renderer/platform/graphics/paint/paint_controller.cc:93:PaintController::CounterForTesting* PaintController::counter_for_testing_ =
+third_party/blink/renderer/platform/graphics/paint/paint_controller.cc:469:    DEFINE_STATIC_LOCAL(std::optional<PaintChunk::Id>, last_duplicated_id, ());
+third_party/blink/renderer/platform/graphics/paint/paint_controller.cc:470:    DEFINE_STATIC_LOCAL(std::optional<base::debug::StackTrace>, previous_stack,
+third_party/blink/renderer/platform/graphics/paint/paint_controller.cc:565:  DEFINE_STATIC_LOCAL(std::optional<PaintChunk::Id>, last_duplicated_id, ());
+third_party/blink/renderer/platform/graphics/paint/paint_controller.cc:566:  DEFINE_STATIC_LOCAL(std::optional<base::debug::StackTrace>, previous_stack,
+third_party/blink/renderer/core/timezone/timezone_controller.cc:124:  DEFINE_THREAD_SAFE_STATIC_LOCAL(TimeZoneController, instance, ());
+third_party/blink/renderer/platform/graphics/paint/geometry_mapper_clip_cache.cc:16:unsigned GeometryMapperClipCache::s_global_generation_ = 1;
+third_party/blink/renderer/core/loader/render_blocking_resource_manager.cc:26:const base::TimeDelta kMaxRenderingDelayForFontPreloads =
+third_party/blink/renderer/core/loader/frame_load_request.cc:185:      DEFINE_STATIC_LOCAL(const AtomicString, blank, ("_blank"));
+third_party/blink/renderer/core/svg/svg_style_element.cc:60:  DEFINE_STATIC_LOCAL(const AtomicString, default_value, ("text/css"));
+third_party/blink/renderer/core/html/rel_list.cc:32:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, tokens,
+third_party/blink/renderer/core/html/rel_list.cc:57:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, tokens,
+third_party/blink/renderer/core/style/position_try_fallbacks.cc:9:bool PositionTryFallback::operator==(const PositionTryFallback& other) const {
+third_party/blink/renderer/core/style/position_try_fallbacks.cc:36:bool PositionTryFallbacks::operator==(const PositionTryFallbacks& other) const {
+third_party/blink/renderer/core/svg/svg_text_content_element.cc:295:    DEFINE_STATIC_LOCAL(const AtomicString, preserve_string, ("preserve"));
+third_party/blink/renderer/core/style/text_decoration_thickness.cc:20:bool TextDecorationThickness::operator==(
+third_party/blink/renderer/core/html/html_slot_element.cc:70:  DEFINE_STATIC_LOCAL(const AtomicString, user_agent_default_slot_name,
+third_party/blink/renderer/core/html/html_slot_element.cc:77:  DEFINE_STATIC_LOCAL(const AtomicString, user_agent_custom_assign_slot_name,
+third_party/blink/renderer/core/html/html_slot_element.cc:572:  DEFINE_STATIC_LOCAL(LCSTable*, lcs_table, (new LCSTable(kLCSTableSizeLimit)));
+third_party/blink/renderer/core/html/html_slot_element.cc:573:  DEFINE_STATIC_LOCAL(BacktrackTable*, backtrack_table,
+third_party/blink/renderer/core/style/list_style_type_data.cc:46:bool ListStyleTypeData::operator==(const ListStyleTypeData& other) const {
+third_party/blink/renderer/core/accessibility/ax_object_cache.h:317:  static AXObjectCacheCreateFunction create_function_;
+third_party/blink/renderer/core/layout/geometry/transform_state.cc:30:TransformState& TransformState::operator=(const TransformState& other) {
+third_party/blink/renderer/platform/graphics/paint/geometry_mapper_transform_cache.cc:16:unsigned GeometryMapperTransformCache::s_global_generation = 1;
+third_party/blink/renderer/core/style/reference_clip_path_operation.cc:25:bool ReferenceClipPathOperation::operator==(const ClipPathOperation& o) const {
+third_party/blink/renderer/core/frame/screen.cc:195:  DEFINE_STATIC_LOCAL(display::ScreenInfo, kEmptyScreenInfo, ());
+third_party/blink/renderer/core/accessibility/ax_object_cache.cc:46:AXObjectCache::AXObjectCacheCreateFunction AXObjectCache::create_function_ =
+third_party/blink/renderer/core/accessibility/ax_object_cache.cc:72:  DEFINE_STATIC_LOCAL(ARIAWidgetSet, widget_set, ({
+third_party/blink/renderer/core/html/html_frame_owner_element.h:109:    static int suspend_count_;
+third_party/blink/renderer/core/accessibility/blink_ax_event_intent.cc:412:BlinkAXEventIntent& BlinkAXEventIntent::operator=(
+third_party/blink/renderer/core/style/style_initial_letter.cc:38:bool StyleInitialLetter::operator==(const StyleInitialLetter& other) const {
+third_party/blink/renderer/platform/graphics/paint/geometry_mapper_clip_cache.h:103:  static unsigned s_global_generation_;
+third_party/blink/renderer/core/offscreencanvas/offscreen_canvas.cc:551:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/style/shape_value.h:85:inline bool ShapeValue::operator==(const ShapeValue& other) const {
+third_party/blink/renderer/core/style/grid_track_list.cc:41:bool GridTrackRepeater::operator==(const GridTrackRepeater& other) const {
+third_party/blink/renderer/core/style/grid_track_list.cc:194:void GridTrackList::operator=(const GridTrackList& other) {
+third_party/blink/renderer/core/style/grid_track_list.cc:205:bool GridTrackList::operator==(const GridTrackList& other) const {
+third_party/blink/renderer/core/html/html_frame_owner_element.cc:169:  DEFINE_STATIC_LOCAL(SubtreeRootSet, nodes, ());
+third_party/blink/renderer/core/html/html_frame_owner_element.cc:174:int HTMLFrameOwnerElement::PluginDisposeSuspendScope::suspend_count_ = 0;
+third_party/blink/renderer/core/style/nine_piece_image.cc:72:bool NinePieceImageData::operator==(const NinePieceImageData& other) const {
+third_party/blink/renderer/core/style/anchor_specifier_value.cc:32:bool AnchorSpecifierValue::operator==(const AnchorSpecifierValue& other) const {
+third_party/blink/renderer/platform/graphics/canvas_child_paint_state.cc:12:bool CanvasChildPaintState::operator==(
+third_party/blink/renderer/platform/graphics/paint/geometry_mapper_transform_cache.h:163:  static unsigned s_global_generation;
+third_party/blink/renderer/core/execution_context/agent_cluster_key.h:201:    DEFINE_STATIC_LOCAL(AgentClusterKey, kEmpty,
+third_party/blink/renderer/core/execution_context/agent_cluster_key.h:206:    DEFINE_STATIC_LOCAL(AgentClusterKey, kDeleted,
+third_party/blink/renderer/core/html/media/media_source_attachment.cc:15:MediaSourceRegistry* MediaSourceAttachment::registry_ = nullptr;
+third_party/blink/renderer/core/frame/web_frame_widget_impl.h:1248:  static bool ignore_input_events_;
+third_party/blink/renderer/core/layout/geometry/margin_strut.cc:39:bool MarginStrut::operator==(const MarginStrut& other) const {
+third_party/blink/renderer/core/html/html_element.cc:3527:  DEFINE_STATIC_LOCAL(const AtomicString, kCharacters, ("characters"));
+third_party/blink/renderer/core/html/html_element.cc:3528:  DEFINE_STATIC_LOCAL(const AtomicString, kWords, ("words"));
+third_party/blink/renderer/core/html/html_element.cc:3529:  DEFINE_STATIC_LOCAL(const AtomicString, kSentences, ("sentences"));
+third_party/blink/renderer/core/html/html_element.cc:3725:  DEFINE_STATIC_LOCAL(const AtomicString, ltr_value, ("ltr"));
+third_party/blink/renderer/core/html/html_element.cc:3726:  DEFINE_STATIC_LOCAL(const AtomicString, rtl_value, ("rtl"));
+third_party/blink/renderer/core/html/html_element.cc:4566:        "ElementInternals is disabled by disabledFeature static field.");
+third_party/blink/renderer/core/html/html_element.cc:4611:          "does not declare 'static formAssociated = true'. Form submission "
+third_party/blink/renderer/core/style/filter_operations.cc:40:bool FilterOperations::operator==(const FilterOperations& o) const {
+third_party/blink/renderer/core/style/style_hyphenate_limit_chars.h:46:inline bool StyleHyphenateLimitChars::operator==(
+third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.h:49:  static int ignore_depth_;
+third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.h:50:  static bool is_document_element_invisible_;
+third_party/blink/renderer/core/style/style_interest_delay.h:31:inline bool StyleInterestDelay::operator==(
+third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.cc:9:int IgnorePaintTimingScope::ignore_depth_ = 0;
+third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.cc:10:bool IgnorePaintTimingScope::is_document_element_invisible_ = false;
+third_party/blink/renderer/core/html/html_meter_element.cc:217:  DEFINE_STATIC_LOCAL(AtomicString, optimum_pseudo_id,
+third_party/blink/renderer/core/html/html_meter_element.cc:219:  DEFINE_STATIC_LOCAL(AtomicString, suboptimum_pseudo_id,
+third_party/blink/renderer/core/html/html_meter_element.cc:221:  DEFINE_STATIC_LOCAL(AtomicString, even_less_good_pseudo_id,
+third_party/blink/renderer/core/style/shape_clip_path_operation.h:74:inline bool ShapeClipPathOperation::operator==(
+third_party/blink/renderer/platform/graphics/paint/raster_invalidation_tracking.cc:23:static bool g_simulate_raster_under_invalidations = false;
+third_party/blink/renderer/core/style/fill_layer.cc:137:FillLayer& FillLayer::operator=(const FillLayer& o) {
+third_party/blink/renderer/core/style/fill_layer.cc:190:bool FillLayer::operator==(const FillLayer& o) const {
+third_party/blink/renderer/platform/graphics/canvas_hibernation_handler.cc:59:  static base::NoDestructor<HibernatedCanvasMemoryDumpProvider> instance;
+third_party/blink/renderer/core/style/geometry_box_clip_path_operation.h:34:inline bool GeometryBoxClipPathOperation::operator==(
+third_party/blink/renderer/core/execution_context/agent_cluster_key.cc:42:bool AgentClusterKey::CrossOriginIsolationKey::operator==(
+third_party/blink/renderer/core/execution_context/agent_cluster_key.cc:98:bool AgentClusterKey::File::operator==(const AgentClusterKey::File& b) const {
+third_party/blink/renderer/core/execution_context/agent_cluster_key.cc:102:bool AgentClusterKey::Empty::operator==(const AgentClusterKey::Empty& b) const {
+third_party/blink/renderer/core/execution_context/agent_cluster_key.cc:106:bool AgentClusterKey::Deleted::operator==(
+third_party/blink/renderer/core/execution_context/agent_cluster_key.cc:111:bool AgentClusterKey::OriginKey::operator==(
+third_party/blink/renderer/platform/blob/blob_url_null_origin_map.cc:17:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<BlobURLNullOriginMap>, map,
+third_party/blink/renderer/platform/blob/blob_url_null_origin_map.cc:50:  DEFINE_THREAD_SAFE_STATIC_LOCAL(BlobURLOpaqueOriginNonceMap, map, ());
+third_party/blink/renderer/platform/cursors.cc:38:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kPointer));
+third_party/blink/renderer/platform/cursors.cc:43:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kCross));
+third_party/blink/renderer/platform/cursors.cc:48:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kHand));
+third_party/blink/renderer/platform/cursors.cc:53:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kMove));
+third_party/blink/renderer/platform/cursors.cc:58:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:64:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kCell));
+third_party/blink/renderer/platform/cursors.cc:69:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:75:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kAlias));
+third_party/blink/renderer/platform/cursors.cc:80:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kZoomIn));
+third_party/blink/renderer/platform/cursors.cc:85:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kZoomOut));
+third_party/blink/renderer/platform/cursors.cc:90:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kCopy));
+third_party/blink/renderer/platform/cursors.cc:95:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kNone));
+third_party/blink/renderer/platform/cursors.cc:100:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kProgress));
+third_party/blink/renderer/platform/cursors.cc:105:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kNoDrop));
+third_party/blink/renderer/platform/cursors.cc:110:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:116:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kIBeam));
+third_party/blink/renderer/platform/cursors.cc:121:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kWait));
+third_party/blink/renderer/platform/cursors.cc:126:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kHelp));
+third_party/blink/renderer/platform/cursors.cc:131:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:137:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:143:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:149:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:155:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:161:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:167:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:173:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:179:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:185:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:191:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/cursors.cc:197:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/platform/cursors.cc:203:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:209:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:215:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:221:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:227:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:233:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:239:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:245:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:251:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:257:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:263:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:269:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:275:  DEFINE_STATIC_LOCAL(ui::Cursor, c,
+third_party/blink/renderer/platform/cursors.cc:281:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kGrab));
+third_party/blink/renderer/platform/cursors.cc:286:  DEFINE_STATIC_LOCAL(ui::Cursor, c, (ui::mojom::blink::CursorType::kGrabbing));
+third_party/blink/renderer/core/style/style_variables.cc:11:bool StyleVariables::operator==(const StyleVariables& other) const {
+third_party/blink/renderer/platform/graphics/compositor_element_id.h:18:const int kCompositorReservedBitCount = cc::kElementIdReservedBitCount;
+third_party/blink/renderer/core/style/svg_paint.cc:43:bool SVGPaint::operator==(const SVGPaint& other) const {
+third_party/blink/renderer/platform/blob/blob_data.cc:80:mojom::blink::BlobRegistry* g_blob_registry_for_testing = nullptr;
+third_party/blink/renderer/platform/blob/blob_data.cc:87:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/style/style_initial_data.cc:36:bool StyleInitialData::operator==(const StyleInitialData& other) const {
+third_party/blink/renderer/core/svg/svg_animate_element.cc:83:  DEFINE_STATIC_LOCAL(AttributeToPropertyTypeMap, css_property_map, ());
+third_party/blink/renderer/core/svg/svg_animate_element.cc:159:  DEFINE_STATIC_LOCAL(const AtomicString, inherit, ("inherit"));
+third_party/blink/renderer/platform/graphics/gpu/webgpu_swap_buffer_provider.cc:440:  static bool is_scanout_allowed =
+third_party/blink/renderer/core/html/media/html_media_element.cc:268:  DEFINE_STATIC_LOCAL(const String, element_error_prefix,
+third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.cc:33:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<SharedGpuContext>,
+third_party/blink/renderer/core/html/media/media_video_visibility_tracker.cc:226:  DEFINE_STATIC_LOCAL(const Vector<AtomicString>, fullscreen_change_event_types,
+third_party/blink/renderer/core/style/computed_style.cc:180:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/core/style/computed_style.cc:547:bool ComputedStyle::operator==(const ComputedStyle& o) const {
+third_party/blink/renderer/core/style/computed_style.cc:1812:  DEFINE_STATIC_LOCAL(AtomicString, hyphen_minus_string,
+third_party/blink/renderer/core/style/computed_style.cc:1814:  DEFINE_STATIC_LOCAL(AtomicString, hyphen_string,
+third_party/blink/renderer/core/style/computed_style.cc:2035:      DEFINE_STATIC_LOCAL(AtomicString, filled_dot_string,
+third_party/blink/renderer/core/style/computed_style.cc:2037:      DEFINE_STATIC_LOCAL(AtomicString, open_dot_string,
+third_party/blink/renderer/core/style/computed_style.cc:2044:      DEFINE_STATIC_LOCAL(AtomicString, filled_circle_string,
+third_party/blink/renderer/core/style/computed_style.cc:2046:      DEFINE_STATIC_LOCAL(AtomicString, open_circle_string,
+third_party/blink/renderer/core/style/computed_style.cc:2053:      DEFINE_STATIC_LOCAL(AtomicString, filled_double_circle_string,
+third_party/blink/renderer/core/style/computed_style.cc:2055:      DEFINE_STATIC_LOCAL(AtomicString, open_double_circle_string,
+third_party/blink/renderer/core/style/computed_style.cc:2062:      DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/style/computed_style.cc:2065:      DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/style/computed_style.cc:2073:      DEFINE_STATIC_LOCAL(AtomicString, filled_sesame_string,
+third_party/blink/renderer/core/style/computed_style.cc:2075:      DEFINE_STATIC_LOCAL(AtomicString, open_sesame_string,
+third_party/blink/renderer/platform/graphics/raster_dark_mode_filter_impl.cc:16:  DEFINE_THREAD_SAFE_STATIC_LOCAL(RasterDarkModeFilterImpl, dark_mode_filter,
+third_party/blink/renderer/core/html/media/media_source_attachment.h:135:  static MediaSourceRegistry* registry_;
+third_party/blink/renderer/core/dom/qualified_name.h:147:CORE_EXPORT extern const QualifiedName& g_any_name;
+third_party/blink/renderer/core/dom/qualified_name.h:148:CORE_EXPORT extern const QualifiedName& g_null_name;
+third_party/blink/renderer/platform/graphics/gpu/canvas_utils.cc:24:std::optional<bool> g_use_mappable_shared_images_for_canvas_2d_for_testing;
+third_party/blink/renderer/platform/graphics/gpu/canvas_utils.cc:25:std::optional<bool> g_low_latency_usage_supported_for_canvas_2d_for_testing;
+third_party/blink/renderer/platform/graphics/gpu/canvas_utils.cc:26:std::optional<bool> g_use_overlays_for_webgl_for_testing;
+third_party/blink/renderer/platform/graphics/gpu/canvas_utils.cc:27:std::optional<bool> g_low_latency_usage_supported_for_webgl_for_testing;
+third_party/blink/renderer/platform/graphics/color.cc:54:const Color Color::kBlack = Color(0xFF000000);
+third_party/blink/renderer/platform/graphics/color.cc:55:const Color Color::kWhite = Color(0xFFFFFFFF);
+third_party/blink/renderer/platform/graphics/color.cc:56:const Color Color::kDarkGray = Color(0xFF808080);
+third_party/blink/renderer/platform/graphics/color.cc:57:const Color Color::kGray = Color(0xFFA0A0A0);
+third_party/blink/renderer/platform/graphics/color.cc:58:const Color Color::kLightGray = Color(0xFFC0C0C0);
+third_party/blink/renderer/platform/graphics/color.cc:59:const Color Color::kTransparent = Color(0x00000000);
+third_party/blink/renderer/platform/graphics/color.cc:854:  static bool enabled =
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:43:  const static int8_t kMinInt8Value = INT8_MIN + 1;
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:48:  const static int16_t kMinInt16Value = INT16_MIN + 1;
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:53:  const static int32_t kMinInt32Value = INT32_MIN + 1;
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:349:const std::array<uint16_t, 512> g_base_table = {
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:399:const std::array<unsigned char, 512> g_shift_table = {
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:480:const std::array<uint32_t, 2048> g_mantissa_table = {
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:825:const std::array<uint16_t, 64> g_offset_table = {
+third_party/blink/renderer/platform/graphics/gpu/webgl_image_conversion.cc:834:const std::array<uint32_t, 64> g_exponent_table = {
+third_party/blink/renderer/platform/graphics/flush_for_image_listener.cc:10:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<FlushForImageListener>,
+third_party/blink/renderer/platform/graphics/bitmap_image_metrics.cc:98:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/graphics/bitmap_image_metrics.cc:101:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/graphics/bitmap_image_metrics.cc:105:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/graphics/video_frame_sink_bundle.cc:24:mojom::blink::EmbeddedFrameSinkProvider* g_frame_sink_provider_override =
+third_party/blink/renderer/platform/graphics/video_frame_sink_bundle.cc:28:  DEFINE_THREAD_SAFE_STATIC_LOCAL(
+third_party/blink/renderer/platform/graphics/touch_action.h:12:const size_t kTouchActionBits = cc::kTouchActionBits;
+third_party/blink/renderer/platform/graphics/gpu/drawing_buffer.cc:94:bool g_should_fail_drawing_buffer_creation_for_testing = false;
+third_party/blink/renderer/platform/graphics/gpu/drawing_buffer.cc:156:const size_t DrawingBuffer::kDefaultColorBufferCacheLimit = 2;
+third_party/blink/renderer/platform/graphics/gpu/drawing_buffer.cc:158:const size_t DrawingBuffer::kDefaultColorBufferCacheLimit = 1;
+third_party/blink/renderer/platform/graphics/compositor_filter_operations.cc:124:bool CompositorFilterOperations::operator==(
+third_party/blink/renderer/platform/graphics/offscreen_canvas_placeholder.cc:23:  DEFINE_STATIC_LOCAL(PlaceholderIdMap, s_placeholderRegistry, ());
+third_party/blink/renderer/core/dom/pseudo_element.cc:167:      DEFINE_STATIC_LOCAL(QualifiedName, after, (AtomicString("::after")));
+third_party/blink/renderer/core/dom/pseudo_element.cc:171:      DEFINE_STATIC_LOCAL(QualifiedName, before, (AtomicString("::before")));
+third_party/blink/renderer/core/dom/pseudo_element.cc:175:      DEFINE_STATIC_LOCAL(QualifiedName, check, (AtomicString("::checkmark")));
+third_party/blink/renderer/core/dom/pseudo_element.cc:179:      DEFINE_STATIC_LOCAL(QualifiedName, picker_icon,
+third_party/blink/renderer/core/dom/pseudo_element.cc:184:      DEFINE_STATIC_LOCAL(QualifiedName, expand_icon,
+third_party/blink/renderer/core/dom/pseudo_element.cc:189:      DEFINE_STATIC_LOCAL(QualifiedName, interest_button,
+third_party/blink/renderer/core/dom/pseudo_element.cc:194:      DEFINE_STATIC_LOCAL(QualifiedName, backdrop,
+third_party/blink/renderer/core/dom/pseudo_element.cc:199:      DEFINE_STATIC_LOCAL(QualifiedName, overscroll_backdrop,
+third_party/blink/renderer/core/dom/pseudo_element.cc:204:      DEFINE_STATIC_LOCAL(QualifiedName, first_letter,
+third_party/blink/renderer/core/dom/pseudo_element.cc:209:      DEFINE_STATIC_LOCAL(QualifiedName, first_letter,
+third_party/blink/renderer/core/dom/pseudo_element.cc:214:      DEFINE_STATIC_LOCAL(QualifiedName, marker, (AtomicString("::marker")));
+third_party/blink/renderer/core/dom/pseudo_element.cc:218:      DEFINE_STATIC_LOCAL(QualifiedName, overscroll_area_parent,
+third_party/blink/renderer/core/dom/pseudo_element.cc:223:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_marker_group,
+third_party/blink/renderer/core/dom/pseudo_element.cc:228:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_button_block_start,
+third_party/blink/renderer/core/dom/pseudo_element.cc:233:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_button_inline_start,
+third_party/blink/renderer/core/dom/pseudo_element.cc:238:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_button_inline_end,
+third_party/blink/renderer/core/dom/pseudo_element.cc:243:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_button_block_end,
+third_party/blink/renderer/core/dom/pseudo_element.cc:248:      DEFINE_STATIC_LOCAL(QualifiedName, scroll_marker,
+third_party/blink/renderer/core/dom/pseudo_element.cc:253:      DEFINE_STATIC_LOCAL(QualifiedName, transition,
+third_party/blink/renderer/core/dom/pseudo_element.cc:260:      DEFINE_STATIC_LOCAL(QualifiedName, transition_container,
+third_party/blink/renderer/core/dom/pseudo_element.cc:265:      DEFINE_STATIC_LOCAL(QualifiedName, transition_nested_groups,
+third_party/blink/renderer/core/dom/pseudo_element.cc:270:      DEFINE_STATIC_LOCAL(QualifiedName, transition_image_wrapper,
+third_party/blink/renderer/core/dom/pseudo_element.cc:275:      DEFINE_STATIC_LOCAL(QualifiedName, transition_incoming_image,
+third_party/blink/renderer/core/dom/pseudo_element.cc:280:      DEFINE_STATIC_LOCAL(QualifiedName, transition_outgoing_image,
+third_party/blink/renderer/core/dom/pseudo_element.cc:285:      DEFINE_STATIC_LOCAL(QualifiedName, skeleton,
+third_party/blink/renderer/core/dom/pseudo_element.cc:292:  DEFINE_STATIC_LOCAL(QualifiedName, name, (AtomicString("::unknown")));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:325:  DEFINE_STATIC_LOCAL(const AtomicString, discrete, ("discrete"));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:326:  DEFINE_STATIC_LOCAL(const AtomicString, linear, ("linear"));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:327:  DEFINE_STATIC_LOCAL(const AtomicString, paced, ("paced"));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:328:  DEFINE_STATIC_LOCAL(const AtomicString, spline, ("spline"));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:364:  DEFINE_STATIC_LOCAL(const AtomicString, sum, ("sum"));
+third_party/blink/renderer/core/svg/svg_animation_element.cc:370:  DEFINE_STATIC_LOCAL(const AtomicString, sum, ("sum"));
+third_party/blink/renderer/core/svg/svg_element.cc:324:  static HashMap<StringImpl*, CSSPropertyID>* property_name_to_id_map = nullptr;
+third_party/blink/renderer/core/svg/svg_element.cc:968:  DEFINE_THREAD_SAFE_STATIC_LOCAL(HashSet<QualifiedName>, animatable_attributes,
+third_party/blink/renderer/core/dom/document.cc:534:  DEFINE_STATIC_LOCAL(const AtomicString, combobox, ("combobox"));
+third_party/blink/renderer/core/dom/document.cc:539:  DEFINE_STATIC_LOCAL(const AtomicString, listbox, ("listbox"));
+third_party/blink/renderer/core/dom/document.cc:752:static bool g_force_synchronous_parsing_for_testing = false;
+third_party/blink/renderer/core/dom/document.cc:3552:size_t g_ax_object_cache_count = 0;
+third_party/blink/renderer/core/dom/document.cc:6733:  DEFINE_STATIC_LOCAL(EventFactorySet, event_factory, ());
+third_party/blink/renderer/core/svg/svg_use_element.cc:303:  DEFINE_STATIC_LOCAL(HashSet<QualifiedName>, allowed_element_tags,
+third_party/blink/renderer/core/svg/animation/svg_smil_element.cc:443:  DEFINE_STATIC_LOCAL(const AtomicString, indefinite_value, ("indefinite"));
+third_party/blink/renderer/core/svg/graphics/filters/svg_filter_builder.cc:44:    DEFINE_STATIC_LOCAL(const AtomicString, source_graphic_name,
+third_party/blink/renderer/core/svg/graphics/filters/svg_filter_builder.cc:50:    DEFINE_STATIC_LOCAL(const AtomicString, source_alpha_name, ("SourceAlpha"));
+third_party/blink/renderer/core/svg/graphics/filters/svg_filter_builder.cc:55:    DEFINE_STATIC_LOCAL(const AtomicString, fill_paint_name, ("FillPaint"));
+third_party/blink/renderer/core/svg/graphics/filters/svg_filter_builder.cc:60:    DEFINE_STATIC_LOCAL(const AtomicString, stroke_paint_name, ("StrokePaint"));
+third_party/blink/renderer/core/svg/graphics/svg_image.cc:940:  DEFINE_STATIC_LOCAL(const AtomicString, svg_mime_type, ("image/svg+xml"));
+third_party/blink/renderer/core/frame/page_scale_constraints.cc:99:bool PageScaleConstraints::operator==(const PageScaleConstraints& other) const {
+third_party/blink/renderer/core/svg/svg_animate_motion_element.cc:186:  DEFINE_STATIC_LOCAL(const AtomicString, auto_val, ("auto"));
+third_party/blink/renderer/core/svg/svg_animate_motion_element.cc:187:  DEFINE_STATIC_LOCAL(const AtomicString, auto_reverse, ("auto-reverse"));
+third_party/blink/renderer/core/dom/element.cc:634:  DEFINE_STATIC_LOCAL(HashSet<AtomicString>, shadow_root_tags,
+third_party/blink/renderer/core/dom/element.cc:3674:  DEFINE_STATIC_LOCAL(AttrNameToTrustedType, attribute_map, ({}));
+third_party/blink/renderer/core/frame/web_frame_widget_impl.cc:390:  DEFINE_STATIC_LOCAL(BrowsingContextGroupMap, values, ());
+third_party/blink/renderer/core/frame/web_frame_widget_impl.cc:451:bool WebFrameWidgetImpl::ignore_input_events_ = false;
+third_party/blink/renderer/core/view_transition/view_transition.h:543:  static int next_id_;
+third_party/blink/renderer/core/view_transition/view_transition_style_builder.cc:17:const char* const kGroupTagName = "::view-transition-group";
+third_party/blink/renderer/core/view_transition/view_transition_style_builder.cc:18:const char* const kGroupChildrenTagName = "::view-transition-group-children";
+third_party/blink/renderer/core/view_transition/view_transition_style_builder.cc:19:const char* const kImagePairTagName = "::view-transition-image-pair";
+third_party/blink/renderer/core/view_transition/view_transition_style_builder.cc:20:const char* const kNewImageTagName = "::view-transition-new";
+third_party/blink/renderer/core/view_transition/view_transition_style_builder.cc:21:const char* const kOldImageTagName = "::view-transition-old";
+third_party/blink/renderer/core/dom/qualified_name.cc:51:  static base::NoDestructor<base::Lock> lock;
+third_party/blink/renderer/core/dom/qualified_name.cc:57:  static QualifiedNameCache* g_name_cache = new QualifiedNameCache;
+third_party/blink/renderer/core/frame/navigator_id.cc:70:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<String>, platform_name, ());
+third_party/blink/renderer/core/view_transition/view_transition.cc:62:int ViewTransition::next_id_ = 0;
+third_party/blink/renderer/core/frame/web_local_frame_impl.cc:304:int g_frame_count = 0;
+third_party/blink/renderer/core/frame/web_local_frame_impl.cc:316:    DEFINE_STATIC_LOCAL(FramePolicy, frame_policy, ());
+third_party/blink/renderer/core/frame/web_local_frame_impl.cc:680:static CreateWebFrameWidgetCallback* g_create_web_frame_widget = nullptr;
+third_party/blink/renderer/core/dom/document_statistics_collector.cc:86:  DEFINE_STATIC_LOCAL(Vector<String>, unlikely_candidates, ());
+third_party/blink/renderer/core/dom/document_statistics_collector.cc:97:  DEFINE_STATIC_LOCAL(Vector<String>, highly_likely_candidates, ());
+third_party/blink/renderer/core/dom/document_statistics_collector.cc:165:  DEFINE_STATIC_LOCAL(AtomicString, og_type, ("og:type"));
+third_party/blink/renderer/core/dom/document_statistics_collector.cc:166:  DEFINE_STATIC_LOCAL(AtomicString, property_attr, ("property"));
+third_party/blink/renderer/core/dom/document_statistics_collector.cc:222:  DEFINE_STATIC_LOCAL(CustomCountHistogram, distillability_histogram,
+third_party/blink/renderer/core/dom/range_boundary_point.h:93:inline RangeBoundaryPoint& RangeBoundaryPoint::operator=(
+third_party/blink/renderer/core/typed_arrays/dom_shared_array_buffer.cc:36:const WrapperTypeInfo& DOMSharedArrayBuffer::wrapper_type_info_ =
+third_party/blink/renderer/core/typed_arrays/dom_data_view.cc:39:const WrapperTypeInfo& DOMDataView::wrapper_type_info_ =
+third_party/blink/renderer/core/dom/node_rare_data.cc:279:  static ScrollOffset offset;
+third_party/blink/renderer/core/typed_arrays/dom_array_buffer_view.cc:34:const WrapperTypeInfo& DOMArrayBufferView::wrapper_type_info_ =
+third_party/blink/renderer/core/typed_arrays/dom_array_buffer.cc:43:const WrapperTypeInfo& DOMArrayBuffer::wrapper_type_info_ =
+third_party/blink/renderer/core/scroll/scrollbar_theme_aura.cc:118:  DEFINE_STATIC_LOCAL(ScrollbarThemeAura, theme, ());
+third_party/blink/renderer/core/dom/processing_instruction.cc:304:  DEFINE_STATIC_LOCAL(AtomicString, kType, ("type"));
+third_party/blink/renderer/core/dom/processing_instruction.cc:305:  DEFINE_STATIC_LOCAL(AtomicString, kHref, ("href"));
+third_party/blink/renderer/core/dom/processing_instruction.cc:306:  DEFINE_STATIC_LOCAL(AtomicString, kCharset, ("charset"));
+third_party/blink/renderer/core/dom/processing_instruction.cc:307:  DEFINE_STATIC_LOCAL(AtomicString, kAlternate, ("alternate"));
+third_party/blink/renderer/core/dom/processing_instruction.cc:308:  DEFINE_STATIC_LOCAL(AtomicString, kTitle, ("title"));
+third_party/blink/renderer/core/dom/processing_instruction.cc:309:  DEFINE_STATIC_LOCAL(AtomicString, kMedia, ("media"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:32:  DEFINE_STATIC_LOCAL(AtomicString, wildcard, ("*"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:33:  DEFINE_STATIC_LOCAL(AtomicString, block_start, ("block-start"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:34:  DEFINE_STATIC_LOCAL(AtomicString, inline_start, ("inline-start"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:35:  DEFINE_STATIC_LOCAL(AtomicString, inline_end, ("inline-end"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:36:  DEFINE_STATIC_LOCAL(AtomicString, block_end, ("block-end"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:54:  DEFINE_STATIC_LOCAL(AtomicString, up, ("up"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:55:  DEFINE_STATIC_LOCAL(AtomicString, right, ("right"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:56:  DEFINE_STATIC_LOCAL(AtomicString, down, ("down"));
+third_party/blink/renderer/core/dom/scroll_button_pseudo_element.cc:57:  DEFINE_STATIC_LOCAL(AtomicString, left, ("left"));
+third_party/blink/renderer/core/dom/weak_identifier_map.h:84:    static IdentifierType last_id = 0;
+third_party/blink/renderer/core/dom/weak_identifier_map.h:126:    DEFINE_STATIC_LOCAL(                                                \
+third_party/blink/renderer/core/dom/tree_scope_adopter.cc:277:static bool g_did_move_to_new_document_was_called = false;
+third_party/blink/renderer/core/dom/tree_scope_adopter.cc:278:static Document* g_old_document_did_move_to_new_document_was_called_with =
+third_party/blink/renderer/core/scroll/scrollbar_theme.cc:291:    DEFINE_STATIC_LOCAL(ScrollbarThemeOverlayMock, overlay_mock_theme, ());
+third_party/blink/renderer/core/scroll/scrollbar_theme_fluent.cc:22:  DEFINE_STATIC_LOCAL(ScrollbarThemeFluent, theme, ());
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:52:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:62:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:72:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:82:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:92:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:102:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scroll_alignment.cc:112:  DEFINE_STATIC_LOCAL(const mojom::blink::ScrollAlignment,
+third_party/blink/renderer/core/scroll/scrollbar_theme_overlay_mobile.cc:26:    DEFINE_STATIC_LOCAL(ScrollbarThemeOverlayMock, theme, ());
+third_party/blink/renderer/core/scroll/scrollbar_theme_overlay_mobile.cc:30:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/dom/mutation_observer.cc:55:static unsigned g_observer_priority = 0;
+third_party/blink/renderer/core/dom/mutation_record.cc:173:  DEFINE_STATIC_LOCAL(AtomicString, child_list, ("childList"));
+third_party/blink/renderer/core/dom/mutation_record.cc:178:  DEFINE_STATIC_LOCAL(AtomicString, attributes, ("attributes"));
+third_party/blink/renderer/core/dom/mutation_record.cc:183:  DEFINE_STATIC_LOCAL(AtomicString, character_data, ("characterData"));
+third_party/blink/renderer/core/scroll/scrollbar_theme_overlay.cc:43:  DEFINE_STATIC_LOCAL(
+third_party/blink/renderer/core/dom/tree_ordered_map.cc:49:static int g_remove_scope_level = 0;
+third_party/blink/renderer/core/dom/space_split_string.cc:170:  DEFINE_THREAD_SAFE_STATIC_LOCAL(ThreadSpecific<Persistent<DataMapHolder>>,

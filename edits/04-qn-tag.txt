@@ -1,0 +1,7 @@
+@@@ third_party/blink/renderer/core/dom/qualified_name.h
+<<<<
+  static constexpr base::subtle::StartRefCountFromOneTag kRefCountPreference =
+      base::subtle::kStartRefCountFromOneTag;
+====
+  using RefCountPreferenceTag = base::subtle::StartRefCountFromOneTag;
+>>>>

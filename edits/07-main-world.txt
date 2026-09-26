@@ -1,0 +1,25 @@
+@@@ third_party/blink/renderer/platform/bindings/v8_per_isolate_data.h
+<<<<
+  DOMWrapperWorld& GetMainWorld() { return *main_world_; }
+====
+  DOMWrapperWorld& GetMainWorld() { return *main_world_; }
+
+  // The Blink render thread owns a non-scripted replica LocalFrame. Frames
+  // always own a main-world WindowProxy manager, so that thread needs a
+  // main-world wrapper table even though it never runs author script.
+  void EnsureMainWorldForRenderThread();
+>>>>
+@@@ third_party/blink/renderer/platform/bindings/v8_per_isolate_data.cc
+<<<<
+V8PerIsolateData::~V8PerIsolateData() = default;
+====
+V8PerIsolateData::~V8PerIsolateData() = default;
+
+void V8PerIsolateData::EnsureMainWorldForRenderThread() {
+  if (!main_world_) {
+    main_world_ =
+        DOMWrapperWorld::Create(GetIsolate(), DOMWrapperWorld::WorldType::kMain,
+                                /*is_default_world_of_isolate=*/true);
+  }
+}
+>>>>

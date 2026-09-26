@@ -1,0 +1,7 @@
+<!DOCTYPE html><html><body style="margin:0;background:#cfc">
+<button id=big style="display:block;width:100%;height:300px;font-size:30px">big button</button>
+<div id=below style="height:200px;background:#88f">below</div>
+<script>
+for (const t of ["mousedown","mouseup","click"]) document.addEventListener(t, e=>console.log("EV", t, e.target.id||e.target.tagName, e.clientX, e.clientY, "offset", e.offsetX, e.offsetY));
+document.getElementById("big").addEventListener("mouseenter", ()=>console.log("EV enter big"));
+</script></body></html>

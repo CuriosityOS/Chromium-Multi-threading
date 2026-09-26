@@ -1,0 +1,19 @@
+@@@ third_party/blink/renderer/core/dom/document.h
+<<<<
+  void SetRenderThreadJournal(RenderThreadJournal* journal);
+====
+  void SetRenderThreadJournal(RenderThreadJournal* journal);
+
+  // True for the replica document that lives on the render thread. The
+  // replica never runs script; it only runs style, layout and paint.
+  bool IsRenderThreadReplica() const { return is_render_thread_replica_; }
+  void SetIsRenderThreadReplica() { is_render_thread_replica_ = true; }
+>>>>
+<<<<
+  Member<RenderThreadJournal> render_thread_journal_;
+
+====
+  Member<RenderThreadJournal> render_thread_journal_;
+  bool is_render_thread_replica_ = false;
+
+>>>>

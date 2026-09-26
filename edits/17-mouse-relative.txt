@@ -1,0 +1,131 @@
+@@@ third_party/blink/renderer/core/events/mouse_event.h
+<<<<
+  void ComputeRelativePosition();
+====
+  void ComputeRelativePosition();
+
+ public:
+  // Layout-dependent part of ComputeRelativePosition. `offset` and
+  // `layer_location` come in as page coordinates and are adjusted in place.
+  // Runs on the thread that owns layout (the render thread with
+  // off-main-thread rendering).
+  static void ComputeRelativePositionFromLayout(
+      const Node& target_node,
+      const gfx::PointF& absolute_location,
+      float zoom_factor,
+      gfx::PointF& offset,
+      gfx::PointF& layer_location);
+
+ protected:
+>>>>
+@@@ third_party/blink/renderer/core/events/mouse_event.cc
+<<<<
+  float zoom_factor = LayoutZoomFactor(dom_window_for_zoom_factor);
+  float inverse_zoom_factor = 1 / zoom_factor;
+
+  // Must have an updated layout tree for this math to work correctly.
+  target_node->GetDocument().UpdateStyleAndLayout(DocumentUpdateReason::kInput);
+
+  // Adjust offsetLocation to be relative to the target's padding box.
+  if (const LayoutObject* layout_object = FindTargetLayoutObject(target_node)) {
+    gfx::PointF local_pos =
+        layout_object->AbsoluteToLocalPoint(AbsoluteLocation());
+
+    if (layout_object->IsInline()) {
+      UseCounter::Count(
+          target_node->GetDocument(),
+          WebFeature::kMouseEventRelativePositionForInlineElement);
+    }
+====
+  float zoom_factor = LayoutZoomFactor(dom_window_for_zoom_factor);
+
+  gfx::PointF offset(offset_x_, offset_y_);
+  // With off-main-thread rendering the render thread owns layout and
+  // computes this; otherwise compute it here.
+  if (!RenderThreadJournal::QueryMouseRelativePosition(
+          *target_node, AbsoluteLocation(), zoom_factor, offset,
+          layer_location_)) {
+    // Must have an updated layout tree for this math to work correctly.
+    target_node->GetDocument().UpdateStyleAndLayout(
+        DocumentUpdateReason::kInput);
+    ComputeRelativePositionFromLayout(*target_node, AbsoluteLocation(),
+                                      zoom_factor, offset, layer_location_);
+  }
+  offset_x_ = offset.x();
+  offset_y_ = offset.y();
+
+  has_cached_relative_position_ = true;
+}
+
+// static
+void MouseEvent::ComputeRelativePositionFromLayout(
+    const Node& target,
+    const gfx::PointF& absolute_location,
+    float zoom_factor,
+    gfx::PointF& offset,
+    gfx::PointF& layer_location) {
+  Node* target_node = const_cast<Node*>(&target);
+  float inverse_zoom_factor = 1 / zoom_factor;
+
+  // Adjust offsetLocation to be relative to the target's padding box.
+  if (const LayoutObject* layout_object = FindTargetLayoutObject(target_node)) {
+    gfx::PointF local_pos = layout_object->AbsoluteToLocalPoint(absolute_location);
+
+    if (layout_object->IsInline() && !IsBlinkRenderThread()) {
+      UseCounter::Count(
+          target_node->GetDocument(),
+          WebFeature::kMouseEventRelativePositionForInlineElement);
+    }
+>>>>
+<<<<
+    offset_x_ = local_pos.x() * inverse_zoom_factor;
+    offset_y_ = local_pos.y() * inverse_zoom_factor;
+  }
+====
+    offset = gfx::PointF(local_pos.x() * inverse_zoom_factor,
+                         local_pos.y() * inverse_zoom_factor);
+  }
+>>>>
+<<<<
+  if (n) {
+    layer_location_.Scale(zoom_factor);
+    if (LocalFrameView* view = n->GetLayoutObject()->View()->GetFrameView())
+      layer_location_ = view->DocumentToFrame(layer_location_);
+
+    PaintLayer* layer = n->GetLayoutObject()->EnclosingLayer();
+    layer = layer->EnclosingSelfPaintingLayer();
+
+    PhysicalOffset physical_offset =
+        layer->GetLayoutObject().LocalToAbsolutePoint(PhysicalOffset());
+    layer_location_ -= gfx::Vector2dF(physical_offset);
+
+    layer_location_.Scale(inverse_zoom_factor);
+  }
+
+  has_cached_relative_position_ = true;
+}
+====
+  if (n) {
+    layer_location.Scale(zoom_factor);
+    if (LocalFrameView* view = n->GetLayoutObject()->View()->GetFrameView())
+      layer_location = view->DocumentToFrame(layer_location);
+
+    PaintLayer* layer = n->GetLayoutObject()->EnclosingLayer();
+    layer = layer->EnclosingSelfPaintingLayer();
+
+    PhysicalOffset physical_offset =
+        layer->GetLayoutObject().LocalToAbsolutePoint(PhysicalOffset());
+    layer_location -= gfx::Vector2dF(physical_offset);
+
+    layer_location.Scale(inverse_zoom_factor);
+  }
+}
+>>>>
+<<<<
+#include "third_party/blink/renderer/core/events/mouse_event.h"
+====
+#include "third_party/blink/renderer/core/events/mouse_event.h"
+
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+#include "third_party/blink/renderer/platform/wtf/render_thread_state.h"
+>>>>

@@ -1,0 +1,17 @@
+@@@ third_party/blink/renderer/platform/wtf/BUILD.gn
+<<<<
+    "per_thread_static.h",
+====
+    "per_thread_static.h",
+    "render_thread_state.cc",
+    "render_thread_state.h",
+>>>>
+@@@ third_party/blink/renderer/bindings/core/v8/window_proxy_manager.cc
+<<<<
+  // All WindowProxyManagers must be created in the main thread.
+  CHECK(IsMainThread());
+====
+  // All WindowProxyManagers must be created in the main thread (or the
+  // non-scripted render thread that owns replica frames).
+  CHECK(IsMainOrBlinkRenderThread());
+>>>>

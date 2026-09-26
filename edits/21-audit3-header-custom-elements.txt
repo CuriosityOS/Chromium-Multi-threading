@@ -1,0 +1,60 @@
+@@@ third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc
+<<<<
+
+CEReactionsScope* CEReactionsScope::top_of_stack_ = nullptr;
+====
+
+constinit thread_local CEReactionsScope* CEReactionsScope::top_of_stack_ =
+    nullptr;
+>>>>
+@@@ third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc
+<<<<
+CEReactionsScope* CEReactionsScope::Current() {
+  DCHECK(IsMainThread());
+  return top_of_stack_;
+====
+CEReactionsScope* CEReactionsScope::Current() {
+  return top_of_stack_;
+>>>>
+@@@ third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc
+<<<<
+    : prev_(top_of_stack_), try_catch_(isolate) {
+  // For speed of the bindings we use a global variable to determine if
+  // we have a CEReactionScope. We check that this is only on the main thread
+  // otherwise this global variable will have collisions.
+  DCHECK(IsMainThread());
+  top_of_stack_ = this;
+====
+    : prev_(top_of_stack_), try_catch_(isolate) {
+  // Each thread maintains its own reaction-scope stack and isolate.
+  top_of_stack_ = this;
+>>>>
+@@@ third_party/blink/renderer/core/html/custom/ce_reactions_scope.h
+<<<<
+ private:
+  static CEReactionsScope* top_of_stack_;
+  CustomElementReactionStack* stack_ = nullptr;
+====
+ private:
+  static thread_local CEReactionsScope* top_of_stack_;
+  CustomElementReactionStack* stack_ = nullptr;
+>>>>
+@@@ third_party/blink/renderer/core/html/custom/custom_element_construction_stack.cc
+<<<<
+
+wtf_size_t CustomElementConstructionStackScope::nesting_level_ = 0;
+====
+
+constinit thread_local wtf_size_t
+    CustomElementConstructionStackScope::nesting_level_ = 0;
+>>>>
+@@@ third_party/blink/renderer/core/html/custom/custom_element_construction_stack.h
+<<<<
+
+  static wtf_size_t nesting_level_;
+};
+====
+
+  static thread_local wtf_size_t nesting_level_;
+};
+>>>>

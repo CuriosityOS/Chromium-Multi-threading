@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Independent rendering validation</title>
+    <link rel="stylesheet" href="demo.css">
+    <script src="common.js" defer></script>
+    <script src="demo.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <h1>Layout while JavaScript is blocked</h1>
+      <p>Same-task class change → height / grid transition → synchronous busy loop.</p>
+      <p id="status">Preparing…</p>
+      <button data-kind="height" data-ms="3000">Height + 3 seconds</button>
+      <button data-kind="grid" data-ms="3000">Grid + 3 seconds</button>
+      <button data-kind="height" data-ms="10000">Height + 10 seconds</button>
+      <button data-kind="grid" data-ms="10000">Grid + 10 seconds</button>
+    </header>
+    <main>
+      <section id="proof" aria-label="Measured layout region">
+        <h2 id="case-label">height transition</h2>
+        <div id="panel" class="height"><div id="fill"></div></div>
+        <div id="follower">This normal-flow sibling must move with layout.</div>
+      </section>
+      <aside>
+        <h2>Evidence rules</h2>
+        <p>The cyan panel grows from 24 to 264 pixels. The yellow sibling is in normal flow.</p>
+        <p>No transform, opacity, canvas, video, worker animation, or spinner.</p>
+        <p>A paused JS heartbeat is a negative control, not a rendered-frame count.</p>
+        <p>JS heartbeat: <span id="heartbeat">0</span></p>
+        <p>Only external pixel capture + trace PID/TIDs can establish rendering progress.</p>
+      </aside>
+    </main>
+    <section id="smoke" aria-label="DOM mutation smoke tests">
+      <h2>DOM / CSSOM smoke</h2>
+      <div id="insert-slot"></div>
+      <div id="text-probe">Before text mutation</div>
+      <div id="style-probe">Inline style</div>
+      <div id="cssom-probe">CSSOM rule</div>
+    </section>
+  </body>
+</html>

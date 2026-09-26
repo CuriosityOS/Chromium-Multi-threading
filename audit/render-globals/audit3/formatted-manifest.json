@@ -1,0 +1,482 @@
+{
+  "cc-caches": [
+    {
+      "path": "third_party/blink/renderer/core/css/css_computed_style_declaration.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/text/strcat.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/string_builder.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/text/strcat.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/string_builder.h\"",
+      "line": 55
+    },
+    {
+      "path": "third_party/blink/renderer/core/css/css_computed_style_declaration.cc",
+      "oldText": "  }\n  DEFINE_STATIC_LOCAL(HashSet<CSSPropertyID>, property_id_set, ());\n  if (!property_id_set.insert(property.PropertyID()).is_new_entry) {",
+      "newText": "  }\n  DEFINE_PER_THREAD_STATIC_LOCAL(HashSet<CSSPropertyID>, property_id_set, ());\n  if (!property_id_set.insert(property.PropertyID()).is_new_entry) {",
+      "line": 74
+    },
+    {
+      "path": "third_party/blink/renderer/core/css/css_computed_style_declaration.cc",
+      "oldText": "    const ExecutionContext* execution_context) {\n  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());\n  if (properties.empty()) {",
+      "newText": "    const ExecutionContext* execution_context) {\n  DEFINE_PER_THREAD_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());\n  if (properties.empty()) {",
+      "line": 105
+    },
+    {
+      "path": "third_party/blink/renderer/core/css/css_style_declaration.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/std_lib_extras.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/ascii_ctype.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/std_lib_extras.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/ascii_ctype.h\"",
+      "line": 48
+    },
+    {
+      "path": "third_party/blink/renderer/core/css/css_style_declaration.cc",
+      "oldText": "  typedef HashMap<String, CSSPropertyID> CSSPropertyIDMap;\n  DEFINE_STATIC_LOCAL(CSSPropertyIDMap, map, ());\n  CSSPropertyIDMap::iterator iter = map.find(name);",
+      "newText": "  typedef HashMap<String, CSSPropertyID> CSSPropertyIDMap;\n  DEFINE_PER_THREAD_STATIC_LOCAL(CSSPropertyIDMap, map, ());\n  CSSPropertyIDMap::iterator iter = map.find(name);",
+      "line": 123
+    },
+    {
+      "path": "third_party/blink/renderer/core/css/css_style_declaration.cc",
+      "oldText": "  typedef Vector<String, kNumCSSProperties - 1> PreAllocatedPropertyVector;\n  DEFINE_STATIC_LOCAL(PreAllocatedPropertyVector, property_names, ());",
+      "newText": "  typedef Vector<String, kNumCSSProperties - 1> PreAllocatedPropertyVector;\n  DEFINE_PER_THREAD_STATIC_LOCAL(PreAllocatedPropertyVector, property_names,\n                                 ());",
+      "line": 262
+    },
+    {
+      "path": "third_party/blink/renderer/core/svg/svg_animate_element.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/hash_map.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/hash_map.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"",
+      "line": 54
+    },
+    {
+      "path": "third_party/blink/renderer/core/svg/svg_animate_element.cc",
+      "oldText": "      HashMap<QualifiedName, AnimatedPropertyType>;\n  DEFINE_STATIC_LOCAL(AttributeToPropertyTypeMap, css_property_map, ());",
+      "newText": "      HashMap<QualifiedName, AnimatedPropertyType>;\n  DEFINE_PER_THREAD_STATIC_LOCAL(AttributeToPropertyTypeMap, css_property_map,\n                                 ());",
+      "line": 82
+    },
+    {
+      "path": "third_party/blink/renderer/core/animation/underlying_value_owner.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/heap/persistent.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/heap/persistent.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"",
+      "line": 6
+    },
+    {
+      "path": "third_party/blink/renderer/core/animation/underlying_value_owner.cc",
+      "oldText": "const InterpolationValue& UnderlyingValueOwner::Value() const {\n  DEFINE_STATIC_LOCAL(NullValueWrapper, null_value_wrapper, ());\n  return *this ? *value_ : null_value_wrapper.value->underlying();",
+      "newText": "const InterpolationValue& UnderlyingValueOwner::Value() const {\n  DEFINE_PER_THREAD_STATIC_LOCAL(NullValueWrapper, null_value_wrapper, ());\n  return *this ? *value_ : null_value_wrapper.value->underlying();",
+      "line": 40
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/decoration_line_painter.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/geometry/path_builder.h\"\n#include \"third_party/blink/renderer/platform/geometry/stroke_data.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/geometry/path_builder.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/geometry/stroke_data.h\"",
+      "line": 9
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/decoration_line_painter.cc",
+      "oldText": "\n  DEFINE_STATIC_LOCAL(std::optional<WavyCache>, wavy_cache, (std::nullopt));",
+      "newText": "\n  DEFINE_PER_THREAD_STATIC_LOCAL(std::optional<WavyCache>, wavy_cache,\n                                 (std::nullopt));",
+      "line": 379
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/html_slot_element.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/instrumentation/use_counter.h\"\n#include \"third_party/blink/renderer/platform/runtime_enabled_features.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/instrumentation/use_counter.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/runtime_enabled_features.h\"",
+      "line": 49
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/html_slot_element.cc",
+      "oldText": "\n  DEFINE_STATIC_LOCAL(LCSTable*, lcs_table, (new LCSTable(kLCSTableSizeLimit)));\n  DEFINE_STATIC_LOCAL(BacktrackTable*, backtrack_table,\n                      (new BacktrackTable(kLCSTableSizeLimit)));",
+      "newText": "\n  DEFINE_PER_THREAD_STATIC_LOCAL(LCSTable*, lcs_table,\n                                 (new LCSTable(kLCSTableSizeLimit)));\n  DEFINE_PER_THREAD_STATIC_LOCAL(BacktrackTable*, backtrack_table,\n                                 (new BacktrackTable(kLCSTableSizeLimit)));",
+      "line": 571
+    },
+    {
+      "path": "third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/text/ignoring_ascii_case_hash.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/utf16.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/text/ignoring_ascii_case_hash.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/wtf/text/utf16.h\"",
+      "line": 22
+    },
+    {
+      "path": "third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc",
+      "oldText": "static mojom::blink::Hyphenation* GetService() {\n  DEFINE_STATIC_LOCAL(mojo::Remote<mojom::blink::Hyphenation>, service,\n                      (ConnectToRemoteService()));\n  return service.get();",
+      "newText": "static mojom::blink::Hyphenation* GetService() {\n  DEFINE_PER_THREAD_STATIC_LOCAL(mojo::Remote<mojom::blink::Hyphenation>,\n                                 service, (ConnectToRemoteService()));\n  return service.get();",
+      "line": 57
+    },
+    {
+      "path": "third_party/blink/renderer/core/svg/svg_element.cc",
+      "oldText": "\n  static HashMap<StringImpl*, CSSPropertyID>* property_name_to_id_map = nullptr;\n  if (!property_name_to_id_map) {",
+      "newText": "\n  static constinit thread_local HashMap<StringImpl*, CSSPropertyID>*\n      property_name_to_id_map = nullptr;\n  if (!property_name_to_id_map) {",
+      "line": 323
+    },
+    {
+      "path": "third_party/blink/renderer/core/layout/forms/layout_text_control.cc",
+      "oldText": "\n  static HashSet<AtomicString>* font_families_with_invalid_char_width_map =\n      nullptr;\n  if (!font_families_with_invalid_char_width_map) {",
+      "newText": "\n  static constinit thread_local HashSet<AtomicString>*\n      font_families_with_invalid_char_width_map = nullptr;\n  if (!font_families_with_invalid_char_width_map) {",
+      "line": 155
+    },
+    {
+      "path": "third_party/blink/renderer/platform/text/platform_locale.cc",
+      "oldText": "namespace {\nLocale* g_default_locale;\n}",
+      "newText": "namespace {\nconstinit thread_local Locale* g_default_locale = nullptr;\n}",
+      "line": 45
+    },
+    {
+      "path": "third_party/blink/renderer/platform/text/platform_locale.cc",
+      "oldText": "Locale& Locale::DefaultLocale() {\n  DCHECK(IsMainThread());\n  if (!g_default_locale)\n    g_default_locale = Locale::Create(DefaultLanguage()).release();\n  return *g_default_locale;",
+      "newText": "Locale& Locale::DefaultLocale() {\n  if (!g_default_locale) {\n    g_default_locale = Locale::Create(DefaultLanguage()).release();\n  }\n  return *g_default_locale;",
+      "line": 188
+    }
+  ],
+  "cc-ids": [
+    {
+      "path": "third_party/blink/renderer/platform/graphics/compositor_element_id.cc",
+      "oldText": "\n#include <limits>",
+      "newText": "\n#include <atomic>\n#include <limits>",
+      "line": 6
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/compositor_element_id.cc",
+      "oldText": "UniqueObjectId NewUniqueObjectId() {\n  static UniqueObjectId counter = 0;\n  return ++counter;\n}",
+      "newText": "UniqueObjectId NewUniqueObjectId() {\n  static constinit std::atomic<UniqueObjectId> counter{0};\n  return counter.fetch_add(1, std::memory_order_relaxed) + 1;\n}",
+      "line": 11
+    }
+  ],
+  "cc-dcheck": [
+    {
+      "path": "third_party/blink/renderer/core/dom/tree_ordered_map.cc",
+      "oldText": "#if DCHECK_IS_ON()\nstatic int g_remove_scope_level = 0;",
+      "newText": "#if DCHECK_IS_ON()\nstatic constinit thread_local int g_remove_scope_level = 0;",
+      "line": 48
+    },
+    {
+      "path": "third_party/blink/renderer/core/dom/tree_scope_adopter.cc",
+      "oldText": "#if DCHECK_IS_ON()\nstatic bool g_did_move_to_new_document_was_called = false;\nstatic Document* g_old_document_did_move_to_new_document_was_called_with =\n    nullptr;",
+      "newText": "#if DCHECK_IS_ON()\nstatic constinit thread_local bool g_did_move_to_new_document_was_called =\n    false;\nstatic constinit thread_local Document*\n    g_old_document_did_move_to_new_document_was_called_with = nullptr;",
+      "line": 276
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer.cc",
+      "oldText": "#if DCHECK_IS_ON()\n  static bool check_no_dirty_flags = false;\n  std::optional<base::AutoReset<bool>> reset_check_no_dirty_flags;",
+      "newText": "#if DCHECK_IS_ON()\n  static constinit thread_local bool check_no_dirty_flags = false;\n  std::optional<base::AutoReset<bool>> reset_check_no_dirty_flags;",
+      "line": 2733
+    }
+  ],
+  "cc-images": [
+    {
+      "path": "third_party/blink/renderer/core/layout/layout_image_resource.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/graphics/bitmap_image.h\"\n#include \"ui/base/resource/resource_scale_factor.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/graphics/bitmap_image.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"ui/base/resource/resource_scale_factor.h\"",
+      "line": 36
+    },
+    {
+      "path": "third_party/blink/renderer/core/layout/layout_image_resource.cc",
+      "oldText": "  if (device_pixel_ratio >= 2) {\n    DEFINE_STATIC_REF(\n        Image, broken_image_hi_res,\n        (Image::LoadPlatformResource(IDR_BROKENIMAGE, ui::k200Percent)));\n    return broken_image_hi_res;",
+      "newText": "  if (device_pixel_ratio >= 2) {\n    DEFINE_PER_THREAD_STATIC_LOCAL(\n        Image*, broken_image_hi_res,\n        (Image::LoadPlatformResource(IDR_BROKENIMAGE, ui::k200Percent)\n             .release()));\n    return broken_image_hi_res;",
+      "line": 175
+    },
+    {
+      "path": "third_party/blink/renderer/core/layout/layout_image_resource.cc",
+      "oldText": "\n  DEFINE_STATIC_REF(Image, broken_image_lo_res,\n                    (Image::LoadPlatformResource(IDR_BROKENIMAGE)));\n  return broken_image_lo_res;",
+      "newText": "\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, broken_image_lo_res,\n      (Image::LoadPlatformResource(IDR_BROKENIMAGE).release()));\n  return broken_image_lo_res;",
+      "line": 181
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/theme_painter_default.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/graphics/color.h\"\n#include \"third_party/blink/renderer/platform/graphics/graphics_context.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/graphics/color.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/graphics/graphics_context.h\"",
+      "line": 47
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/theme_painter_default.cc",
+      "oldText": "\n  DEFINE_STATIC_REF(Image, cancel_image,\n                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL)));\n  DEFINE_STATIC_REF(Image, cancel_pressed_image,\n                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED)));\n  DEFINE_STATIC_REF(Image, cancel_image_dark_mode,\n                    (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_DARK_MODE)));\n  DEFINE_STATIC_REF(\n      Image, cancel_pressed_image_dark_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_DARK_MODE)));\n  DEFINE_STATIC_REF(\n      Image, cancel_image_hc_light_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_HC_LIGHT_MODE)));\n  DEFINE_STATIC_REF(\n      Image, cancel_pressed_image_hc_light_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_HC_LIGHT_MODE)));\n  Image* color_scheme_adjusted_cancel_image;",
+      "newText": "\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_image,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL).release()));\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_pressed_image,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED).release()));\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_image_dark_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_DARK_MODE).release()));\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_pressed_image_dark_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_DARK_MODE)\n           .release()));\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_image_hc_light_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_HC_LIGHT_MODE).release()));\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, cancel_pressed_image_hc_light_mode,\n      (Image::LoadPlatformResource(IDR_SEARCH_CANCEL_PRESSED_HC_LIGHT_MODE)\n           .release()));\n  Image* color_scheme_adjusted_cancel_image;",
+      "line": 853
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/canvas/html_canvas_element.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/functional.h\"\n#include \"ui/accessibility/accessibility_features.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/functional.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"ui/accessibility/accessibility_features.h\"",
+      "line": 130
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/canvas/html_canvas_element.cc",
+      "oldText": "  if (device_scale_factor >= 2) {\n    DEFINE_STATIC_REF(blink::Image, broken_canvas_hi_res,\n                      (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS,\n                                                          ui::k200Percent)));\n    return std::make_pair(broken_canvas_hi_res, 2);",
+      "newText": "  if (device_scale_factor >= 2) {\n    DEFINE_PER_THREAD_STATIC_LOCAL(\n        Image*, broken_canvas_hi_res,\n        (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS, ui::k200Percent)\n             .release()));\n    return std::make_pair(broken_canvas_hi_res, 2);",
+      "line": 1093
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/canvas/html_canvas_element.cc",
+      "oldText": "\n  DEFINE_STATIC_REF(blink::Image, broken_canvas_lo_res,\n                    (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS)));\n  return std::make_pair(broken_canvas_lo_res, 1);",
+      "newText": "\n  DEFINE_PER_THREAD_STATIC_LOCAL(\n      Image*, broken_canvas_lo_res,\n      (blink::Image::LoadPlatformResource(IDR_BROKENCANVAS).release()));\n  return std::make_pair(broken_canvas_lo_res, 1);",
+      "line": 1099
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/image.cc",
+      "oldText": "#include \"third_party/blink/renderer/platform/wtf/allocator/allocator.h\"\n#include \"third_party/blink/renderer/platform/wtf/shared_buffer.h\"",
+      "newText": "#include \"third_party/blink/renderer/platform/wtf/allocator/allocator.h\"\n#include \"third_party/blink/renderer/platform/wtf/per_thread_static.h\"\n#include \"third_party/blink/renderer/platform/wtf/shared_buffer.h\"",
+      "line": 51
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/image.cc",
+      "oldText": "Image* Image::NullImage() {\n  DCHECK(IsMainThread());\n  DEFINE_STATIC_REF(Image, null_image, (BitmapImage::Create()));\n  return null_image;",
+      "newText": "Image* Image::NullImage() {\n  DEFINE_PER_THREAD_STATIC_LOCAL(Image*, null_image,\n                                 (BitmapImage::Create().release()));\n  return null_image;",
+      "line": 76
+    }
+  ],
+  "header-scopes": [
+    {
+      "path": "third_party/blink/renderer/core/display_lock/display_lock_utilities.cc",
+      "oldText": "\nDisplayLockUtilities::LockCheckMemoizationScope*\n    DisplayLockUtilities::memoizer_ = nullptr;",
+      "newText": "\nconstinit thread_local DisplayLockUtilities::LockCheckMemoizationScope*\n    DisplayLockUtilities::memoizer_ = nullptr;",
+      "line": 33
+    },
+    {
+      "path": "third_party/blink/renderer/core/display_lock/display_lock_utilities.h",
+      "oldText": "\n  static LockCheckMemoizationScope* memoizer_;\n};",
+      "newText": "\n  static thread_local LockCheckMemoizationScope* memoizer_;\n};",
+      "line": 342
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/timing/paint_timing_detector.cc",
+      "oldText": "\nScopedPaintTimingDetectorBlockPaintHook*\n    ScopedPaintTimingDetectorBlockPaintHook::top_ = nullptr;",
+      "newText": "\nconstinit thread_local ScopedPaintTimingDetectorBlockPaintHook*\n    ScopedPaintTimingDetectorBlockPaintHook::top_ = nullptr;",
+      "line": 394
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/timing/paint_timing_detector.h",
+      "oldText": "  std::optional<Data> data_;\n  static ScopedPaintTimingDetectorBlockPaintHook* top_;\n};",
+      "newText": "  std::optional<Data> data_;\n  static thread_local ScopedPaintTimingDetectorBlockPaintHook* top_;\n};",
+      "line": 210
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/frame_painter.cc",
+      "oldText": "\nbool FramePainter::in_paint_contents_ = false;",
+      "newText": "\nconstinit thread_local bool FramePainter::in_paint_contents_ = false;",
+      "line": 22
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/frame_painter.h",
+      "oldText": "  const LocalFrameView* frame_view_;\n  static bool in_paint_contents_;\n};",
+      "newText": "  const LocalFrameView* frame_view_;\n  static thread_local bool in_paint_contents_;\n};",
+      "line": 30
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.cc",
+      "oldText": "\nunsigned PrePaintDisableSideEffectsScope::count_ = 0;",
+      "newText": "\nconstinit thread_local unsigned PrePaintDisableSideEffectsScope::count_ = 0;",
+      "line": 8
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.h",
+      "oldText": " private:\n  static unsigned count_;\n};",
+      "newText": " private:\n  static thread_local unsigned count_;\n};",
+      "line": 31
+    },
+    {
+      "path": "third_party/blink/renderer/core/layout/svg/svg_layout_support.cc",
+      "oldText": "\nAffineTransform SubtreeContentTransformScope::current_content_transformation_;",
+      "newText": "\nthread_local AffineTransform\n    SubtreeContentTransformScope::current_content_transformation_;",
+      "line": 348
+    },
+    {
+      "path": "third_party/blink/renderer/core/layout/svg/svg_layout_support.h",
+      "oldText": " private:\n  static AffineTransform current_content_transformation_;\n  AffineTransform saved_content_transformation_;",
+      "newText": " private:\n  static thread_local AffineTransform current_content_transformation_;\n  AffineTransform saved_content_transformation_;",
+      "line": 123
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer.cc",
+      "oldText": "\nbool CheckAncestorPositionVisibilityScope::should_check_ = false;",
+      "newText": "\nconstinit thread_local bool\n    CheckAncestorPositionVisibilityScope::should_check_ = false;",
+      "line": 2876
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer.h",
+      "oldText": " private:\n  static bool should_check_;\n  base::AutoReset<bool> reset_;",
+      "newText": " private:\n  static thread_local bool should_check_;\n  base::AutoReset<bool> reset_;",
+      "line": 871
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.cc",
+      "oldText": "\nint IgnorePaintTimingScope::ignore_depth_ = 0;\nbool IgnorePaintTimingScope::is_document_element_invisible_ = false;",
+      "newText": "\nconstinit thread_local int IgnorePaintTimingScope::ignore_depth_ = 0;\nconstinit thread_local bool\n    IgnorePaintTimingScope::is_document_element_invisible_ = false;",
+      "line": 8
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.h",
+      "oldText": "  base::AutoReset<bool> reset_is_document_element_invisible_;\n  static int ignore_depth_;\n  static bool is_document_element_invisible_;\n};",
+      "newText": "  base::AutoReset<bool> reset_is_document_element_invisible_;\n  static thread_local int ignore_depth_;\n  static thread_local bool is_document_element_invisible_;\n};",
+      "line": 48
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc",
+      "oldText": "\nint PaintLayerScrollableArea::FreezeScrollbarsScope::count_ = 0;",
+      "newText": "\nconstinit thread_local int\n    PaintLayerScrollableArea::FreezeScrollbarsScope::count_ = 0;",
+      "line": 3029
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc",
+      "oldText": "\nint PaintLayerScrollableArea::DelayScrollOffsetClampScope::count_ = 0;",
+      "newText": "\nconstinit thread_local int\n    PaintLayerScrollableArea::DelayScrollOffsetClampScope::count_ = 0;",
+      "line": 3050
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h",
+      "oldText": "   private:\n    static int count_;\n  };",
+      "newText": "   private:\n    static thread_local int count_;\n  };",
+      "line": 226
+    },
+    {
+      "path": "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h",
+      "oldText": "    static HeapVector<Member<PaintLayerScrollableArea>>& NeedsClampList();\n\n    static int count_;\n  };",
+      "newText": "    static HeapVector<Member<PaintLayerScrollableArea>>& NeedsClampList();\n\n    static thread_local int count_;\n  };",
+      "line": 270
+    }
+  ],
+  "header-geometry": [
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/geometry_mapper_transform_cache.cc",
+      "oldText": "// with s_global_generation.\nunsigned GeometryMapperTransformCache::s_global_generation = 1;",
+      "newText": "// with s_global_generation.\nconstinit thread_local unsigned\n    GeometryMapperTransformCache::s_global_generation = 1;",
+      "line": 15
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/geometry_mapper_transform_cache.h",
+      "oldText": "\n  static unsigned s_global_generation;",
+      "newText": "\n  static thread_local unsigned s_global_generation;",
+      "line": 162
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/geometry_mapper_clip_cache.cc",
+      "oldText": "// s_global_generation_.\nunsigned GeometryMapperClipCache::s_global_generation_ = 1;",
+      "newText": "// s_global_generation_.\nconstinit thread_local unsigned GeometryMapperClipCache::s_global_generation_ =\n    1;",
+      "line": 15
+    },
+    {
+      "path": "third_party/blink/renderer/platform/graphics/paint/geometry_mapper_clip_cache.h",
+      "oldText": "  unsigned cache_generation_ = s_global_generation_ - 1;\n  static unsigned s_global_generation_;\n};",
+      "newText": "  unsigned cache_generation_ = s_global_generation_ - 1;\n  static thread_local unsigned s_global_generation_;\n};",
+      "line": 102
+    }
+  ],
+  "header-script-policy": [
+    {
+      "path": "third_party/blink/renderer/platform/bindings/script_forbidden_scope.cc",
+      "oldText": "unsigned ScriptForbiddenScope::g_main_thread_counter_ = 0;\nunsigned ScriptForbiddenScope::g_blink_lifecycle_counter_ = 0;",
+      "newText": "unsigned ScriptForbiddenScope::g_main_thread_counter_ = 0;\nconstinit thread_local unsigned\n    ScriptForbiddenScope::g_blink_lifecycle_counter_ = 0;",
+      "line": 9
+    },
+    {
+      "path": "third_party/blink/renderer/platform/bindings/script_forbidden_scope.h",
+      "oldText": "    AllowUserAgentScript() : saved_counter_(&GetMutableCounter(), 0) {\n      if (IsMainThread()) [[likely]] {\n        saved_blink_counter_.emplace(&g_blink_lifecycle_counter_, 0);\n      }\n    }",
+      "newText": "    AllowUserAgentScript() : saved_counter_(&GetMutableCounter(), 0) {\n      saved_blink_counter_.emplace(&g_blink_lifecycle_counter_, 0);\n    }",
+      "line": 39
+    },
+    {
+      "path": "third_party/blink/renderer/platform/bindings/script_forbidden_scope.h",
+      "oldText": "  // sources of attempted script execution during blink lifecycle.\n  static bool WillBeScriptForbidden() {\n    if (IsMainThread()) [[likely]] {\n      return g_blink_lifecycle_counter_ > 0;\n    }\n    // Blink lifecycle scope is never entered on other threads.\n    return false;\n  }",
+      "newText": "  // sources of attempted script execution during blink lifecycle.\n  static bool WillBeScriptForbidden() { return g_blink_lifecycle_counter_ > 0; }",
+      "line": 78
+    },
+    {
+      "path": "third_party/blink/renderer/platform/bindings/script_forbidden_scope.h",
+      "oldText": "\n  static void EnterBlinkLifecycle() {\n    DCHECK(IsMainThread());\n    ++g_blink_lifecycle_counter_;\n  }\n  static void ExitBlinkLifecycle() {\n    DCHECK(IsMainThread());\n    --g_blink_lifecycle_counter_;",
+      "newText": "\n  static void EnterBlinkLifecycle() { ++g_blink_lifecycle_counter_; }\n  static void ExitBlinkLifecycle() {\n    DCHECK(g_blink_lifecycle_counter_);\n    --g_blink_lifecycle_counter_;",
+      "line": 107
+    },
+    {
+      "path": "third_party/blink/renderer/platform/bindings/script_forbidden_scope.h",
+      "oldText": "  // BlinkLifecycleScopeWillBeScriptForbidden can be removed.\n  static unsigned g_blink_lifecycle_counter_;",
+      "newText": "  // BlinkLifecycleScopeWillBeScriptForbidden can be removed.\n  static thread_local unsigned g_blink_lifecycle_counter_;",
+      "line": 122
+    }
+  ],
+  "header-custom-elements": [
+    {
+      "path": "third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc",
+      "oldText": "\nCEReactionsScope* CEReactionsScope::top_of_stack_ = nullptr;",
+      "newText": "\nconstinit thread_local CEReactionsScope* CEReactionsScope::top_of_stack_ =\n    nullptr;",
+      "line": 14
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc",
+      "oldText": "CEReactionsScope* CEReactionsScope::Current() {\n  DCHECK(IsMainThread());\n  return top_of_stack_;",
+      "newText": "CEReactionsScope* CEReactionsScope::Current() {\n  return top_of_stack_;",
+      "line": 18
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/custom/ce_reactions_scope.cc",
+      "oldText": "    : prev_(top_of_stack_), try_catch_(isolate) {\n  // For speed of the bindings we use a global variable to determine if\n  // we have a CEReactionScope. We check that this is only on the main thread\n  // otherwise this global variable will have collisions.\n  DCHECK(IsMainThread());\n  top_of_stack_ = this;",
+      "newText": "    : prev_(top_of_stack_), try_catch_(isolate) {\n  // Each thread maintains its own reaction-scope stack and isolate.\n  top_of_stack_ = this;",
+      "line": 24
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/custom/ce_reactions_scope.h",
+      "oldText": " private:\n  static CEReactionsScope* top_of_stack_;\n  CustomElementReactionStack* stack_ = nullptr;",
+      "newText": " private:\n  static thread_local CEReactionsScope* top_of_stack_;\n  CustomElementReactionStack* stack_ = nullptr;",
+      "line": 37
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/custom/custom_element_construction_stack.cc",
+      "oldText": "\nwtf_size_t CustomElementConstructionStackScope::nesting_level_ = 0;",
+      "newText": "\nconstinit thread_local wtf_size_t\n    CustomElementConstructionStackScope::nesting_level_ = 0;",
+      "line": 97
+    },
+    {
+      "path": "third_party/blink/renderer/core/html/custom/custom_element_construction_stack.h",
+      "oldText": "\n  static wtf_size_t nesting_level_;\n};",
+      "newText": "\n  static thread_local wtf_size_t nesting_level_;\n};",
+      "line": 79
+    }
+  ],
+  "header-metrics": [
+    {
+      "path": "third_party/blink/renderer/platform/fonts/font_performance.h",
+      "oldText": "  static void Reset() {\n    primary_font_ = base::TimeDelta();",
+      "newText": "  static void Reset() {\n    if (!IsMainThread()) {\n      return;\n    }\n    primary_font_ = base::TimeDelta();",
+      "line": 32
+    },
+    {
+      "path": "third_party/blink/renderer/platform/fonts/font_performance.h",
+      "oldText": "   public:\n    StyleScope() { ++in_style_; }\n    ~StyleScope() {\n      DCHECK(in_style_);\n      --in_style_;\n    }",
+      "newText": "   public:\n    StyleScope() {\n      if (IsMainThread()) {\n        ++in_style_;\n      }\n    }\n    ~StyleScope() {\n      if (IsMainThread()) {\n        DCHECK(in_style_);\n        --in_style_;\n      }\n    }",
+      "line": 91
+    },
+    {
+      "path": "third_party/blink/renderer/platform/fonts/font_performance.cc",
+      "oldText": "void FontPerformance::MarkFirstContentfulPaint() {\n  UMA_HISTOGRAM_TIMES(\"Renderer.Font.PrimaryFont.FCP\",",
+      "newText": "void FontPerformance::MarkFirstContentfulPaint() {\n  if (!IsMainThread()) {\n    return;\n  }\n  UMA_HISTOGRAM_TIMES(\"Renderer.Font.PrimaryFont.FCP\",",
+      "line": 22
+    },
+    {
+      "path": "third_party/blink/renderer/platform/fonts/font_performance.cc",
+      "oldText": "void FontPerformance::MarkDomContentLoaded() {\n  UMA_HISTOGRAM_TIMES(\"Renderer.Font.PrimaryFont.DomContentLoaded\",",
+      "newText": "void FontPerformance::MarkDomContentLoaded() {\n  if (!IsMainThread()) {\n    return;\n  }\n  UMA_HISTOGRAM_TIMES(\"Renderer.Font.PrimaryFont.DomContentLoaded\",",
+      "line": 32
+    },
+    {
+      "path": "third_party/blink/renderer/platform/instrumentation/instance_counters.h",
+      "oldText": "  static inline void IncrementCounter(CounterType type) {\n    // There are lots of nodes created. Atomic barriers or locks\n    // should be avoided for the sake of performance. See crbug.com/641019\n    if (type == kNodeCounter) {\n      DCHECK(IsMainThread());\n      ++node_counter_;\n    } else {",
+      "newText": "  static inline void IncrementCounter(CounterType type) {\n    if (type == kNodeCounter) {\n      node_counter_.fetch_add(1, std::memory_order_relaxed);\n    } else {",
+      "line": 82
+    },
+    {
+      "path": "third_party/blink/renderer/platform/instrumentation/instance_counters.h",
+      "oldText": "    if (type == kNodeCounter) {\n      DCHECK(IsMainThread());\n      --node_counter_;\n    } else {",
+      "newText": "    if (type == kNodeCounter) {\n      node_counter_.fetch_sub(1, std::memory_order_relaxed);\n    } else {",
+      "line": 94
+    },
+    {
+      "path": "third_party/blink/renderer/platform/instrumentation/instance_counters.h",
+      "oldText": "      counters_;\n  PLATFORM_EXPORT static int node_counter_;\n};",
+      "newText": "      counters_;\n  PLATFORM_EXPORT static std::atomic_int node_counter_;\n};",
+      "line": 106
+    },
+    {
+      "path": "third_party/blink/renderer/platform/instrumentation/instance_counters.cc",
+      "oldText": "// static\nint InstanceCounters::node_counter_ = 0;",
+      "newText": "// static\nconstinit std::atomic_int InstanceCounters::node_counter_{0};",
+      "line": 39
+    },
+    {
+      "path": "third_party/blink/renderer/platform/instrumentation/instance_counters.cc",
+      "oldText": "  if (type == kNodeCounter) {\n    DCHECK(IsMainThread());\n    return node_counter_;\n  }",
+      "newText": "  if (type == kNodeCounter) {\n    return node_counter_.load(std::memory_order_relaxed);\n  }",
+      "line": 43
+    }
+  ]
+}

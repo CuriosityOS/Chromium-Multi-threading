@@ -1,0 +1,14 @@
+@@@ third_party/blink/renderer/core/frame/local_dom_window.cc
+<<<<
+void LocalDOMWindow::SetIsInBackForwardCache(bool is_in_back_forward_cache) {
+  ExecutionContext::SetIsInBackForwardCache(is_in_back_forward_cache);
+====
+void LocalDOMWindow::SetIsInBackForwardCache(bool is_in_back_forward_cache) {
+  ExecutionContext::SetIsInBackForwardCache(is_in_back_forward_cache);
+  // A page in the back/forward cache keeps no render thread; a restored page
+  // gets a new one.
+  if (document()) {
+    RenderThreadJournal::SetInBackForwardCache(*document(),
+                                               is_in_back_forward_cache);
+  }
+>>>>

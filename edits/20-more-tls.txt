@@ -1,0 +1,22 @@
+@@@ third_party/blink/renderer/core/paint/cull_rect_updater.cc
+<<<<
+Vector<FragmentCullRects>* g_original_cull_rects = nullptr;
+====
+// Per thread: painting also runs on off-main-thread rendering threads.
+constinit thread_local Vector<FragmentCullRects>* g_original_cull_rects =
+    nullptr;
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/compositing/paint_artifact_compositor.cc
+<<<<
+static int g_s_property_tree_sequence_number = 1;
+====
+// Per thread: property trees are per thread with off-main-thread rendering.
+constinit thread_local int g_s_property_tree_sequence_number = 1;
+>>>>
+@@@ third_party/blink/renderer/core/layout/layout_object.cc
+<<<<
+static int g_allow_destroying_layout_object_in_finalizer = 0;
+====
+// Per thread: layout also runs on off-main-thread rendering threads.
+constinit thread_local int g_allow_destroying_layout_object_in_finalizer = 0;
+>>>>

@@ -1,0 +1,69 @@
+--- animation/animation.cc
++++ formatted/animation/animation.cc
+@@ -104,8 +104,8 @@
+ #define VERIFY_PAINT_CLEAN_LOG_ONCE()                                         \
+   if (VLOG_IS_ON(1)) {                                                        \
+     if (document_->Lifecycle().GetState() < DocumentLifecycle::kPaintClean) { \
+-      static constinit std::atomic<bool> first_call{true};                     \
+-      bool was_first_call =                                                  \
++      static constinit std::atomic<bool> first_call{true};                    \
++      bool was_first_call =                                                   \
+           first_call.exchange(false, std::memory_order_relaxed);              \
+       if (was_first_call) {                                                   \
+         VLOG(1) << __PRETTY_FUNCTION__                                        \
+--- css/style_attribute_mutation_scope.cc
++++ formatted/css/style_attribute_mutation_scope.cc
+@@ -47,9 +47,10 @@
+ constinit thread_local unsigned StyleAttributeMutationScope::scope_count_ = 0;
+ constinit thread_local Element* StyleAttributeMutationScope::current_element_ =
+     nullptr;
+-constinit thread_local bool StyleAttributeMutationScope::should_notify_inspector_ =
++constinit thread_local bool
++    StyleAttributeMutationScope::should_notify_inspector_ = false;
++constinit thread_local bool StyleAttributeMutationScope::should_deliver_ =
+     false;
+-constinit thread_local bool StyleAttributeMutationScope::should_deliver_ = false;
+ 
+ StyleAttributeMutationScope::StyleAttributeMutationScope(
+     AbstractPropertySetCSSStyleDeclaration* decl) {
+--- dom/document.cc
++++ formatted/dom/document.cc
+@@ -331,7 +331,6 @@
+ #include "third_party/blink/renderer/core/page/focusgroup_controller_utils.h"
+ #include "third_party/blink/renderer/core/page/frame_tree.h"
+ #include "third_party/blink/renderer/core/page/page.h"
+-#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+ #include "third_party/blink/renderer/core/page/page_animator.h"
+ #include "third_party/blink/renderer/core/page/plugin_script_forbidden_scope.h"
+ #include "third_party/blink/renderer/core/page/pointer_lock_controller.h"
+@@ -348,6 +347,7 @@
+ #include "third_party/blink/renderer/core/permissions_policy/dom_feature_policy.h"
+ #include "third_party/blink/renderer/core/permissions_policy/permissions_policy_parser.h"
+ #include "third_party/blink/renderer/core/probe/core_probes.h"
++#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+ #include "third_party/blink/renderer/core/resize_observer/resize_observer.h"
+ #include "third_party/blink/renderer/core/resize_observer/resize_observer_controller.h"
+ #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
+--- dom/dom_node_ids.cc
++++ formatted/dom/dom_node_ids.cc
+@@ -29,7 +29,7 @@
+     DOMNodeId next =
+         last == std::numeric_limits<DOMNodeId>::max() ? 1 : last + 1;
+     if (g_last_id.compare_exchange_weak(last, next,
+-                                      std::memory_order_relaxed)) {
++                                        std::memory_order_relaxed)) {
+       return next;
+     }
+   }
+--- layout/layout_shift_tracker.cc
++++ formatted/layout/layout_shift_tracker.cc
+@@ -40,7 +40,8 @@
+ constinit thread_local ReattachHookScope* ReattachHookScope::top_ = nullptr;
+ 
+ using ContainingBlockScope = LayoutShiftTracker::ContainingBlockScope;
+-constinit thread_local ContainingBlockScope* ContainingBlockScope::top_ = nullptr;
++constinit thread_local ContainingBlockScope* ContainingBlockScope::top_ =
++    nullptr;
+ 
+ namespace {
+ 

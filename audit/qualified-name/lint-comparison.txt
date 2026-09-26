@@ -1,0 +1,2 @@
+No new cpplint warnings. All five warnings from the remote lint reproduce on the baseline; one pre-existing braces warning was removed. Local mirror header-path warnings are identical after path normalization.
+Removed: {'(cpplint) { should almost always be at the end of the previous line  [whitespace/braces] [4]': 1}

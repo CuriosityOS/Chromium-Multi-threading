@@ -1,0 +1,110 @@
+@@@ third_party/blink/renderer/platform/fonts/font_performance.h
+<<<<
+  static void Reset() {
+    primary_font_ = base::TimeDelta();
+====
+  static void Reset() {
+    if (!IsMainThread()) {
+      return;
+    }
+    primary_font_ = base::TimeDelta();
+>>>>
+@@@ third_party/blink/renderer/platform/fonts/font_performance.h
+<<<<
+   public:
+    StyleScope() { ++in_style_; }
+    ~StyleScope() {
+      DCHECK(in_style_);
+      --in_style_;
+    }
+====
+   public:
+    StyleScope() {
+      if (IsMainThread()) {
+        ++in_style_;
+      }
+    }
+    ~StyleScope() {
+      if (IsMainThread()) {
+        DCHECK(in_style_);
+        --in_style_;
+      }
+    }
+>>>>
+@@@ third_party/blink/renderer/platform/fonts/font_performance.cc
+<<<<
+void FontPerformance::MarkFirstContentfulPaint() {
+  UMA_HISTOGRAM_TIMES("Renderer.Font.PrimaryFont.FCP",
+====
+void FontPerformance::MarkFirstContentfulPaint() {
+  if (!IsMainThread()) {
+    return;
+  }
+  UMA_HISTOGRAM_TIMES("Renderer.Font.PrimaryFont.FCP",
+>>>>
+@@@ third_party/blink/renderer/platform/fonts/font_performance.cc
+<<<<
+void FontPerformance::MarkDomContentLoaded() {
+  UMA_HISTOGRAM_TIMES("Renderer.Font.PrimaryFont.DomContentLoaded",
+====
+void FontPerformance::MarkDomContentLoaded() {
+  if (!IsMainThread()) {
+    return;
+  }
+  UMA_HISTOGRAM_TIMES("Renderer.Font.PrimaryFont.DomContentLoaded",
+>>>>
+@@@ third_party/blink/renderer/platform/instrumentation/instance_counters.h
+<<<<
+  static inline void IncrementCounter(CounterType type) {
+    // There are lots of nodes created. Atomic barriers or locks
+    // should be avoided for the sake of performance. See crbug.com/641019
+    if (type == kNodeCounter) {
+      DCHECK(IsMainThread());
+      ++node_counter_;
+    } else {
+====
+  static inline void IncrementCounter(CounterType type) {
+    if (type == kNodeCounter) {
+      node_counter_.fetch_add(1, std::memory_order_relaxed);
+    } else {
+>>>>
+@@@ third_party/blink/renderer/platform/instrumentation/instance_counters.h
+<<<<
+    if (type == kNodeCounter) {
+      DCHECK(IsMainThread());
+      --node_counter_;
+    } else {
+====
+    if (type == kNodeCounter) {
+      node_counter_.fetch_sub(1, std::memory_order_relaxed);
+    } else {
+>>>>
+@@@ third_party/blink/renderer/platform/instrumentation/instance_counters.h
+<<<<
+      counters_;
+  PLATFORM_EXPORT static int node_counter_;
+};
+====
+      counters_;
+  PLATFORM_EXPORT static std::atomic_int node_counter_;
+};
+>>>>
+@@@ third_party/blink/renderer/platform/instrumentation/instance_counters.cc
+<<<<
+// static
+int InstanceCounters::node_counter_ = 0;
+====
+// static
+constinit std::atomic_int InstanceCounters::node_counter_{0};
+>>>>
+@@@ third_party/blink/renderer/platform/instrumentation/instance_counters.cc
+<<<<
+  if (type == kNodeCounter) {
+    DCHECK(IsMainThread());
+    return node_counter_;
+  }
+====
+  if (type == kNodeCounter) {
+    return node_counter_.load(std::memory_order_relaxed);
+  }
+>>>>

@@ -1,0 +1,19 @@
+html { scroll-behavior: auto; }
+body { min-height: calc(100vh + 100px); }
+.query-proof { width: 560px; height: 370px; background: #182235; padding: 16px; }
+.query-proof h2 { margin: 0 0 14px; }
+.query-panel { width: 100%; overflow: hidden; }
+.query-panel.height { height: 24px; transition: height var(--duration) linear; }
+.query-panel.height.open { height: 264px; }
+.query-panel.grid { display: grid; grid-template-rows: 24px; transition: grid-template-rows var(--duration) linear; }
+.query-panel.grid.open { grid-template-rows: 264px; }
+.query-fill { height: 100%; min-height: 0; background: #20d8c0; }
+.query-follower { height: 24px; background: #f8cd46; color: #111827; padding-left: 12px; }
+#query-container { position: absolute; left: 24px; top: 610px; width: 1100px; height: 140px; }
+#scroll-probe { position: absolute; left: 200px; top: 0; box-sizing: content-box; width: 100px; height: 60px; border: 2px solid; padding: 0; overflow: hidden; }
+#scroll-probe > div { width: 220px; height: 180px; background: #426580; }
+#hit-probe { position: absolute; left: 400px; top: 5px; width: 80px; height: 40px; background: #df9030; }
+#shadow-host { position: absolute; left: 500px; top: 5px; width: 100px; height: 70px; }
+#query-text { position: absolute; left: 0; top: 85px; width: 180px; height: 30px; }
+#input-button { position: absolute; left: 740px; top: 10px; width: 160px; height: 50px; border: 2px solid #fff; padding: 0; margin: 0; }
+#disabled-button { position: absolute; left: 930px; top: 10px; }

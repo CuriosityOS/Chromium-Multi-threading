@@ -1,0 +1,189 @@
+# Linux off-main-thread rendering validation
+
+**Do not launch Chromium until the parent explicitly confirms the build is ready.**
+`run.mjs` refuses without `--build-ready`; that argument is an operator acknowledgement, not build detection. **Current status: final release Linux/Xvfb matrix PASS.** The latest approved run (`approved-20260926T183827Z`, final formatted build) exited0 with all twelve recording cases,68 query assertions, paired native input, full BFCache restoration, DOM/CSSOM smoke, resize and navigation passing. No fatal signatures or in-block main-thread fallbacks. Detailed evidence is in that run's `REPORT.md`, `analysis.json` and `DIAGNOSTICS.md` (about1GB retained locally/remotely). Each later browser launch still requires explicit build approval. Static checks, the Xvfb/FFmpeg transport self-test, and synthetic-media analyzer integration tests do not launch a browser.
+
+Target: `ssh core`, source version **153.0.8010.55**, binary `/root/cr153/src/out/Omt/chrome`.
+Only this directory is synced, to **`/root/cr153/validation`**. No source/build/git changes, dependency installations, or modifications to `/root/cr-omtl`.
+
+## Exact commands
+
+On the Mac, safe before build readiness:
+
+```sh
+cd /Users/core/chromium-threading/validation
+python3 format.py
+bash check.sh
+bash sync.sh
+ssh core 'cd /root/cr153/validation && bash check.sh'
+ssh core 'cd /root/cr153/validation && node test_capture.mjs'
+ssh core 'cd /root/cr153/validation && PYTHONDONTWRITEBYTECODE=1 python3 test_media.py'
+```
+
+**Only after explicit parent approval**, execute the complete baseline + enabled matrix:
+
+```sh
+ssh core 'cd /root/cr153/validation && bash run.sh --build-ready'
+```
+
+Default output is a fresh `/root/cr153/validation/results/<UTC timestamp>/`.
+To select a new, unused output directory:
+
+```sh
+ssh core 'cd /root/cr153/validation && bash run.sh --build-ready --output /root/cr153/validation/results/approved-run-01'
+```
+
+Reanalyze retained evidence without starting Chromium:
+
+```sh
+ssh core 'cd /root/cr153/validation && python3 analyze.py results/approved-run-01'
+```
+
+Retrieve results into this local directory only:
+
+```sh
+rsync -av core:/root/cr153/validation/results/ /Users/core/chromium-threading/validation/results/
+```
+
+An optional binary override is `--binary /absolute/path/to/chrome`; version checking is not disabled. Both modes must have the same runtime-build fingerprint. Do not rebuild/replace any executable or shared library during a run. `build-{initial,baseline,omt,final}.json` hash the executable, adjacent shared libraries/resources, crash handler and locale packs; changed assets fail the run. The legacy executable-only SHA remains available but cannot identify a component rebuild by itself. No source or build file is modified by fingerprinting.
+
+## What runs
+
+Two private profiles; same executable, same switches except:
+
+- Baseline: `--disable-blink-features=OffMainThreadRendering`.
+- Enabled: `--enable-blink-features=OffMainThreadRendering`.
+
+Each mode gets six fresh page loads: four passive `height` / `grid-template-rows` cases, plus two query-heavy cases that transition **both panels in the same task**. Each scenario has a **3s and 10s** synchronous busy loop (12 recorded cases total). A class toggle changes 24px → 264px; a normal-flow yellow sibling must move as the cyan region grows. Transition duration is 80% of the block. There is **no transform, opacity animation, spinner, video, worker canvas, or document.timeline counter**.
+
+CDP arms a normal timer task. In the passive cases, `runBlock()` toggles the class, emits timing marks, then immediately busy-loops. There is **no rAF, timeout, await, style query or layout flush between the mutation and the loop**. Only the before-state settles in earlier tasks. During the block, automation sends **no renderer commands**: it waits for the console completion milestone while FFmpeg independently samples Xvfb. No rendering via V8 interrupts is requested.
+
+After the measured block, recordings continue long enough for the baseline's delayed transition to finish. Both modes must reach the same final geometry and visible 264px panel, preventing a stale/wrong capture surface from passing as a frozen baseline.
+
+Each mode additionally tests:
+
+- DOM insertion and removal, text replacement, inline color + height.
+- CSSOM `insertRule` and `deleteRule`.
+- Computed-style/DOM assertions plus target-region pixel differences in both CDP and external X11 screenshots for each mutation.
+- Real browser window resize via `Browser.setWindowBounds`, changed viewport dimensions and a resize event.
+- Navigate to `about:blank`, return to a fresh demo document, check readiness/title and screenshot.
+
+Manual demo: serve `demo/` using an existing HTTP server, then open `index.html` **after approval**. Buttons settle the before-state for one second, then perform toggle + block in one task. This is a diagnostic UI, not an automatic proof claim.
+
+## Evidence and fail-closed gates
+
+1. **Capture:** dedicated auto-allocated Xvfb display, 1280×800, 30 sampled frames/s, no mouse cursor, lossless FFV1/BGR0 Matroska. `-copyts`, wallclock input PTS and a 1ms encoder timebase preserve absolute timestamps. `test_capture.mjs` checks this transport without Chromium; `test_media.py` exercises decode/ROI/timestamp/PNG analysis on synthetic static-versus-expanding rectangles (never browser evidence). The analysis rejects relative/duplicate/nonmonotonic timestamps.
+2. **Clock correlation:** the page records epoch and monotonic timestamps immediately around the loop; the trace has matching User Timing marks. Reject clock disagreement >50ms. Pixel comparisons use only `[block-start + 250ms, block-end − 250ms]`. Console delivery time and recording process launch time are **not** used as the block start. No CDP screenshot is used as evidence of in-block progress.
+3. **Pixels:** discover the initial cyan region in the external recording, then sample a fixed 32×290px interior strip containing its layout edge and yellow normal-flow sibling. No browser chrome, status, heartbeat or pointer is in that ROI. Save every sample's PTS, cyan height, follower position and SHA-256. Require coverage of the interior window and no capture gap >250ms. Initial/final captured heights must be 24/264px.
+4. **Enabled:** at least 5 captured height changes, ≥30px height range, ≥500ms change span, monotonically expanding geometry, and the sibling following the edge. A one-frame jump or a compositor spinner cannot pass.
+5. **Baseline:** exactly zero height changes and one unique lossless ROI hash in the interior window. The enabled-minus-baseline height-range difference must be ≥29px for each pair.
+6. **Trace:** require unique mutation/start/end marks on `CrRendererMain`, and one synchronous `X` (or paired `B/E`) slice enclosing **both** mutation and the complete block. Record main PID/TID. On **`BlinkRenderThread` in that same renderer process, with a different TID**, require sustained **`ReplicaPage::BeginFrame` and `ReplicaPage::Paint`** events (`blink` category) inside the block; at least five of each, distinct timestamps spanning ≥500ms. Compositor/GPU/Viz/raster threads are excluded. `ReplicaPage::ApplyOps` remains useful diagnostic data but cannot substitute for Paint. Baseline must have no matching OMT rendering events during its block.
+7. **Health:** missing readiness, milestones, trace stream, trace metadata, trace loss, CDP timeout/disconnect, target crash, JS exception, fatal Chromium log signature, failed recording, incorrect version/hash, smoke/query/input/lifetime failure, or missing matrix case produces a nonzero result. Enabled mode must emit `[OMT]` logs, but logs alone never establish success.
+
+The JS heartbeat is only a **negative control**: callbacks must not execute inside the synchronous loop. Its count is not a frame count.
+
+## Retained artifacts
+
+- `run.json`, command arguments, executable hash, runtime-build fingerprint manifests, per-mode version and feature flags.
+- Xvfb, Chromium, CDP event/command, FFmpeg and progress logs; private browser profiles.
+- Per-case `capture.mkv`, full `trace.json`, trace-completion metadata, `case.json`.
+- Before/after CDP PNGs; external pre/early/middle/late/post PNGs with exact capture PTS.
+- `pixel-samples.json`, `trace-inventory.json`, smoke screenshots/state/pixel comparisons, resize/navigation results.
+- `fallbacks.json` (trace counts before/during/after the block plus textual counter samples), `queries-analysis.json` and paired query samples.
+- `input/` trusted event targets/offsets, native xdotool commands, screenshots/alignment and query trace pairs.
+- `page-threads/` per-stage `/proc` task snapshots including start ticks, full traces, replica IDs, attached URLs and stop logs.
+- `analysis.json` and `REPORT.md`; no successful report is manufactured if evidence is absent.
+
+Only harness-owned process groups are terminated; no `pkill` or shared display/profile. The wrapper has a 12-minute wall-clock deadline. Navigation readiness has a bounded 60s deadline (the initial cold baseline exceeded 15s); measured block durations and evidence gates are unchanged. A target crash still fails the run and blocks all normal CDP commands, but `Tracing.end`, `IO.read/close`, and the trace-completion event remain available for best-effort diagnostic preservation on a surviving browser connection. A disconnected transport rejects those too. Nine browser-free CDP tests cover this policy.
+
+On interruption, partial artifacts and failure state are retained; run `analyze.py` afterward for an explicit incomplete-evidence report. Nothing automatically deletes results or profiles. For detached runs, save the wrapper's status to `<output>/exit-code`, then run `python3 -u watch_run.py <output>` on core: it emits only fatal messages with the first 15 stack frames and a final success/failure notification. Approved reruns also retain `harness-source.tar.gz` before launch.
+
+## Web research / implementation choice
+
+Checked before implementation:
+
+- [Official CDP browser schema](https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/browser_protocol.json): `Tracing.start/end`, JSON `ReturnAsStream`, `Tracing.tracingComplete.dataLossOccurred`, sequential `IO.read`, `Page.navigate/captureScreenshot`, `Browser.getVersion/getWindowForTarget/setWindowBounds`.
+- [Official CDP JS schema](https://raw.githubusercontent.com/ChromeDevTools/devtools-protocol/master/json/js_protocol.json): `Runtime.evaluate`, `consoleAPICalled`, `exceptionThrown`.
+- [Node built-in WebSocket](https://nodejs.org/api/globals.html#class-websocket): available without experimental flag in Node 22; no external client package needed. Remote inspection found **Node 22.22.1**, no Python `websocket`, `websockets`, or Playwright libraries.
+- [FFmpeg X11 capture documentation](https://ffmpeg.org/ffmpeg-devices.html#x11grab): `framerate`, `video_size`, `draw_mouse`, display addressing. [FFmpeg options](https://ffmpeg.org/ffmpeg.html) describe timestamp preservation and encoding controls. Absolute-PTS behavior is additionally checked empirically by the browser-free transport self-test.
+- [W3C CSS Transitions §3](https://www.w3.org/TR/css-transitions-1/#starting): transition creation depends on before-/after-change styles and style-change events. Hence explicitly settle only the before-state; do not force a post-mutation layout or yield just to make this test pass.
+
+Compared Python existing-CDP libraries (unavailable), implementing WebSocket framing in Python stdlib (unnecessary protocol complexity), and installed Node's native WebSocket (chosen). Compared CDP screenshot/screencast-only evidence versus independent X11 recordings (chosen, so renderer-request timing cannot manufacture progress). Existing Pillow/numpy are available but not needed: analysis uses Python stdlib and installed FFmpeg/ffprobe. **No new production or development dependency.**
+
+KISS/DRY: native HTTP/WebSocket clients, shared FFmpeg capture arguments, one demo for both modes, one pixel/trace analyzer, fixed synchronized directory. `check.sh` runs JS/shell syntax, Python AST, HTML/invariant lint, evidence tests and whitespace-format checks; ShellCheck runs if already installed. The lightweight formatter does not claim to be a full language formatter.
+
+## Extended design gates
+
+### Synchronous queries in one long task
+
+`demo/queries.html` toggles height and grid classes in the same normal timer task, performs immediate mutation/query assertions, then reads each panel's `offsetHeight`, `getBoundingClientRect().height` and `getComputedStyle().height` about every 200ms without yielding. There is an explicit final sample **before the block-end mark**. OMT values must strictly increase during the active transition and reach 264px inside the task; end-of-transition plateaus are allowed. Baseline values are retained/compared, not incorrectly required to advance. Both modes must pass identical immediate DOM/CSSOM assertions and show matching final geometry after the task.
+
+Assertions cover offset Left/Top/Width/Height/Parent identity, client Left/Top/Width/Height, scroll Left/Top/Width/Height, bounding/client rects (Element and Range), computed-style property access and `getPropertyValue` (including custom properties and `::before`), insertion/removal/reinsertion, inline updates, CSSOM insert/delete, rendered `innerText`, light/shadow hit testing and document retargeting, outside-viewport hits, enabled/disabled/hidden focusability. The content-box fixture is 123px wide + 5px padding + 2px border per side: offsetWidth=137, clientWidth=133. Shadow out-of-root behavior is recorded and compared with baseline rather than assigned an invented cross-browser rule.
+
+The parent's updated contract also forwards window geometry/scrolling. The query page has static `min-height: calc(100vh + 100px)` and explicit `scroll-behavior: auto`. Ten additional strict assertions inside the same block check `innerWidth`/`innerHeight` against the pre-block viewport measurement (and therefore against the paired baseline), initial `scrollX/Y=0`, `window.scrollTo(0,40)` → `scrollY=40` / `scrollX=0`, and a bounding-rect top shift of −40px. A synchronous `scrollTo(0,0)` must restore both offsets and rectangle position before query sampling. The original 58 assertions remain; there are now 68.
+
+The scroll-restoration timestamp and a same-main-thread `validation:window-scroll-restored` trace mark must both precede the existing 250ms pixel guard. No visual window is shortened or moved to hide scrolling. A slow/missing restoration fails rather than letting whole-page movement masquerade as layout animation. There is no yield during the scroll round trip.
+
+Only bulk computed-style `cssText`/`length` remain excluded (known OMT gaps per parent); named properties and `getPropertyValue` remain tested. Their **informational scope note** is not an extra failure gate and does not excuse any existing failure. Inline `element.style.cssText` assignment and `CSSRuleList.length` remain exercised; they are different APIs. Focusability stays inside the block with `focus({preventScroll:true})`, per [MDN's documented no-scroll option](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus). [CSSOM](https://drafts.csswg.org/cssom/) distinguishes named computed-property access from serialization/enumeration.
+
+Query cases retain **both** independently analyzed transition ROIs (`pixel-samples.json` and `pixel-samples-grid.json`). On main `CrRendererMain`, each `RenderThread::RunQuery` trace slice must exactly enclose one same-type `ReplicaPage::AnswerQuery` on that page's distinct `BlinkRenderThread`. No cross-thread timestamp slack is used: an early 100µs allowance incorrectly included later adjacent answers and was removed after inspecting real traces. [Perfetto's trace format documentation](https://perfetto.dev/docs/getting-started/other-formats) specifies the common microsecond timestamp fields. At least six pairs per transition sample are required; request/answer counts and latencies are retained. Flag-off must not emit forwarding pairs. First-answer log milestones are mandatory on enabled query pages. The analyzer also requires every exercised query family to appear in the trace; `RenderThreadQuery::Type` declaration order was read from `render_thread_channel.h` (0–27: HitTest=19, FocusableState=20, MouseRelativePosition=21, RangeClientRects=22, RangeBoundingClientRect=23, InnerWidth=24, InnerHeight=25, WindowScrollX=26, WindowScrollY=27). Enum changes fail with a contract mismatch instead of silently reclassifying query types.
+
+### Native input
+
+On a fresh query page, screenshots establish the viewport-to-X11 coordinate translation. A private-window title/PID lookup selects the harness window. Separate xdotool invocations focus/raise it, then **fresh invocations without `--window`** send XTEST motion and press/release. Pointer coordinates are read before and after motion; the final X-server position must exactly match the target before pressing. Button press and release are separately logged (including subprocess timeout/error/signal). No DOM `.click()` or CDP input dispatch is used. An earlier combined `mousemove --sync ... mousedown ... mouseup` chain timed out in the latest run. A matching browser-free `Xvfb -noreset` reproduction established that installed xdotool3.20160805.1 hangs on a same-position `mousemove --sync`; an initial reset-enabled experiment had misleadingly recentered the pointer between clients. Explicit destination readback avoids that bug and improves verification over `--sync`'s wait-for-any-movement semantics, without relaxing event gates. The transport self-test also uses `-noreset`, matching the real harness and preserving pointer state between commands. Require trusted mousedown → mouseup → click, target `input-button`, offsets (20,15) ±1px, matching baseline semantics, and successful button focus. Enabled native hit testing must produce a synchronous **HitTest (type 19) and MouseRelativePosition (type 21)** query/answer pairs between input trace marks. The browser-free `test_capture.mjs` also checks XTEST mouse movement on its own private Xvfb display.
+
+### One thread per page and lifetime
+
+Same-origin `window.open` retains its opener; no COOP/noopener or disabling site isolation is used. Trace marks must establish that owner and peer share the **same renderer PID and main TID**. `/proc/<pid>/task/<tid>/comm` snapshots must show one → two → one → one → one render threads for owner, owner+peer, peer closed, owner navigated a→b, and history.back() restoring a. Both live threads must have distinct TIDs and replica IDs, and full `BlinkRenderThread` metadata in the trace. Linux truncates `comm` to 15 visible bytes (`BlinkRenderThre`); the harness handles that explicitly. Task start ticks distinguish reused TIDs. Closing peer must preserve the owner thread; navigation must retire its old identity and allocate a new replica ID. All attach/start/stop milestones are required, including the new BFCache-entry stop message and a fresh A journal attachment/replica after restoration. Baseline must show zero render threads throughout. Back-forward cache is **not disabled to conceal lifetime problems**.
+
+The history test waits for `pageshow`, not another `load` event, and requires `persisted=true` to claim an actual BFCache hit. CDP can replay cached console history on restoration, so the matching event's own epoch must be at or after the history-back request; delivery order alone is insufficient. Old events remain retained. Cache misses remain missing coverage (with CDP reason events retained), not a fabricated restoration pass. A has an inline64px panel and a unique DOM token before navigation; B has its original24px panel and no token. Restored A must answer offsetHeight64 and preserve the token, then answer96 after a fresh inline mutation. External X11 captures (taken before diagnostic CDP screenshots) must show64→24→64→96px with the matching normal-flow yellow sibling. Restored64px ROI hashes must match original A, while the fresh96px image must differ from both A/B: a retained cached bitmap cannot substitute for new rendering. Fresh offsetHeight query pairs and post-mutation Paint on the newly allocated render thread are required. Browser-free unit/synthetic pixel tests reject stale surfaces, cache misses, reused threads/replicas, lost DOM identity, and missing attachment/Paint.
+
+### Every main-thread fallback
+
+Chromium runs with `TZ=UTC`; Chrome's own timestamp prefix is parsed, not stdout reception time. Textual fallback counters are retained, including phase/reason, but their sampled `#n` values are not misreported as occurrence counts.
+
+**Confirmed instrumentation contract:** every call to `RenderThreadJournal::NoteMainThreadRendering` emits an unthrottled `TRACE_EVENT_INSTANT` in category `blink`, named `RenderThreadJournal::MainThreadFallback`, on `CrRendererMain`. Arguments are `phase` (string), `reason` (integer DocumentUpdateReason; 0 for style), and `count` (uint64 per-journal running count). Hooks are at entry of `Document::UpdateStyleAndLayoutTree` (style) and `Document::UpdateStyleAndLayout` (layout), only with an attached journal. `run.json` records the confirmed event name.
+
+These counts are **conservative lifecycle-entry counts, not proof that style/layout work actually ran**: the event fires even when the lifecycle is already clean. Any event during the exact block interval still fails the requested no-entry gate (no pixel guard applied). Before/after counts and raw arguments are retained without failing merely because they occurred outside the block.
+
+The parent's follow-up contract adds `RenderThreadJournal::SkippedForFocus` (`blink`, instant event): the focus path **skips** main-thread lifecycle work instead of performing fallback work. These events are counted separately before/during/after the block in `fallbacks.json` and `REPORT.md`, and separately for outside-block input/lifetime traces. They are informational, never subtracted from `MainThreadFallback`, and never weaken the strict zero-fallback gate. In-block focus tests are unchanged. No absence/presence requirement is placed on the informational skip event. The full case trace starts before navigation/preparation. Textual logs remain throttled (first 10, then every 100); absence of a textual log is never treated as proof of absence. Instrumentation confirmation alone is **not BUILD READY approval**; each new build still requires explicit approval.
+
+### Additional web research
+
+- [V8 RuntimeAgent implementation](https://raw.githubusercontent.com/v8/v8/main/src/inspector/v8-runtime-agent-impl.cc): `restore()` calls `enable()`, which reports stored console messages. Choose occurrence-time filtering over clearing console history or replacing instrumentation with new bindings. Resize readiness waits for both changed geometry and the matching fresh resize event; original window bounds are restored in `finally` and restoration geometry is verified. Poll samples are retained in `resize-samples.jsonl`, including the last sample in `resize.json`, even when readiness times out. This avoids sleeps and state leakage into native input.
+- [Official BFCache guide](https://web.dev/articles/bfcache) and [MDN pageshow](https://developer.mozilla.org/en-US/docs/Web/API/Window/pageshow_event): `pageshow.persisted` identifies actual restoration; a new load event is not a valid restore readiness condition. Chose cache-enabled history traversal and existing X11 pixel helpers over disabling BFCache or trusting CDP screenshots alone. A fresh post-restore mutation excludes a cached-surface false positive; no dependency added.
+
+- [W3C CSSOM View](https://www.w3.org/TR/cssom-view-1/) and [CSSOM](https://www.w3.org/TR/cssom-1): box metrics, rects, hit-testing boundaries, computed properties/pseudo-elements.
+- [MDN innerWidth](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth), [innerHeight](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerHeight), [scrollTo](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo), and [getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect): viewport dimensions, default auto scrolling, and viewport-relative rectangle changes. Compared dynamic spacer insertion with static CSS overflow (chosen), and hardcoded browser chrome dimensions with measured pre-block dimensions (chosen); no dependency is needed.
+- [WPT shadow hit-testing test](https://github.com/web-platform-tests/wpt/blob/master/css/cssom-view/elementsFromPoint-shadowroot.html): document queries exclude shadow internals; shadow-root queries include their own descendants.
+- [Chromium multiprocess architecture](https://www.chromium.org/developers/design-documents/multi-process-architecture/): same-origin opener-connected pages share a renderer; verify rather than assume. Chosen over relying solely on `--renderer-process-limit=1`.
+- [Linux proc_pid_comm](https://man7.org/linux/man-pages/man5/proc_pid_comm.5.html): per-task names and the 16-byte limit including NUL.
+- [xdotool upstream manual](https://github.com/jordansissel/xdotool/blob/master/xdotool.pod): XTEST versus XSendEvent, focus/raise and mouse command semantics. Chosen over synthetic/CDP clicks to exercise native input hit testing.
+- Official CDP schema additionally checked for `SystemInfo.getProcessInfo`, `Target.closeTarget/getTargets`, and `Page.bringToFront`.
+
+No new dependencies; xdotool was verified installed on core. All extended checks remain behind the same explicit build-ready launch gate and use the same exact run command above.
+
+## Interpretation / limits
+
+This is an experimental regression/proof harness, **not proof that stock CSS transitions must animate during synchronous JS**. It intentionally asks the new design to meet a stronger behavior. A failure is evidence of an unmet requirement or missing instrumentation, not permission to relax the gate.
+
+Xvfb establishes independently changing presented pixels in a software display, not physical GPU scanout, hardware GPU performance, or general FPS. Thirty captured samples/s bounds measurement; no animation FPS is inferred from main-document clocks. Trace attribution plus layout-specific captured changes supports the OMT path; broader DOM semantics, concurrent mutation races and physical-display performance require additional testing.
+
+**BUILD READY approval received on 2026-09-26 for the full matrix.** Preflight files remain transport/static tests only, never Chromium validation results. Actual runs and reports are stored separately under `results/`.
+
+- `approved-20260926T155008Z`: FAIL. Five baseline recorded cases passed (0 changes/0px range/1 ROI hash; 75 guarded samples for 3s, 285 for 10s). Baseline height/3s exceeded the original 15s navigation deadline. Both query baselines passed 58 immediate assertions; baseline native input and lifecycle checks passed. The first OMT page aborted in `SyncScrollAttemptHeuristic::~SyncScrollAttemptHeuristic`, `sync_scroll_attempt_heuristic.cc:32`, from `PageAnimator::ServiceScriptedAnimations`; the remaining OMT cases were blocked. Its binary SHA256 was `d4b3ddeab1f58f3beb6a78ce017018dc6d77b378ae9b5678595eb3ed5ea4f910`. Parent fixed/rebuilt the shared heuristic state and explicitly approved another full run; validation did not modify source/build.
+- `approved-20260926T155925Z`: FAIL, no fatal/crash. All six baseline cases passed. All four passive OMT cases passed: 66 captured layout changes, 218px guarded range, 67 unique hashes, approximately 2167ms motion span and zero in-block fallbacks. Same renderer main PID/TID 2428048; distinct render TIDs 2428450/2428847/2429032/2429256. Each had 132–133 Paint and 133–134 BeginFrame events over about 2200ms. These prove in-block independent layout pixels, **not animation throughout all 10 seconds**: the 10s transitions also finished near 2.4s rather than the requested 8s (consistent with the inline-style propagation failure below).
+  - Both OMT query cases failed: inline width137 expected157; CSSOM custom19px expected23px; scrollLeft/Top0 expected17/23. All 16/51 samples were264px from the first sample at roughly42ms, rather than progressing. Each recorded eight in-block fallback entries: layout reason20 twice (`Element::setScrollLeft/Top` stacks), layout13 twice, style0 four times. All Range checks passed. Separate strict-containment diagnostic analysis found 146/356 correctly paired queries/answers on render TIDs2428943/2429458, with every required family present and maximum query waits1262/2232µs. Forwarding itself is observed, but stale answers/animation/fallback failures still prevent a query-case pass. Focus checks remain inside these original blocks; they have not been excused from the no-fallback gate.
+  - OMT smoke failed on stale inline color `rgb(40,50,60)` / height30 rather than `rgb(40,200,80)` /45. Native input and per-page lifecycle were not reached in that run; no pass is claimed. Future orchestration isolates these fresh-page stages so an assertion failure remains fatal to the report without suppressing unrelated diagnostics.
+  - The executable SHA stayed unchanged across the rebuild because `libblink_core.so` / `libblink_platform.so` changed instead. Full runtime manifests were added only after this discovery; no retrospective manifest is claimed for these first two runs.
+
+- `approved-20260926T163423Z`: all twelve recorded cases PASS, **overall FAIL**. Every block had zero MainThreadFallback. Both OMT query cases passed 68 exact assertions and matched baseline, with 155/365 paired requests/answers (max waits2848/2945µs), 16/51 progressing samples, and 10 informational SkippedForFocus entries each. Window scrolling restored in approximately9.7/5.5ms by trace. OMT3s height/grid/query:66 changes each,218/218/219px guarded ranges. OMT10s:233/233/234 changes,233/233/234px ranges,7733/7733/7766ms spans; both query ROIs passed.
+  - A deferred replica teardown hit SIGSEGV in `WeakIdentifierMap::Identifier -> MainThreadDebugger::DidClearContextsForFrame -> LocalDOMWindow::FrameDestroyed -> LocalFrame::DetachImpl -> Page::WillBeDestroyed -> ReplicaPage::~ReplicaPage -> ShutdownRenderThread`. The first15 frames were reported immediately. No clean bill of health is claimed despite passing prior recordings.
+  - OMT native input timed out in the combined xdotool chain before events were retained; it is not a native-input pass. This was subsequently reproduced without Chromium as a harness-side same-position `--sync` hang in xdotool3.20160805.1; the next run uses explicit pointer readback instead. Its recorded trace has three outside-block fallbacks (layout28×2,13×1), reported rather than failed. Page-lifetime staging saw three persistent render threads instead of one for20s (385 samples), so stopped before opening the peer. Its trace has four outside-block fallbacks (28×2,17×1,13×1).
+  - All four runtime manifests matched:791 files, build SHA256 `66eafe4ebc5b0d5c5efacead020c2b534e9d88342e807c21eb5e0ea96fffa57a`. No harness-profile processes remained after cleanup. Artifacts and original harness source are retained; later pointer hardening is not retrospectively attributed to this run.
+- `approved-20260926T172500Z`: all twelve recorded cases PASS, overall FAIL, no fatal signatures. OMT native input passes trusted events/target/offsets/focus with18 query pairs including19/21, max580µs. All blocks have zero fallback; query blocks each retain10 informational focus skips. Both modes really restored from BFCache (`pageshow.persisted=true` in raw logs), but the harness selected replayed initial pageshow(false) before the fresh event. Full restored geometry/pixel gates were consequently unexecuted, not passed. OMT completed thread counts1→2→1→1 before this assertion; restored replica6/TID2492999 submitted a frame. Baseline resize geometry was observed8ms before the resize event; the premature assertion left the window shrunk and invalidated later native input. These harness races are repaired for the next approved run; original results are not rewritten as passes.
+- `approved-20260926T174359Z`: all twelve recorded cases PASS; paired native input PASS; full BFCache lifetime/restored-query/fresh-pixel checks PASS; overall FAIL only on OMT resize readiness. No fatal signatures. OMT BFCache counts1→2→1→1→1, replicas9→9+10→11→12, fresh renderTID2506685, four paired geometry queries (max421µs) and9 fresh Paints. Both modes preserve the DOM token and show64/24/64/96px external ROI heights. OMT resize event reports old1279×651 after shrinking to1080×720 outer; restoration event reports old1080×572. Baseline events report the correct current dimensions. The strict matching-event gate is retained; source ordering/correctness needs investigation. All four791-file manifests equal the prior run (`d683cb43ff6c627da03f819fd38e29fcf7e76a548785598c3b12f571f9db70d9`). Resize poll retention was added afterward for future diagnosis, not retroactively attributed to this run.
+- `approved-20260926T180001Z`: **full PASS, exit0**, no failures/fatal signatures. All12 recordings pass; both68-assertion query objects exactly equal baseline;155/365 matched queries, max3816/2027µs. Zero in-block MainThreadFallback,10 separate informational focus skips perqueryblock. OMT resize now reports current1080×572 in the event and passes readiness in7ms; restoration reports1279×651. Native input and baselineequivalence pass with18 OMT pairs including19/21 (max595µs). BFCache counts1→2→1→1→1, real persisted=true, preserved DOM token/64px geometry and fresh96px X11 pixels; replica6/newTID2521138,4 paired geometry queries(max897µs),9 fresh Paints. All four791-file manifests match buildSHA `56f0a1616a8a6faed2dd8313d6b3577a49c6f91b5aac82d15ab6addbc56364de`. No own-profile Chromium processes remain. Scope remains Linux software-display validation, not physical GPU scanout or all-platform correctness.
+- `approved-20260926T183827Z`: **final release PASS, exit0**, after the parent's formatting-only rebuild. All12 recordings and all extended query/native-input/BFCache/DOM/CSSOM/resize/navigation gates pass; no fatal signatures or in-block MainThreadFallback. All four803-file manifests match SHA256 `9a63ea1594e8960360c463a939871a34d57635977a3be772f1b2c56edc4c3877`. No own-profile Chromium processes remain. The parent reports a28-job blink_unittests run overlapped the three baseline3s capture windows through18:39:33Z; all three passed unchanged timing/pixel/trace gates. Baseline10s measured blocks start18:39:35Z and OMT measurements start18:41:19Z, after that overlap. This is noted in REPORT.md and RUN-NOTES.md; no clean-load performance benchmark is claimed. Artifacts are retained locally/remotely.
+
+For runtime provenance, checked [Chromium's official component-build documentation](https://chromium.googlesource.com/chromium/src.git/+/HEAD/docs/component_build.md). Compared executable-only hashes with a dependency-free manifest of adjacent DSOs/resources (chosen); no new tooling or dependency is needed. For those diagnostic changes, rechecked the official CDP schema: `Target.targetCrashed` identifies a target failure, while `Tracing.end` and `Tracing.tracingComplete` control trace flushing. Compared aborting all CDP operations (loses crash traces) with allowing only bounded diagnostic cleanup (chosen); no test continuation, relaxed health gate, or dependency was added.

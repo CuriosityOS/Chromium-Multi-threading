@@ -1,0 +1,20 @@
+@@@ third_party/blink/renderer/core/dom/document.cc
+<<<<
+  PostStyleUpdateScope post_style_update_scope(*this);
+====
+  if (render_thread_journal_) {
+    render_thread_journal_->NoteMainThreadRendering("style", 0);
+  }
+  PostStyleUpdateScope post_style_update_scope(*this);
+>>>>
+<<<<
+  TRACE_EVENT("blink", "Document::UpdateStyleAndLayout");
+  LocalFrameView* frame_view = View();
+====
+  TRACE_EVENT("blink", "Document::UpdateStyleAndLayout");
+  if (render_thread_journal_) {
+    render_thread_journal_->NoteMainThreadRendering("layout",
+                                                    static_cast<int>(reason));
+  }
+  LocalFrameView* frame_view = View();
+>>>>

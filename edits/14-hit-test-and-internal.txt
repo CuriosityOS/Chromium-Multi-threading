@@ -1,0 +1,96 @@
+@@@ third_party/blink/renderer/core/dom/document.cc
+<<<<
+  if (HaveRenderBlockingStylesheetsLoaded() &&
+      (GetFrame()->IsMainFrame() ||
+       (Loader()->HasLoadedNonInitialEmptyDocument() &&
+        GetFrame()->View()->IsVisible()))) {
+    UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
+  }
+====
+  // With off-main-thread rendering the render thread lays the page out.
+  if (!render_thread_journal_ && HaveRenderBlockingStylesheetsLoaded() &&
+      (GetFrame()->IsMainFrame() ||
+       (Loader()->HasLoadedNonInitialEmptyDocument() &&
+        GetFrame()->View()->IsVisible()))) {
+    UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
+  }
+>>>>
+<<<<
+    if (!is_initial_empty_document_ && HaveRenderBlockingStylesheetsLoaded()) {
+      // The is_initial_empty_document_ flag is only true when the document is
+====
+    if (!is_initial_empty_document_ && !render_thread_journal_ &&
+        HaveRenderBlockingStylesheetsLoaded()) {
+      // The is_initial_empty_document_ flag is only true when the document is
+>>>>
+<<<<
+  DCHECK(!GetLayoutView() || IsA<LayoutView>(GetLayoutView()));
+
+  // LayoutView::hitTest causes a layout, and we don't want to hit that until
+====
+  DCHECK(!GetLayoutView() || IsA<LayoutView>(GetLayoutView()));
+
+  if (render_thread_journal_) {
+    // The render thread owns layout; it answers the hit test.
+    HitTestLocation location(document_point);
+    HitTestResult result(request, location);
+    if (RenderThreadJournal::HitTest(*this, location, result)) {
+      if (!request.ReadOnly()) {
+        UpdateHoverActiveState(request.Active(), !request.Move(),
+                               result.InnerPossiblyPseudoElement());
+      }
+      return MouseEventWithHitTestResults(event, location, result);
+    }
+  }
+
+  // LayoutView::hitTest causes a layout, and we don't want to hit that until
+>>>>
+@@@ third_party/blink/renderer/core/input/event_handling_util.cc
+<<<<
+  HitTestResult result(HitTestRequest(hit_type), location);
+
+  if (!frame || !frame->ContentLayoutObject())
+    return result;
+====
+  HitTestResult result(HitTestRequest(hit_type), location);
+
+  if (frame && frame->GetDocument() &&
+      RenderThreadJournal::HitTest(*frame->GetDocument(), location, result)) {
+    return result;
+  }
+  if (!frame || !frame->ContentLayoutObject())
+    return result;
+>>>>
+<<<<
+#include "third_party/blink/renderer/core/frame/local_frame_view.h"
+====
+#include "third_party/blink/renderer/core/frame/local_frame_view.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+@@@ third_party/blink/renderer/core/editing/element_inner_text.cc
+<<<<
+String Element::innerText(TextVisitor* visitor) {
+====
+String Element::innerText(TextVisitor* visitor) {
+  if (!visitor) {
+    if (auto answer = RenderThreadJournal::QueryInnerText(*this)) {
+      return *answer;
+    }
+  }
+>>>>
+@@@ third_party/blink/renderer/core/html/html_element.cc
+<<<<
+String HTMLElement::innerTextForBinding() {
+  if (auto answer = RenderThreadJournal::QueryInnerText(*this)) {
+    return *answer;
+  }
+====
+String HTMLElement::innerTextForBinding() {
+>>>>
+@@@ third_party/blink/renderer/core/editing/element_inner_text.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/vector.h"
+====
+#include "third_party/blink/renderer/platform/wtf/vector.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>

@@ -1,0 +1,133 @@
+@@@ third_party/blink/renderer/core/frame/local_dom_window.cc
+<<<<
+int LocalDOMWindow::innerHeight() const {
+  if (!GetFrame()) {
+    return 0;
+  }
+====
+int LocalDOMWindow::innerHeight() const {
+  if (!GetFrame()) {
+    return 0;
+  }
+  // With off-main-thread rendering the render thread owns layout.
+  if (auto answer = RenderThreadJournal::QueryWindowNumber(
+          *document(), RenderThreadQuery::Type::kInnerHeight)) {
+    return static_cast<int>(*answer);
+  }
+>>>>
+<<<<
+int LocalDOMWindow::innerWidth() const {
+  if (!GetFrame()) {
+    return 0;
+  }
+====
+int LocalDOMWindow::innerWidth() const {
+  if (!GetFrame()) {
+    return 0;
+  }
+  if (auto answer = RenderThreadJournal::QueryWindowNumber(
+          *document(), RenderThreadQuery::Type::kInnerWidth)) {
+    return static_cast<int>(*answer);
+  }
+>>>>
+<<<<
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  // TODO(bokan): This is wrong when the document.rootScroller is non-default.
+  // crbug.com/505516.
+  double viewport_x = view->LayoutViewport()->GetWebExposedScrollOffset().x();
+====
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+
+  if (auto answer = RenderThreadJournal::QueryWindowNumber(
+          *document(), RenderThreadQuery::Type::kWindowScrollX)) {
+    return *answer;
+  }
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  // TODO(bokan): This is wrong when the document.rootScroller is non-default.
+  // crbug.com/505516.
+  double viewport_x = view->LayoutViewport()->GetWebExposedScrollOffset().x();
+>>>>
+<<<<
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  // TODO(bokan): This is wrong when the document.rootScroller is non-default.
+  // crbug.com/505516.
+  double viewport_y = view->LayoutViewport()->GetWebExposedScrollOffset().y();
+====
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+
+  if (auto answer = RenderThreadJournal::QueryWindowNumber(
+          *document(), RenderThreadQuery::Type::kWindowScrollY)) {
+    return *answer;
+  }
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  // TODO(bokan): This is wrong when the document.rootScroller is non-default.
+  // crbug.com/505516.
+  double viewport_y = view->LayoutViewport()->GetWebExposedScrollOffset().y();
+>>>>
+<<<<
+  SyncScrollAttemptHeuristic::DidSetScrollOffset();
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  float x = 0.0f;
+  float y = 0.0f;
+====
+  SyncScrollAttemptHeuristic::DidSetScrollOffset();
+
+  // With off-main-thread rendering the render thread scrolls.
+  if (RenderThreadJournal::Scroll(
+          *document(),
+          scroll_to_options->hasLeft()
+              ? std::optional<double>(ScrollableArea::NormalizeNonFiniteScroll(
+                    scroll_to_options->left()))
+              : std::nullopt,
+          scroll_to_options->hasTop()
+              ? std::optional<double>(ScrollableArea::NormalizeNonFiniteScroll(
+                    scroll_to_options->top()))
+              : std::nullopt,
+          /*relative=*/true)) {
+    return resolver->CreateScriptPromise();
+  }
+
+  document()->UpdateStyleAndLayout(DocumentUpdateReason::kJavaScript);
+
+  float x = 0.0f;
+  float y = 0.0f;
+>>>>
+<<<<
+  // It is only necessary to have an up-to-date layout if the position may be
+  // clamped, which is never the case for (0, 0).
+====
+  if (RenderThreadJournal::Scroll(
+          *document(),
+          scroll_to_options->hasLeft()
+              ? std::optional<double>(ScrollableArea::NormalizeNonFiniteScroll(
+                    scroll_to_options->left()))
+              : std::nullopt,
+          scroll_to_options->hasTop()
+              ? std::optional<double>(ScrollableArea::NormalizeNonFiniteScroll(
+                    scroll_to_options->top()))
+              : std::nullopt,
+          /*relative=*/false)) {
+    return resolver->CreateScriptPromise();
+  }
+
+  // It is only necessary to have an up-to-date layout if the position may be
+  // clamped, which is never the case for (0, 0).
+>>>>
+<<<<
+#include "third_party/blink/renderer/core/probe/core_probes.h"
+====
+#include "third_party/blink/renderer/core/probe/core_probes.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>

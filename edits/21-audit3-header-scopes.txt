@@ -1,0 +1,177 @@
+@@@ third_party/blink/renderer/core/display_lock/display_lock_utilities.cc
+<<<<
+
+DisplayLockUtilities::LockCheckMemoizationScope*
+    DisplayLockUtilities::memoizer_ = nullptr;
+====
+
+constinit thread_local DisplayLockUtilities::LockCheckMemoizationScope*
+    DisplayLockUtilities::memoizer_ = nullptr;
+>>>>
+@@@ third_party/blink/renderer/core/display_lock/display_lock_utilities.h
+<<<<
+
+  static LockCheckMemoizationScope* memoizer_;
+};
+====
+
+  static thread_local LockCheckMemoizationScope* memoizer_;
+};
+>>>>
+@@@ third_party/blink/renderer/core/paint/timing/paint_timing_detector.cc
+<<<<
+
+ScopedPaintTimingDetectorBlockPaintHook*
+    ScopedPaintTimingDetectorBlockPaintHook::top_ = nullptr;
+====
+
+constinit thread_local ScopedPaintTimingDetectorBlockPaintHook*
+    ScopedPaintTimingDetectorBlockPaintHook::top_ = nullptr;
+>>>>
+@@@ third_party/blink/renderer/core/paint/timing/paint_timing_detector.h
+<<<<
+  std::optional<Data> data_;
+  static ScopedPaintTimingDetectorBlockPaintHook* top_;
+};
+====
+  std::optional<Data> data_;
+  static thread_local ScopedPaintTimingDetectorBlockPaintHook* top_;
+};
+>>>>
+@@@ third_party/blink/renderer/core/paint/frame_painter.cc
+<<<<
+
+bool FramePainter::in_paint_contents_ = false;
+====
+
+constinit thread_local bool FramePainter::in_paint_contents_ = false;
+>>>>
+@@@ third_party/blink/renderer/core/paint/frame_painter.h
+<<<<
+  const LocalFrameView* frame_view_;
+  static bool in_paint_contents_;
+};
+====
+  const LocalFrameView* frame_view_;
+  static thread_local bool in_paint_contents_;
+};
+>>>>
+@@@ third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.cc
+<<<<
+
+unsigned PrePaintDisableSideEffectsScope::count_ = 0;
+====
+
+constinit thread_local unsigned PrePaintDisableSideEffectsScope::count_ = 0;
+>>>>
+@@@ third_party/blink/renderer/core/paint/pre_paint_disable_side_effects_scope.h
+<<<<
+ private:
+  static unsigned count_;
+};
+====
+ private:
+  static thread_local unsigned count_;
+};
+>>>>
+@@@ third_party/blink/renderer/core/layout/svg/svg_layout_support.cc
+<<<<
+
+AffineTransform SubtreeContentTransformScope::current_content_transformation_;
+====
+
+thread_local AffineTransform
+    SubtreeContentTransformScope::current_content_transformation_;
+>>>>
+@@@ third_party/blink/renderer/core/layout/svg/svg_layout_support.h
+<<<<
+ private:
+  static AffineTransform current_content_transformation_;
+  AffineTransform saved_content_transformation_;
+====
+ private:
+  static thread_local AffineTransform current_content_transformation_;
+  AffineTransform saved_content_transformation_;
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer.cc
+<<<<
+
+bool CheckAncestorPositionVisibilityScope::should_check_ = false;
+====
+
+constinit thread_local bool
+    CheckAncestorPositionVisibilityScope::should_check_ = false;
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer.h
+<<<<
+ private:
+  static bool should_check_;
+  base::AutoReset<bool> reset_;
+====
+ private:
+  static thread_local bool should_check_;
+  base::AutoReset<bool> reset_;
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.cc
+<<<<
+
+int IgnorePaintTimingScope::ignore_depth_ = 0;
+bool IgnorePaintTimingScope::is_document_element_invisible_ = false;
+====
+
+constinit thread_local int IgnorePaintTimingScope::ignore_depth_ = 0;
+constinit thread_local bool
+    IgnorePaintTimingScope::is_document_element_invisible_ = false;
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/paint/ignore_paint_timing_scope.h
+<<<<
+  base::AutoReset<bool> reset_is_document_element_invisible_;
+  static int ignore_depth_;
+  static bool is_document_element_invisible_;
+};
+====
+  base::AutoReset<bool> reset_is_document_element_invisible_;
+  static thread_local int ignore_depth_;
+  static thread_local bool is_document_element_invisible_;
+};
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc
+<<<<
+
+int PaintLayerScrollableArea::FreezeScrollbarsScope::count_ = 0;
+====
+
+constinit thread_local int
+    PaintLayerScrollableArea::FreezeScrollbarsScope::count_ = 0;
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc
+<<<<
+
+int PaintLayerScrollableArea::DelayScrollOffsetClampScope::count_ = 0;
+====
+
+constinit thread_local int
+    PaintLayerScrollableArea::DelayScrollOffsetClampScope::count_ = 0;
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h
+<<<<
+   private:
+    static int count_;
+  };
+====
+   private:
+    static thread_local int count_;
+  };
+>>>>
+@@@ third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h
+<<<<
+    static HeapVector<Member<PaintLayerScrollableArea>>& NeedsClampList();
+
+    static int count_;
+  };
+====
+    static HeapVector<Member<PaintLayerScrollableArea>>& NeedsClampList();
+
+    static thread_local int count_;
+  };
+>>>>

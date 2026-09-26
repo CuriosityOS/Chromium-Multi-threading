@@ -1,0 +1,71 @@
+@@@ third_party/blink/renderer/platform/runtime_enabled_features.json5
+<<<<
+    {
+      name: "OffscreenCanvasGetContextAttributes",
+      status: "stable",
+    },
+====
+    {
+      // Runs style, layout and paint of the outermost main frame's document
+      // on a dedicated render thread. The main thread journals DOM changes
+      // and keeps running JS; the render thread keeps producing frames.
+      // See core/render_thread/README.md.
+      name: "OffMainThreadRendering",
+    },
+    {
+      name: "OffscreenCanvasGetContextAttributes",
+      status: "stable",
+    },
+>>>>
+@@@ third_party/blink/renderer/core/frame/local_frame_view.h
+<<<<
+      public FrameView {
+  friend class PaintControllerPaintTestBase;
+  friend class Internals;
+====
+      public FrameView {
+  friend class PaintControllerPaintTestBase;
+  friend class Internals;
+  friend class RenderThreadPresenter;
+>>>>
+@@@ third_party/blink/renderer/core/dom/document.h
+<<<<
+class StyleEngine;
+====
+class RenderThreadJournal;
+class StyleEngine;
+>>>>
+<<<<
+  StyleEngine& GetStyleEngine() const {
+    DCHECK(style_engine_.Get());
+    return *style_engine_.Get();
+  }
+====
+  StyleEngine& GetStyleEngine() const {
+    DCHECK(style_engine_.Get());
+    return *style_engine_.Get();
+  }
+
+  // Non-null when this document's rendering (style, layout, paint) runs on
+  // the off-main-thread render thread. DOM mutations are journaled to it.
+  RenderThreadJournal* GetRenderThreadJournal() const {
+    return render_thread_journal_.Get();
+  }
+  void SetRenderThreadJournal(RenderThreadJournal* journal);
+>>>>
+<<<<
+  Member<StyleEngine> style_engine_;
+
+====
+  Member<StyleEngine> style_engine_;
+
+  Member<RenderThreadJournal> render_thread_journal_;
+
+>>>>
+@@@ third_party/blink/renderer/core/dom/document.cc
+<<<<
+  visitor->Trace(style_engine_);
+====
+  visitor->Trace(style_engine_);
+  visitor->Trace(render_thread_journal_);
+>>>>

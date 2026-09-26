@@ -1,0 +1,14 @@
+@@@ third_party/blink/renderer/platform/heap/thread_state_storage.h
+<<<<
+  ALWAYS_INLINE static ThreadStateStorage* GetState() {
+    auto* main_thread_storage = ThreadStateStorage::MainThreadStateStorage();
+    DCHECK_EQ(main_thread_storage, ThreadStateStorage::Current());
+    return main_thread_storage;
+  }
+====
+  ALWAYS_INLINE static ThreadStateStorage* GetState() {
+    // DOM, style and layout objects are also allocated by the Blink render
+    // thread, which owns its own Oilpan heap and replica document.
+    return ThreadStateStorage::Current();
+  }
+>>>>

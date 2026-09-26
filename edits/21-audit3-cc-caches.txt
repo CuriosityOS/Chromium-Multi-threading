@@ -1,0 +1,198 @@
+@@@ third_party/blink/renderer/core/css/css_computed_style_declaration.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+====
+#include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+>>>>
+@@@ third_party/blink/renderer/core/css/css_computed_style_declaration.cc
+<<<<
+  }
+  DEFINE_STATIC_LOCAL(HashSet<CSSPropertyID>, property_id_set, ());
+  if (!property_id_set.insert(property.PropertyID()).is_new_entry) {
+====
+  }
+  DEFINE_PER_THREAD_STATIC_LOCAL(HashSet<CSSPropertyID>, property_id_set, ());
+  if (!property_id_set.insert(property.PropertyID()).is_new_entry) {
+>>>>
+@@@ third_party/blink/renderer/core/css/css_computed_style_declaration.cc
+<<<<
+    const ExecutionContext* execution_context) {
+  DEFINE_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+  if (properties.empty()) {
+====
+    const ExecutionContext* execution_context) {
+  DEFINE_PER_THREAD_STATIC_LOCAL(Vector<const CSSProperty*>, properties, ());
+  if (properties.empty()) {
+>>>>
+@@@ third_party/blink/renderer/core/css/css_style_declaration.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/std_lib_extras.h"
+#include "third_party/blink/renderer/platform/wtf/text/ascii_ctype.h"
+====
+#include "third_party/blink/renderer/platform/wtf/std_lib_extras.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/wtf/text/ascii_ctype.h"
+>>>>
+@@@ third_party/blink/renderer/core/css/css_style_declaration.cc
+<<<<
+  typedef HashMap<String, CSSPropertyID> CSSPropertyIDMap;
+  DEFINE_STATIC_LOCAL(CSSPropertyIDMap, map, ());
+  CSSPropertyIDMap::iterator iter = map.find(name);
+====
+  typedef HashMap<String, CSSPropertyID> CSSPropertyIDMap;
+  DEFINE_PER_THREAD_STATIC_LOCAL(CSSPropertyIDMap, map, ());
+  CSSPropertyIDMap::iterator iter = map.find(name);
+>>>>
+@@@ third_party/blink/renderer/core/css/css_style_declaration.cc
+<<<<
+  typedef Vector<String, kNumCSSProperties - 1> PreAllocatedPropertyVector;
+  DEFINE_STATIC_LOCAL(PreAllocatedPropertyVector, property_names, ());
+====
+  typedef Vector<String, kNumCSSProperties - 1> PreAllocatedPropertyVector;
+  DEFINE_PER_THREAD_STATIC_LOCAL(PreAllocatedPropertyVector, property_names,
+                                 ());
+>>>>
+@@@ third_party/blink/renderer/core/svg/svg_animate_element.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/hash_map.h"
+====
+#include "third_party/blink/renderer/platform/wtf/hash_map.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+>>>>
+@@@ third_party/blink/renderer/core/svg/svg_animate_element.cc
+<<<<
+      HashMap<QualifiedName, AnimatedPropertyType>;
+  DEFINE_STATIC_LOCAL(AttributeToPropertyTypeMap, css_property_map, ());
+====
+      HashMap<QualifiedName, AnimatedPropertyType>;
+  DEFINE_PER_THREAD_STATIC_LOCAL(AttributeToPropertyTypeMap, css_property_map,
+                                 ());
+>>>>
+@@@ third_party/blink/renderer/core/animation/underlying_value_owner.cc
+<<<<
+#include "third_party/blink/renderer/platform/heap/persistent.h"
+====
+#include "third_party/blink/renderer/platform/heap/persistent.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+>>>>
+@@@ third_party/blink/renderer/core/animation/underlying_value_owner.cc
+<<<<
+const InterpolationValue& UnderlyingValueOwner::Value() const {
+  DEFINE_STATIC_LOCAL(NullValueWrapper, null_value_wrapper, ());
+  return *this ? *value_ : null_value_wrapper.value->underlying();
+====
+const InterpolationValue& UnderlyingValueOwner::Value() const {
+  DEFINE_PER_THREAD_STATIC_LOCAL(NullValueWrapper, null_value_wrapper, ());
+  return *this ? *value_ : null_value_wrapper.value->underlying();
+>>>>
+@@@ third_party/blink/renderer/core/paint/decoration_line_painter.cc
+<<<<
+#include "third_party/blink/renderer/platform/geometry/path_builder.h"
+#include "third_party/blink/renderer/platform/geometry/stroke_data.h"
+====
+#include "third_party/blink/renderer/platform/geometry/path_builder.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/geometry/stroke_data.h"
+>>>>
+@@@ third_party/blink/renderer/core/paint/decoration_line_painter.cc
+<<<<
+
+  DEFINE_STATIC_LOCAL(std::optional<WavyCache>, wavy_cache, (std::nullopt));
+====
+
+  DEFINE_PER_THREAD_STATIC_LOCAL(std::optional<WavyCache>, wavy_cache,
+                                 (std::nullopt));
+>>>>
+@@@ third_party/blink/renderer/core/html/html_slot_element.cc
+<<<<
+#include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
+#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
+====
+#include "third_party/blink/renderer/platform/instrumentation/use_counter.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
+>>>>
+@@@ third_party/blink/renderer/core/html/html_slot_element.cc
+<<<<
+
+  DEFINE_STATIC_LOCAL(LCSTable*, lcs_table, (new LCSTable(kLCSTableSizeLimit)));
+  DEFINE_STATIC_LOCAL(BacktrackTable*, backtrack_table,
+                      (new BacktrackTable(kLCSTableSizeLimit)));
+====
+
+  DEFINE_PER_THREAD_STATIC_LOCAL(LCSTable*, lcs_table,
+                                 (new LCSTable(kLCSTableSizeLimit)));
+  DEFINE_PER_THREAD_STATIC_LOCAL(BacktrackTable*, backtrack_table,
+                                 (new BacktrackTable(kLCSTableSizeLimit)));
+>>>>
+@@@ third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/ignoring_ascii_case_hash.h"
+#include "third_party/blink/renderer/platform/wtf/text/utf16.h"
+====
+#include "third_party/blink/renderer/platform/wtf/text/ignoring_ascii_case_hash.h"
+#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+#include "third_party/blink/renderer/platform/wtf/text/utf16.h"
+>>>>
+@@@ third_party/blink/renderer/platform/text/hyphenation/hyphenation_minikin.cc
+<<<<
+static mojom::blink::Hyphenation* GetService() {
+  DEFINE_STATIC_LOCAL(mojo::Remote<mojom::blink::Hyphenation>, service,
+                      (ConnectToRemoteService()));
+  return service.get();
+====
+static mojom::blink::Hyphenation* GetService() {
+  DEFINE_PER_THREAD_STATIC_LOCAL(mojo::Remote<mojom::blink::Hyphenation>,
+                                 service, (ConnectToRemoteService()));
+  return service.get();
+>>>>
+@@@ third_party/blink/renderer/core/svg/svg_element.cc
+<<<<
+
+  static HashMap<StringImpl*, CSSPropertyID>* property_name_to_id_map = nullptr;
+  if (!property_name_to_id_map) {
+====
+
+  static constinit thread_local HashMap<StringImpl*, CSSPropertyID>*
+      property_name_to_id_map = nullptr;
+  if (!property_name_to_id_map) {
+>>>>
+@@@ third_party/blink/renderer/core/layout/forms/layout_text_control.cc
+<<<<
+
+  static HashSet<AtomicString>* font_families_with_invalid_char_width_map =
+      nullptr;
+  if (!font_families_with_invalid_char_width_map) {
+====
+
+  static constinit thread_local HashSet<AtomicString>*
+      font_families_with_invalid_char_width_map = nullptr;
+  if (!font_families_with_invalid_char_width_map) {
+>>>>
+@@@ third_party/blink/renderer/platform/text/platform_locale.cc
+<<<<
+namespace {
+Locale* g_default_locale;
+}
+====
+namespace {
+constinit thread_local Locale* g_default_locale = nullptr;
+}
+>>>>
+@@@ third_party/blink/renderer/platform/text/platform_locale.cc
+<<<<
+Locale& Locale::DefaultLocale() {
+  DCHECK(IsMainThread());
+  if (!g_default_locale)
+    g_default_locale = Locale::Create(DefaultLanguage()).release();
+  return *g_default_locale;
+====
+Locale& Locale::DefaultLocale() {
+  if (!g_default_locale) {
+    g_default_locale = Locale::Create(DefaultLanguage()).release();
+  }
+  return *g_default_locale;
+>>>>

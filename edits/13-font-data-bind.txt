@@ -1,0 +1,50 @@
+@@@ content/child/font_data/font_data_manager.h
+<<<<
+  scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
+====
+  scoped_refptr<base::SingleThreadTaskRunner> main_task_runner_;
+  // The process' ChildThread, captured on the main thread. Its host remote is
+  // a SharedRemote, so other threads can bind interfaces through it without a
+  // main-thread hop (the main thread may be blocked on them; see
+  // third_party/blink/renderer/core/render_thread/).
+  raw_ptr<content::ChildThread> child_thread_ = nullptr;
+>>>>
+<<<<
+namespace base {
+class MemoryMappedFile;
+}
+====
+namespace base {
+class MemoryMappedFile;
+}
+
+namespace content {
+class ChildThread;
+}
+>>>>
+<<<<
+#include "base/hash/hash.h"
+====
+#include "base/hash/hash.h"
+#include "base/memory/raw_ptr.h"
+>>>>
+@@@ content/child/font_data/font_data_manager.cc
+<<<<
+      main_task_runner_(base::SingleThreadTaskRunner::GetCurrentDefault()) {
+}
+====
+      main_task_runner_(base::SingleThreadTaskRunner::GetCurrentDefault()),
+      child_thread_(content::ChildThread::Get()) {
+}
+>>>>
+<<<<
+    if (main_task_runner_->RunsTasksInCurrentSequence()) {
+      BindHostReceiverOnMainThread(remote.BindNewPipeAndPassReceiver());
+    } else {
+====
+    if (main_task_runner_->RunsTasksInCurrentSequence()) {
+      BindHostReceiverOnMainThread(remote.BindNewPipeAndPassReceiver());
+    } else if (child_thread_) {
+      child_thread_->BindHostReceiver(remote.BindNewPipeAndPassReceiver());
+    } else {
+>>>>

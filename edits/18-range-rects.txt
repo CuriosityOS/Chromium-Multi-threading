@@ -1,0 +1,36 @@
+@@@ third_party/blink/renderer/core/dom/range.cc
+<<<<
+DOMRectList* Range::getClientRects() const {
+  // TODO(crbug.com/1499981): This should be removed once synchronized scrolling
+  // impact is understood.
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+====
+DOMRectList* Range::getClientRects() const {
+  // TODO(crbug.com/1499981): This should be removed once synchronized scrolling
+  // impact is understood.
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+  if (auto answer = RenderThreadJournal::QueryRangeRects(
+          *this, RenderThreadQuery::Type::kRangeClientRects)) {
+    return MakeGarbageCollected<DOMRectList>(*answer);
+  }
+>>>>
+<<<<
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+  return DOMRect::FromRectF(BoundingRect());
+}
+====
+  SyncScrollAttemptHeuristic::DidAccessScrollOffset();
+  if (auto answer = RenderThreadJournal::QueryRangeRects(
+          *this, RenderThreadQuery::Type::kRangeBoundingClientRect)) {
+    return DOMRect::FromRectF(answer->empty() ? gfx::RectF()
+                                              : answer->front());
+  }
+  return DOMRect::FromRectF(BoundingRect());
+}
+>>>>
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+====
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+#include "third_party/blink/renderer/platform/wtf/text/strcat.h"
+>>>>

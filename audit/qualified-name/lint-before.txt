@@ -1,0 +1,10 @@
+/Users/core/chromium-threading/audit/qualified-name/context/cpplint.py:6455: DeprecationWarning: codecs.open() is deprecated. Use open() instead.
+  with codecs.open(filename, 'r', 'utf8', 'replace') as stream:
+audit/qualified-name/before/qualified_name.h:138:  (cpplint) { should almost always be at the end of the previous line  [whitespace/braces] [4]
+audit/qualified-name/before/qualified_name.h:312:  (cpplint) Is this a non-const reference? If so, make const or use a pointer: QualifiedName& slot  [runtime/references] [2]
+audit/qualified-name/before/qualified_name.h:168:  (cpplint) Add #include <utility> for move  [build/include_what_you_use] [4]
+audit/qualified-name/before/qualified_name.cc:72:  (cpplint) Is this a non-const reference? If so, make const or use a pointer: QualifiedNameImpl*& location  [runtime/references] [2]
+audit/qualified-name/before/qualified_name.cc:154:  (cpplint) Using C-style cast.  Use reinterpret_cast<void*>(...) instead  [readability/casting] [4]
+audit/qualified-name/before/qualified_name.cc:156:  (cpplint) Using C-style cast.  Use reinterpret_cast<void*>(...) instead  [readability/casting] [4]
+audit/qualified-name/before/qualified_name.cc:20:  (cpplint) audit/qualified-name/before/qualified_name.cc should include its header file audit/qualified-name/before/qualified_name.h  [build/include] [5]
+Total errors found: 7

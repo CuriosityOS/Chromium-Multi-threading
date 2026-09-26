@@ -1,0 +1,241 @@
+@@@ third_party/blink/renderer/core/dom/element.cc
+<<<<
+int Element::clientLeft() {
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+====
+int Element::clientLeft() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kClientLeft)) {
+    return static_cast<int>(*answer);
+  }
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+>>>>
+<<<<
+int Element::clientTop() {
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+====
+int Element::clientTop() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kClientTop)) {
+    return static_cast<int>(*answer);
+  }
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+>>>>
+<<<<
+int Element::clientWidth() {
+  // When in strict mode, clientWidth for the document element should return the
+====
+int Element::clientWidth() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kClientWidth)) {
+    return static_cast<int>(*answer);
+  }
+  // When in strict mode, clientWidth for the document element should return the
+>>>>
+<<<<
+int Element::clientHeight() {
+  // When in strict mode, clientHeight for the document element should return
+====
+int Element::clientHeight() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kClientHeight)) {
+    return static_cast<int>(*answer);
+  }
+  // When in strict mode, clientHeight for the document element should return
+>>>>
+<<<<
+double Element::scrollLeft() {
+  if (!InActiveDocument()) {
+====
+double Element::scrollLeft() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kScrollLeft)) {
+    return (*answer);
+  }
+  if (!InActiveDocument()) {
+>>>>
+<<<<
+double Element::scrollTop() {
+  if (!InActiveDocument()) {
+====
+double Element::scrollTop() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kScrollTop)) {
+    return (*answer);
+  }
+  if (!InActiveDocument()) {
+>>>>
+<<<<
+int Element::scrollWidth() {
+  if (!InActiveDocument()) {
+====
+int Element::scrollWidth() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kScrollWidth)) {
+    return static_cast<int>(*answer);
+  }
+  if (!InActiveDocument()) {
+>>>>
+<<<<
+int Element::scrollHeight() {
+  if (!InActiveDocument()) {
+====
+int Element::scrollHeight() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kScrollHeight)) {
+    return static_cast<int>(*answer);
+  }
+  if (!InActiveDocument()) {
+>>>>
+<<<<
+DOMRectList* Element::getClientRects() {
+  Vector<gfx::RectF> rects = GetClientRectsNoAdjustment();
+====
+DOMRectList* Element::getClientRects() {
+  if (auto answer = RenderThreadJournal::QueryRects(*this, RenderThreadQuery::Type::kClientRects)) {
+    return MakeGarbageCollected<DOMRectList>(*answer);
+  }
+  Vector<gfx::RectF> rects = GetClientRectsNoAdjustment();
+>>>>
+<<<<
+DOMRect* Element::GetBoundingClientRect() {
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+====
+DOMRect* Element::GetBoundingClientRect() {
+  if (auto answer = RenderThreadJournal::QueryRects(*this, RenderThreadQuery::Type::kBoundingClientRect)) {
+    return DOMRect::FromRectF(answer->empty() ? gfx::RectF() : answer->front());
+  }
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+>>>>
+@@@ third_party/blink/renderer/core/html/html_element.cc
+<<<<
+#include "ui/gfx/geometry/rect_conversions.h"
+====
+#include "ui/gfx/geometry/rect_conversions.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+int HTMLElement::offsetLeftForBinding() {
+  return OffsetTopOrLeft(/*top=*/false);
+====
+int HTMLElement::offsetLeftForBinding() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kOffsetLeft)) {
+    return static_cast<int>(*answer);
+  }
+  return OffsetTopOrLeft(/*top=*/false);
+>>>>
+<<<<
+int HTMLElement::offsetTopForBinding() {
+  return OffsetTopOrLeft(/*top=*/true);
+====
+int HTMLElement::offsetTopForBinding() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kOffsetTop)) {
+    return static_cast<int>(*answer);
+  }
+  return OffsetTopOrLeft(/*top=*/true);
+>>>>
+<<<<
+int HTMLElement::offsetWidthForBinding() {
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+====
+int HTMLElement::offsetWidthForBinding() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kOffsetWidth)) {
+    return static_cast<int>(*answer);
+  }
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+>>>>
+<<<<
+int HTMLElement::offsetHeightForBinding() {
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+====
+int HTMLElement::offsetHeightForBinding() {
+  if (auto answer = RenderThreadJournal::QueryNumber(*this, RenderThreadQuery::Type::kOffsetHeight)) {
+    return static_cast<int>(*answer);
+  }
+  GetDocument().UpdateStyleAndLayoutForNode(this,
+>>>>
+<<<<
+Element* HTMLElement::unclosedOffsetParent() {
+====
+Element* HTMLElement::unclosedOffsetParent() {
+  if (auto answer = RenderThreadJournal::QueryOffsetParent(*this)) {
+    return *answer;
+  }
+>>>>
+<<<<
+String HTMLElement::innerTextForBinding() {
+====
+String HTMLElement::innerTextForBinding() {
+  if (auto answer = RenderThreadJournal::QueryInnerText(*this)) {
+    return *answer;
+  }
+>>>>
+@@@ third_party/blink/renderer/core/dom/tree_scope.cc
+<<<<
+#include "ui/gfx/geometry/point_conversions.h"
+====
+#include "ui/gfx/geometry/point_conversions.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+Element* TreeScope::ElementFromPoint(double x, double y) const {
+====
+Element* TreeScope::ElementFromPoint(double x, double y) const {
+  if (auto answer = RenderThreadJournal::QueryElementFromPoint(*this, x, y)) {
+    return *answer;
+  }
+>>>>
+<<<<
+HeapVector<Member<Element>> TreeScope::ElementsFromPoint(double x,
+                                                         double y) const {
+====
+HeapVector<Member<Element>> TreeScope::ElementsFromPoint(double x,
+                                                         double y) const {
+  if (auto answer = RenderThreadJournal::QueryElementsFromPoint(*this, x, y)) {
+    return std::move(*answer);
+  }
+>>>>
+@@@ third_party/blink/renderer/core/css/css_computed_style_declaration.h
+<<<<
+  AtomicString pseudo_argument_;
+====
+  AtomicString pseudo_argument_;
+  // The pseudo element argument as given to getComputedStyle(). Forwarded to
+  // the render thread (see RenderThreadJournal::QueryComputedStyle()).
+  String pseudo_element_name_;
+>>>>
+@@@ third_party/blink/renderer/core/css/css_computed_style_declaration.cc
+<<<<
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+====
+#include "third_party/blink/renderer/platform/wtf/text/string_builder.h"
+#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+>>>>
+<<<<
+      allow_visited_style_(allow_visited_style),
+      guaranteed_style_clean_(false) {
+====
+      allow_visited_style_(allow_visited_style),
+      guaranteed_style_clean_(false) {
+  pseudo_element_name_ = pseudo_element_name;
+>>>>
+<<<<
+String CSSComputedStyleDeclaration::GetPropertyValue(
+    CSSPropertyID property_id) const {
+====
+String CSSComputedStyleDeclaration::GetPropertyValue(
+    CSSPropertyID property_id) const {
+  if (element_ && !allow_visited_style_ && IsValidCSSPropertyID(property_id) &&
+      property_id != CSSPropertyID::kVariable) {
+    if (auto answer = RenderThreadJournal::QueryComputedStyle(
+            *element_, CSSProperty::Get(property_id).GetPropertyNameString(),
+            pseudo_element_name_)) {
+      return *answer;
+    }
+  }
+>>>>
+<<<<
+  if (property_id == CSSPropertyID::kVariable) {
+    const CSSValue* value = GetPropertyCSSValue(AtomicString(property_name));
+====
+  if (property_id == CSSPropertyID::kVariable) {
+    if (element_ && !allow_visited_style_) {
+      if (auto answer = RenderThreadJournal::QueryComputedStyle(*element_, property_name,
+                                                pseudo_element_name_)) {
+        return *answer;
+      }
+    }
+    const CSSValue* value = GetPropertyCSSValue(AtomicString(property_name));
+>>>>

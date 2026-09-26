@@ -1,0 +1,21 @@
+@@@ third_party/blink/renderer/platform/graphics/compositor_element_id.cc
+<<<<
+
+#include <limits>
+====
+
+#include <atomic>
+#include <limits>
+>>>>
+@@@ third_party/blink/renderer/platform/graphics/compositor_element_id.cc
+<<<<
+UniqueObjectId NewUniqueObjectId() {
+  static UniqueObjectId counter = 0;
+  return ++counter;
+}
+====
+UniqueObjectId NewUniqueObjectId() {
+  static constinit std::atomic<UniqueObjectId> counter{0};
+  return counter.fetch_add(1, std::memory_order_relaxed) + 1;
+}
+>>>>

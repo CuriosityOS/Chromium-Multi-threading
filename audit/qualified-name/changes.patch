@@ -1,0 +1,295 @@
+--- before/qualified_name.h
++++ after/qualified_name.h
+@@ -74,7 +74,8 @@
+   unsigned ComputeHash() const;
+ 
+   bool IsStatic() const {
+-    return is_static_and_html_attribute_triggers_index_ != kNotStatic;
++    return is_static_and_html_attribute_triggers_index_.load(
++               std::memory_order_relaxed) != kNotStatic;
+   }
+ 
+   bool HasOneRef() const {
+@@ -109,14 +110,18 @@
+     kStaticWithNoIndex = 255
+   };
+ 
+-  // We rely on HashComponents() clearing out the top 8 bits when
+-  // doing hashing and use one of the bits for the is_static_ value.
+-  mutable unsigned existing_hash_ : 24;
+-  mutable unsigned is_static_and_html_attribute_triggers_index_ : 8;
++  // Registration changes only the index, never whether the name is static.
++  // Keep it separate from the immutable hash: adjacent bitfields share a
++  // memory location even when different threads access different fields.
++  std::atomic<unsigned> is_static_and_html_attribute_triggers_index_;
+   const AtomicString prefix_;
+   const AtomicString local_name_;
+   const AtomicString namespace_;
+-  mutable AtomicString local_name_upper_;
++  // Initialize derived values before publishing the impl in the shared cache.
++  // In particular, LocalNameUpper() returns a reference that must stay
++  // immutable.
++  const AtomicString local_name_upper_;
++  const unsigned existing_hash_;
+ 
+  private:
+   friend class QualifiedName;
+@@ -128,14 +133,13 @@
+                     StringImpl* local_name,
+                     StringImpl* namespace_uri,
+                     bool is_static)
+-      : existing_hash_(0),
+-        is_static_and_html_attribute_triggers_index_(
++      : is_static_and_html_attribute_triggers_index_(
+             is_static ? kStaticWithNoIndex : kNotStatic),
+         prefix_(prefix),
+         local_name_(local_name),
+-        namespace_(namespace_uri)
+-
+-  {
++        namespace_(namespace_uri),
++        local_name_upper_(local_name_.ToAsciiUpper()),
++        existing_hash_(ComputeHash()) {
+     DCHECK(!namespace_.empty() || namespace_.IsNull());
+   }
+ };
+@@ -185,31 +189,31 @@
+   const AtomicString& LocalName() const { return impl_->local_name_; }
+   const AtomicString& NamespaceURI() const { return impl_->namespace_; }
+ 
+-  // Uppercased localName, cached for efficiency
++  // Uppercased localName, computed before the shared impl is published.
+   const AtomicString& LocalNameUpper() const {
+-    if (impl_->local_name_upper_)
+-      return impl_->local_name_upper_;
+-    return LocalNameUpperSlow();
++    return impl_->local_name_upper_;
+   }
+ 
+   const AtomicString& LocalNameUpperSlow() const;
+ 
+   void RegisterHTMLAttributeTriggersIndex(unsigned index) const {
+     using enum QualifiedNameImpl::StaticAndAttributeTriggersConstants;
+-    CHECK_EQ(impl_->is_static_and_html_attribute_triggers_index_,
+-             kStaticWithNoIndex);
+     CHECK_LE(index, kLargestAllowedIndex);
+-    impl_->is_static_and_html_attribute_triggers_index_ = index;
+-    CHECK_EQ(*HTMLAttributeTriggersIndex(), index);
++    unsigned expected = kStaticWithNoIndex;
++    CHECK(impl_->is_static_and_html_attribute_triggers_index_
++              .compare_exchange_strong(expected, index,
++                                       std::memory_order_relaxed));
+   }
+ 
+   std::optional<unsigned> HTMLAttributeTriggersIndex() const {
+     using enum QualifiedNameImpl::StaticAndAttributeTriggersConstants;
+-    if (impl_->is_static_and_html_attribute_triggers_index_ >
+-        kLargestAllowedIndex) {
++    const unsigned index =
++        impl_->is_static_and_html_attribute_triggers_index_.load(
++            std::memory_order_relaxed);
++    if (index > kLargestAllowedIndex) {
+       return std::nullopt;
+     }
+-    return unsigned{impl_->is_static_and_html_attribute_triggers_index_};
++    return index;
+   }
+ 
+   // Returns true if this is a built-in name. That is, one of the names defined
+@@ -287,9 +291,6 @@
+ template <>
+ struct HashTraits<QualifiedNameImpl*> : GenericHashTraits<QualifiedNameImpl*> {
+   static unsigned GetHash(const QualifiedNameImpl* name) {
+-    if (!name->existing_hash_) {
+-      name->existing_hash_ = name->ComputeHash();
+-    }
+     return name->existing_hash_;
+   }
+   static constexpr bool kSafeToCompareToEmptyOrDeleted = false;
+--- before/qualified_name.cc
++++ after/qualified_name.cc
+@@ -36,8 +36,9 @@
+ namespace blink {
+ 
+ struct SameSizeAsQualifiedNameImpl {
+-  unsigned bitfield;
++  unsigned attribute_triggers_index;
+   void* pointers[4];
++  unsigned hash;
+   int ref_count;
+ };
+ 
+@@ -52,6 +53,7 @@
+ }
+ 
+ static QualifiedNameCache& GetQualifiedNameCache() {
++  QualifiedNameCacheLock().AssertAcquired();
+   static QualifiedNameCache* g_name_cache = new QualifiedNameCache;
+   return *g_name_cache;
+ }
+@@ -138,8 +140,9 @@
+ 
+ String QualifiedName::ToString() const {
+   String local = LocalName();
+-  if (HasPrefix())
++  if (HasPrefix()) {
+     return StrCat({Prefix().GetString(), ":", local});
++  }
+   return local;
+ }
+ 
+@@ -149,8 +152,11 @@
+ 
+ void QualifiedName::InitAndReserveCapacityForSize(wtf_size_t size) {
+   DCHECK(g_star_atom.Impl());
+-  GetQualifiedNameCache().ReserveCapacityForSize(
+-      size + 2 /*g_star_atom and g_null_atom */);
++  {
++    base::AutoLock locker(QualifiedNameCacheLock());
++    GetQualifiedNameCache().ReserveCapacityForSize(
++        size + 2 /*g_star_atom and g_null_atom */);
++  }
+   new ((void*)&g_any_name)
+       QualifiedName(g_null_atom, g_null_atom, g_star_atom, true);
+   new ((void*)&g_null_name)
+@@ -158,8 +164,9 @@
+ }
+ 
+ const AtomicString& QualifiedName::LocalNameUpperSlow() const {
+-  impl_->local_name_upper_ = impl_->local_name_.ToAsciiUpper();
+-  return impl_->local_name_upper_;
++  // Kept for callers of the former lazy accessor. This must not mutate the
++  // AtomicString, even when the computed value is null or unchanged.
++  return LocalNameUpper();
+ }
+ 
+ unsigned QualifiedNameImpl::ComputeHash() const {
+--- before/qualified_name_test.cc
++++ after/qualified_name_test.cc
+@@ -4,9 +4,43 @@
+ 
+ #include "third_party/blink/renderer/core/dom/qualified_name.h"
+ 
++#include <initializer_list>
++#include <memory>
++#include <utility>
++
++#include "base/functional/callback.h"
++#include "base/synchronization/waitable_event.h"
++#include "base/test/bind.h"
++#include "base/threading/simple_thread.h"
+ #include "testing/gtest/include/gtest/gtest.h"
+ 
+ namespace blink {
++namespace {
++
++class QualifiedNameTestThread final : public base::SimpleThread {
++ public:
++  explicit QualifiedNameTestThread(base::OnceClosure task)
++      : SimpleThread("QualifiedNameTest"), task_(std::move(task)) {}
++
++ private:
++  void Run() override { std::move(task_).Run(); }
++
++  base::OnceClosure task_;
++};
++
++void RunConcurrently(base::RepeatingClosure task) {
++  base::WaitableEvent start;
++  QualifiedNameTestThread thread(base::BindLambdaForTesting([&] {
++    start.Wait();
++    task.Run();
++  }));
++  thread.Start();
++  start.Signal();
++  task.Run();
++  thread.Join();
++}
++
++}  // namespace
+ 
+ class QualifiedNameTest : public testing::Test {};
+ 
+@@ -19,4 +53,82 @@
+   EXPECT_EQ(name, QualifiedName(g_null_atom, AtomicString("foo"), g_null_atom));
+ }
+ 
++TEST_F(QualifiedNameTest, UppercaseAndHash) {
++  for (const auto& local :
++       {AtomicString(), AtomicString(""), AtomicString("already-UPPER"),
++        AtomicString(u"a\u00e9\u03a9z")}) {
++    QualifiedName name{local};
++    EXPECT_EQ(name.LocalNameUpper(), local.ToAsciiUpper());
++    EXPECT_EQ(name.LocalNameUpper().IsNull(), local.IsNull());
++    EXPECT_EQ(&name.LocalNameUpper(), &name.LocalNameUpperSlow());
++    EXPECT_EQ(GetHash(name), name.Impl()->ComputeHash());
++    EXPECT_EQ(name, QualifiedName(g_null_atom, local, g_empty_atom));
++    EXPECT_FALSE(name.HTMLAttributeTriggersIndex().has_value());
++  }
++}
++
++// Run these concurrent tests under TSan as well: equal results do not make
++// concurrent writes to an interned impl's derived values safe.
++TEST_F(QualifiedNameTest, ConcurrentSharedImplReadsAndCopies) {
++  QualifiedName name{AtomicString("qualified-name-concurrent-read")};
++  const AtomicString upper("QUALIFIED-NAME-CONCURRENT-READ");
++  const unsigned hash = name.Impl()->ComputeHash();
++  RunConcurrently(base::BindLambdaForTesting([&] {
++    for (int i = 0; i < 2000; ++i) {
++      QualifiedName copy{name};
++      EXPECT_EQ(GetHash(copy), hash);
++      EXPECT_EQ(copy.LocalNameUpper(), upper);
++      EXPECT_EQ(&copy.LocalNameUpper(), &name.LocalNameUpperSlow());
++      EXPECT_EQ(copy, QualifiedName(name.LocalName()));
++      EXPECT_FALSE(copy.IsDefinedName());
++    }
++  }));
++  EXPECT_TRUE(name.Impl()->HasOneRef());
++}
++
++TEST_F(QualifiedNameTest, ConcurrentInterningAndLastRelease) {
++  const AtomicString local("qualified-name-concurrent-last-release");
++  const AtomicString upper("QUALIFIED-NAME-CONCURRENT-LAST-RELEASE");
++  // Do not retain an anchor QualifiedName: either thread may remove the last
++  // impl while the other thread is looking up the same cache entry.
++  RunConcurrently(base::BindLambdaForTesting([&] {
++    for (int i = 0; i < 2000; ++i) {
++      QualifiedName name{local};
++      QualifiedName copy{name};
++      EXPECT_EQ(name, QualifiedName(local));
++      EXPECT_EQ(GetHash(copy), name.Impl()->ComputeHash());
++      EXPECT_EQ(copy.LocalNameUpper(), upper);
++    }
++  }));
++}
++
++TEST_F(QualifiedNameTest, ConcurrentTriggerRegistrationAndReads) {
++  const AtomicString local("qualified-name-concurrent-trigger");
++  auto impl = QualifiedNameImpl::Create(nullptr, local.Impl(), nullptr, true);
++  // This test-only static impl is not interned and does not refcount. Destroy
++  // it explicitly after all handles and the reader thread have gone away.
++  std::unique_ptr<QualifiedNameImpl> owner(impl.get());
++  QualifiedName name{std::move(impl)};
++  const unsigned hash = name.Impl()->ComputeHash();
++  constexpr unsigned kIndex = QualifiedNameImpl::kLargestAllowedIndex;
++  base::WaitableEvent start;
++  QualifiedNameTestThread thread(base::BindLambdaForTesting([&] {
++    start.Wait();
++    for (int i = 0; i < 2000; ++i) {
++      QualifiedName copy{name};
++      EXPECT_TRUE(copy.IsDefinedName());
++      EXPECT_EQ(GetHash(copy), hash);
++      const auto index = copy.HTMLAttributeTriggersIndex();
++      EXPECT_TRUE(!index || *index == kIndex);
++    }
++  }));
++  thread.Start();
++  start.Signal();
++  name.RegisterHTMLAttributeTriggersIndex(kIndex);
++  thread.Join();
++  EXPECT_EQ(name.HTMLAttributeTriggersIndex(), kIndex);
++  EXPECT_TRUE(name.IsDefinedName());
++  EXPECT_EQ(GetHash(name), hash);
++}
++
+ }  // namespace blink

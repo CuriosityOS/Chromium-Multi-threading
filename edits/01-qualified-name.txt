@@ -1,0 +1,203 @@
+@@@ third_party/blink/renderer/core/dom/qualified_name.h
+<<<<
+#include "base/containers/span.h"
+====
+#include <atomic>
+
+#include "base/containers/span.h"
+#include "base/memory/scoped_refptr.h"
+>>>>
+<<<<
+class CORE_EXPORT QualifiedNameImpl : public RefCounted<QualifiedNameImpl> {
+ public:
+====
+// QualifiedNameImpl is shared between the main thread and the off-main-thread
+// render thread (see core/render_thread/), so its reference count is atomic
+// and the global cache is protected by a lock. The 1 -> 0 transition only
+// happens while holding the cache lock, so a concurrent cache lookup can never
+// resurrect an impl that is being destroyed.
+class CORE_EXPORT QualifiedNameImpl {
+ public:
+  static constexpr base::subtle::StartRefCountFromOneTag kRefCountPreference =
+      base::subtle::kStartRefCountFromOneTag;
+
+>>>>
+<<<<
+  void AddRef() {
+    if (IsStatic()) {
+      return;
+    }
+    RefCounted<QualifiedNameImpl>::AddRef();
+  }
+
+  void Release() {
+    if (IsStatic()) {
+      return;
+    }
+    RefCounted<QualifiedNameImpl>::Release();
+  }
+====
+  bool HasOneRef() const {
+    return ref_count_.load(std::memory_order_acquire) == 1;
+  }
+  void Adopted() const {}
+
+  void AddRef() const {
+    if (IsStatic()) {
+      return;
+    }
+    ref_count_.fetch_add(1, std::memory_order_relaxed);
+  }
+
+  void Release() const {
+    if (IsStatic()) {
+      return;
+    }
+    int count = ref_count_.load(std::memory_order_relaxed);
+    while (count > 1) {
+      if (ref_count_.compare_exchange_weak(count, count - 1,
+                                           std::memory_order_acq_rel)) {
+        return;
+      }
+    }
+    ReleaseSlow();
+  }
+>>>>
+<<<<
+  mutable AtomicString local_name_upper_;
+
+ private:
+====
+  mutable AtomicString local_name_upper_;
+
+ private:
+  friend class QualifiedName;
+  void ReleaseSlow() const;
+
+  mutable std::atomic<int> ref_count_{1};
+
+>>>>
+@@@ third_party/blink/renderer/core/dom/qualified_name.cc
+<<<<
+#include "third_party/blink/renderer/core/dom/qualified_name.h"
+
+====
+#include "third_party/blink/renderer/core/dom/qualified_name.h"
+
+#include "base/no_destructor.h"
+#include "base/synchronization/lock.h"
+>>>>
+<<<<
+struct SameSizeAsQualifiedNameImpl
+    : public RefCounted<SameSizeAsQualifiedNameImpl> {
+  unsigned bitfield;
+  void* pointers[4];
+};
+====
+struct SameSizeAsQualifiedNameImpl {
+  unsigned bitfield;
+  void* pointers[4];
+  int ref_count;
+};
+>>>>
+<<<<
+static QualifiedNameCache& GetQualifiedNameCache() {
+  // This code is lockless and thus assumes it all runs on one thread!
+  DCHECK(IsMainThread());
+  static QualifiedNameCache* g_name_cache = new QualifiedNameCache;
+  return *g_name_cache;
+}
+====
+// The cache is shared by the main thread and the render thread.
+static base::Lock& QualifiedNameCacheLock() {
+  static base::NoDestructor<base::Lock> lock;
+  return *lock;
+}
+
+static QualifiedNameCache& GetQualifiedNameCache() {
+  static QualifiedNameCache* g_name_cache = new QualifiedNameCache;
+  return *g_name_cache;
+}
+
+// Looks up (or inserts) `data` in the cache and returns a referenced impl.
+static scoped_refptr<QualifiedNameImpl> LookupOrAddQualifiedName(
+    const QualifiedNameData& data);
+>>>>
+<<<<
+QualifiedName::QualifiedName(const AtomicString& p,
+                             const AtomicString& l,
+                             const AtomicString& n) {
+  QualifiedNameData data = {
+      {p.Impl(), l.Impl(), n.empty() ? g_null_atom.Impl() : n.Impl()}, false};
+  QualifiedNameCache::AddResult add_result =
+      GetQualifiedNameCache().AddWithTranslator<QNameComponentsTranslator>(
+          data);
+  impl_ = *add_result.stored_value;
+  if (add_result.is_new_entry)
+    impl_->Release();
+}
+====
+static scoped_refptr<QualifiedNameImpl> LookupOrAddQualifiedName(
+    const QualifiedNameData& data) {
+  scoped_refptr<QualifiedNameImpl> result;
+  bool is_new_entry = false;
+  {
+    base::AutoLock locker(QualifiedNameCacheLock());
+    QualifiedNameCache::AddResult add_result =
+        GetQualifiedNameCache().AddWithTranslator<QNameComponentsTranslator>(
+            data);
+    // Take our reference while holding the lock so that a concurrent
+    // ReleaseSlow() on another thread cannot destroy the impl under us.
+    result = *add_result.stored_value;
+    is_new_entry = add_result.is_new_entry;
+  }
+  if (is_new_entry) {
+    // Drop the initial reference created by QNameComponentsTranslator::Store;
+    // the count is >= 2 here so this never takes the slow path.
+    result->Release();
+  }
+  return result;
+}
+
+void QualifiedNameImpl::ReleaseSlow() const {
+  base::AutoLock locker(QualifiedNameCacheLock());
+  if (ref_count_.fetch_sub(1, std::memory_order_acq_rel) != 1) {
+    return;
+  }
+  GetQualifiedNameCache().erase(const_cast<QualifiedNameImpl*>(this));
+  delete this;
+}
+
+QualifiedName::QualifiedName(const AtomicString& p,
+                             const AtomicString& l,
+                             const AtomicString& n) {
+  QualifiedNameData data = {
+      {p.Impl(), l.Impl(), n.empty() ? g_null_atom.Impl() : n.Impl()}, false};
+  impl_ = LookupOrAddQualifiedName(data);
+}
+>>>>
+<<<<
+  QualifiedNameData data = {{p.Impl(), l.Impl(), n.Impl()}, is_static};
+  QualifiedNameCache::AddResult add_result =
+      GetQualifiedNameCache().AddWithTranslator<QNameComponentsTranslator>(
+          data);
+  impl_ = *add_result.stored_value;
+  if (add_result.is_new_entry)
+    impl_->Release();
+}
+
+QualifiedName::~QualifiedName() = default;
+
+QualifiedNameImpl::~QualifiedNameImpl() {
+  GetQualifiedNameCache().erase(this);
+}
+====
+  QualifiedNameData data = {{p.Impl(), l.Impl(), n.Impl()}, is_static};
+  impl_ = LookupOrAddQualifiedName(data);
+}
+
+QualifiedName::~QualifiedName() = default;
+
+// Removal from the cache happens in ReleaseSlow() under the cache lock.
+QualifiedNameImpl::~QualifiedNameImpl() = default;
+>>>>

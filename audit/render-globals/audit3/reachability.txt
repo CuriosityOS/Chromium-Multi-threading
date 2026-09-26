@@ -1,0 +1,76 @@
+third_party/blink/renderer/platform/fonts/font_performance.cc:22:void FontPerformance::MarkFirstContentfulPaint() {
+third_party/blink/renderer/platform/fonts/font_performance.cc:32:void FontPerformance::MarkDomContentLoaded() {
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:208:  return WeakIdentifierMap<LocalFrame>::Identifier(&local_frame_root);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:221:      WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:239:      WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:269:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:279:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:290:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:315:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:320:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:325:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:330:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:343:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/inspector/main_thread_debugger.cc:357:  LocalFrame* frame = WeakIdentifierMap<LocalFrame>::Lookup(context_group_id);
+third_party/blink/renderer/core/loader/document_loader.cc:2051:  WeakIdentifierMap<DocumentLoader>::NotifyObjectDestroyed(this);
+third_party/blink/renderer/core/loader/document_loader.cc:2374:    FontPerformance::Reset();
+third_party/blink/renderer/core/display_lock/display_lock_utilities.cc:34:DisplayLockUtilities::LockCheckMemoizationScope*
+third_party/blink/renderer/core/inspector/identifiers_factory.cc:142:  const int id = WeakIdentifierMap<CSSStyleSheet>::Identifier(
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:135:  class LockCheckMemoizationScope {
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:139:    LockCheckMemoizationScope(LockCheckMemoizationScope&& other) {
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:143:    LockCheckMemoizationScope(const LockCheckMemoizationScope&) = delete;
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:144:    ~LockCheckMemoizationScope() {
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:152:    LockCheckMemoizationScope() {
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:203:  static LockCheckMemoizationScope CreateLockCheckMemoizationScope() {
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:204:    return LockCheckMemoizationScope();
+third_party/blink/renderer/core/display_lock/display_lock_utilities.h:343:  static LockCheckMemoizationScope* memoizer_;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:23:class BlinkLifecycleScopeWillBeScriptForbidden;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:122:  // BlinkLifecycleScopeWillBeScriptForbidden can be removed.
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:127:  friend class BlinkLifecycleScopeWillBeScriptForbidden;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:136:class PLATFORM_EXPORT BlinkLifecycleScopeWillBeScriptForbidden final {
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:140:  BlinkLifecycleScopeWillBeScriptForbidden() {
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:143:  BlinkLifecycleScopeWillBeScriptForbidden(
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:144:      const BlinkLifecycleScopeWillBeScriptForbidden&) = delete;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:145:  BlinkLifecycleScopeWillBeScriptForbidden& operator=(
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:146:      const BlinkLifecycleScopeWillBeScriptForbidden&) = delete;
+third_party/blink/renderer/platform/bindings/script_forbidden_scope.h:147:  ~BlinkLifecycleScopeWillBeScriptForbidden() {
+third_party/blink/renderer/core/frame/local_frame_view.cc:2477:  BlinkLifecycleScopeWillBeScriptForbidden forbid_script;
+third_party/blink/renderer/core/frame/local_frame_view.cc:3059:      DisplayLockUtilities::CreateLockCheckMemoizationScope();
+third_party/blink/renderer/core/frame/local_frame_view.cc:4816:    BlinkLifecycleScopeWillBeScriptForbidden forbid_script;
+third_party/blink/renderer/core/frame/local_frame_view.cc:5190:      FontPerformance::MarkFirstContentfulPaint();
+third_party/blink/renderer/core/frame/local_frame_view.cc:5445:        BlinkLifecycleScopeWillBeScriptForbidden forbid_script;
+third_party/blink/renderer/core/dom/weak_identifier_map.h:18:// TODO(sof): WeakIdentifierMap<> belongs (out) in wtf/, but
+third_party/blink/renderer/core/dom/weak_identifier_map.h:23:    : public GarbageCollected<WeakIdentifierMap<T, IdentifierType>> {
+third_party/blink/renderer/core/dom/weak_identifier_map.h:71:  static WeakIdentifierMap<T, IdentifierType>& Instance();
+third_party/blink/renderer/core/dom/weak_identifier_map.h:116:  WeakIdentifierMap<T, ##__VA_ARGS__>&             \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:117:  WeakIdentifierMap<T, ##__VA_ARGS__>::Instance(); \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:118:  extern template class WeakIdentifierMap<T, ##__VA_ARGS__>
+third_party/blink/renderer/core/dom/weak_identifier_map.h:121:  template class WeakIdentifierMap<T, ##__VA_ARGS__>;                   \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:123:  WeakIdentifierMap<T, ##__VA_ARGS__>&                                  \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:124:  WeakIdentifierMap<T, ##__VA_ARGS__>::Instance() {                     \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:125:    using RefType = WeakIdentifierMap<T, ##__VA_ARGS__>;                \
+third_party/blink/renderer/core/dom/weak_identifier_map.h:128:        (MakeGarbageCollected<WeakIdentifierMap<T, ##__VA_ARGS__>>())); \
+third_party/blink/renderer/core/dom/document.cc:2706:  FontPerformance::StyleScope font_performance_scope;
+third_party/blink/renderer/core/dom/document.cc:8150:      FontPerformance::MarkDomContentLoaded();
+third_party/blink/renderer/core/frame/local_frame.cc:874:  WeakIdentifierMap<LocalFrame>::NotifyObjectDestroyed(this);
+212:  return IsMainThread() &&
+272:  return IsMainThread() && resource->IsLoaded() &&
+843:  if (IsMainThread()) {
+1037:  if (IsMainThread()) {
+1039:            MemoryCache::Get()->ResourceForURL(url, cache_identifier)) {
+1045:          MemoryCache::Get()->SaveDataURIStrongReference(old_resource);
+1049:      MemoryCache::Get()->Remove(old_resource);
+1148:    if (IsMainThread()) {
+1149:      MemoryCache::Get()->SaveDataURIStrongReference(resource);
+1243:  if (is_static_data || !IsMainThread()) {
+1502:    } else if (IsMainThread()) {
+1508:          MemoryCache::Get()->ResourceForURL(params.Url(), cache_identifier);
+1526:      MemoryCache::Get()->Remove(resource);
+1681:  DCHECK(MemoryCache::Get()->Contains(resource));
+1818:  MemoryCache::Get()->Add(resource);
+1827:  DCHECK(!IsMainThread() || params.IsStaleRevalidation() ||
+1828:         !MemoryCache::Get()->ResourceForURL(params.GetResourceRequest().Url(),
+2436:      MemoryCache::Get()->Remove(resource);
+2783:    if (properties_->ShouldBlockLoadingSubResource() && IsMainThread()) {
+2784:      MemoryCache::Get()->Remove(resource);
+3350:  MemoryCache::Get()->SaveStrongReference(resource);

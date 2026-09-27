@@ -14,6 +14,7 @@ from extended_analysis import (
     compare_extended,
     compare_memory,
     handoff_evidence,
+    gpu_evidence,
     memory_evidence,
     smoke_trace_evidence,
     validate_unreplicable,
@@ -571,7 +572,8 @@ class HybridTests(unittest.TestCase):
         for index in range(23):
             t = index * 2000
             pss = 100 + growth * t / 1000 if t <= 20000 else idle
-            samples.append({"epochMs": EPOCH + t, "renderers": [{"pid": 11, "pssKb": pss * 1024, "renderThreads": (1 if mode == "omt" else 0) if threads is None else threads}, {"pid": 99, "pssKb": 1, "renderThreads": 0}]})
+            gpu = {"pid": 50, "pssKb": (200 if t <= 20000 else 150) * 1024, "vramMib": 60 if t <= 20000 else 40}
+            samples.append({"epochMs": EPOCH + t, "gpu": gpu, "renderers": [{"pid": 11, "pssKb": pss * 1024, "renderThreads": (1 if mode == "omt" else 0) if threads is None else threads}, {"pid": 99, "pssKb": 1, "renderThreads": 0}]})
         (directory / "mem" / "memory.json").write_text(json.dumps({"completed": True, "churnStart": {"epochMs": EPOCH}, "churnEnd": {"epochMs": EPOCH + 20000, "ticks": 1200}, "samples": samples}))
         return memory_evidence(directory, mode)
 
@@ -580,6 +582,7 @@ class HybridTests(unittest.TestCase):
             result = self.memory_fixture(Path(temporary))
             self.assertEqual((result["pid"], result["idleMedianMb"], result["takeoversDuringChurn"]), (11, 100, 0))
             self.assertEqual(len(result["series"]), 23)
+            self.assertEqual(result["gpuProcess"], {"churnPssMb": 200, "idlePssMb": 150, "churnVramMib": 60, "idleVramMib": 40})
         with tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, "grows"):
             self.memory_fixture(Path(temporary), growth=10)
         with tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, "TakeOver during"):
@@ -593,6 +596,31 @@ class HybridTests(unittest.TestCase):
         self.assertEqual(compare_memory(baseline, {"idleMedianMb": 148.0})["deltaMb"], 48)
         with self.assertRaisesRegex(ValueError, "idle PSS"):
             compare_memory(baseline, {"idleMedianMb": 148.5})
+
+    def gpu_fixture(self, directory, mode="omt", log="", **changes):
+        info = {"devices": [{"vendorId": 0x10DE, "driverVersion": "595.84"}, {"vendorId": 0x1002}], "featureStatus": {"gpu_compositing": "enabled", "rasterization": "enabled", "opengl": "enabled_on"}, "glRenderer": "ANGLE (NVIDIA Corporation, NVIDIA GeForce RTX 4090/PCIe/SSE2, OpenGL 4.5.0 NVIDIA 595.84)", "glImplementationParts": "(gl=egl-angle,angle=opengl)", **changes}
+        (directory / "chrome.log").write_text(log)
+        return gpu_evidence(directory, mode, {"gpu": {mode: info}})
+
+    def test_gpu_gates(self):
+        line = "[1:2:0927/044558.028276:INFO:render_thread.cc:1071] [OMT] replica 1 raster provider {} ({})\n"
+        good = line.format("1280x800", "gpu") + line.format("1280x744", "gpu")
+        with tempfile.TemporaryDirectory() as temporary:
+            result = self.gpu_fixture(Path(temporary), log=good)
+            self.assertEqual((result["rasterProviders"], result["vendorId"]), ({"gpu": 2}, 0x10DE))
+            self.assertEqual(self.gpu_fixture(Path(temporary), mode="baseline")["rasterProviders"], {})
+        cases = [
+            ("omt", "", {}, "no .*raster provider"),
+            ("omt", good + line.format("1280x800", "software"), {}, "non-GPU"),
+            ("baseline", good, {}, "Baseline logged"),
+            ("omt", good, {"devices": [{"vendorId": 0x1002}]}, "not NVIDIA"),
+            ("omt", good, {"glRenderer": "ANGLE (Mesa, llvmpipe)"}, "not NVIDIA"),
+            ("omt", good, {"featureStatus": {"gpu_compositing": "disabled_software", "rasterization": "enabled"}}, "not hardware"),
+            ("baseline", "", {"featureStatus": {"gpu_compositing": "enabled", "rasterization": "unavailable_software"}}, "not hardware"),
+        ]
+        for mode, log, changes, message in cases:
+            with self.subTest(message=message, mode=mode), tempfile.TemporaryDirectory() as temporary, self.assertRaisesRegex(ValueError, message):
+                self.gpu_fixture(Path(temporary), mode=mode, log=log, **changes)
 
 
 if __name__ == "__main__":

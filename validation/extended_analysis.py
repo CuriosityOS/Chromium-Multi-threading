@@ -25,6 +25,8 @@ MAIN_PAINT_EVENT = "LocalFrameView::RunPaintLifecyclePhase"
 TAKEOVER_LIMIT_MS = 250
 HANDBACK_LIMIT_MS = 1000
 MEMORY_IDLE_MARGIN_MB = 48
+RASTER_PROVIDER = re.compile(r"\[OMT\] replica \d+ raster provider (\d+)x(\d+) \((\w+)\)")
+NVIDIA_VENDOR_ID = 0x10DE
 # Read-only contract: RenderThreadQuery::Type in the parent's 153 render_thread_channel.h.
 # No explicit enumerator assignments; preserve declaration order. Fail if the contract changes.
 QUERY_TYPES = {name: index for index, name in enumerate((
@@ -477,12 +479,36 @@ def memory_evidence(directory, mode):
     warm = median([item["pssMb"] for item in series if 5000 <= item["t"] < 10000])
     last = median([item["pssMb"] for item in churn if item["t"] >= churn_ms - 5000])
     idle = median([item["pssMb"] for item in series if item["t"] > churn_ms and item["t"] >= series[-1]["t"] - 10000])
+    gpu = [(sample["epochMs"] - churn_start, sample.get("gpu") or {}) for sample in result["samples"]]
+    def gpu_median(key, scale, idle):
+        values = [entry[key] / scale for t, entry in gpu if entry.get(key) is not None and (t > churn_ms if idle else t <= churn_ms)]
+        return statistics.median(values) if values else None
     during = takeovers(events, start["pid"], start["ts"], end["ts"])
     require(not during, f"{len(during)} TakeOver during short-task churn")
     require(not trace_occurrences(events, UNREPLICABLE_EVENT), "Churn page unexpectedly unreplicable")
     if mode == "omt":
         require(last <= warm * 1.5 + 20, f"OMT churn PSS grows: last-5s median {last:.1f}MB > 1.5 x {warm:.1f}MB + 20MB")
-    return {"pid": start["pid"], "ticks": result["churnEnd"]["ticks"], "takeoversDuringChurn": len(during), "takeoversTotal": len(trace_occurrences(events, TAKEOVER_EVENT)), "warmChurnMedianMb": warm, "lastChurnMedianMb": last, "idleMedianMb": idle, "series": series}
+    return {"pid": start["pid"], "ticks": result["churnEnd"]["ticks"], "takeoversDuringChurn": len(during), "takeoversTotal": len(trace_occurrences(events, TAKEOVER_EVENT)), "warmChurnMedianMb": warm, "lastChurnMedianMb": last, "idleMedianMb": idle,
+        # Informational: GPU process PSS and (real display only) its VRAM.
+        "gpuProcess": {"churnPssMb": gpu_median("pssKb", 1024, False), "idlePssMb": gpu_median("pssKb", 1024, True), "churnVramMib": gpu_median("vramMib", 1, False), "idleVramMib": gpu_median("vramMib", 1, True)},
+        "series": series}
+
+
+def gpu_evidence(directory, mode, run):
+    """Real-display runs: SystemInfo must show NVIDIA hardware acceleration; OMT replicas must raster on the GPU."""
+    info = run["gpu"][mode]
+    primary = info["devices"][0]
+    features = info["featureStatus"]
+    require(primary["vendorId"] == NVIDIA_VENDOR_ID and "NVIDIA" in info.get("glRenderer", ""), f"Active GPU is not NVIDIA: vendor {primary['vendorId']:#x}, {info.get('glRenderer')}")
+    require(features.get("gpu_compositing") == "enabled" and features.get("rasterization", "").startswith("enabled"), f"GPU compositing/rasterization not hardware accelerated: {features}")
+    lines = [line for line in (directory / "chrome.log").read_text(errors="replace").splitlines() if RASTER_PROVIDER.search(line)]
+    kinds = Counter(RASTER_PROVIDER.search(line).group(3) for line in lines)
+    if mode == "omt":
+        require(kinds["gpu"] >= 1, "OMT: no '[OMT] replica N raster provider WxH (gpu)' log line")
+        require(set(kinds) == {"gpu"}, f"OMT: non-GPU replica raster providers {dict(kinds)}")
+    else:
+        require(not lines, "Baseline logged OMT raster providers")
+    return {"glRenderer": info["glRenderer"], "glImplementationParts": info.get("glImplementationParts"), "vendorId": primary["vendorId"], "driverVersion": primary.get("driverVersion"), "featureStatus": {key: features.get(key) for key in ("gpu_compositing", "rasterization", "opengl")}, "rasterProviders": dict(kinds), "rasterProviderLines": lines[:10]}
 
 
 def compare_memory(baseline, omt):

@@ -1,207 +1,84 @@
-# Chromium Multi-threading: style, layout and paint off the main thread
+# Chromium Multi-threading
 
-An experimental patch to **Chromium 153.0.8010.55** (Linux) that gives each page its own **render thread**. That thread can run
-CSS style, layout, paint and raster for the page whenever the main thread is stuck in JavaScript. The model follows the one Andreas
-Kling describes for Ladybird:
+A patch for **Chromium 153** (Linux) that keeps pages animating while JavaScript is busy.
 
-* the **main thread** runs JavaScript and keeps a *journal* of DOM / CSSOM mutations;
-* each **page** gets its own **render thread** (`BlinkRenderThread`, a `WorkerBackingThread` with its own V8 isolate and Oilpan heap).
-  It keeps a **replica** of the page's document up to date from the journal;
-* **hybrid hand-off / hand-back.**
-  * While the main thread is responsive, it renders the page with the normal Blink lifecycle. The render thread only follows along:
-    it applies the journal and keeps style and animation state in sync, but does no layout or paint.
-  * If a single main-thread task runs longer than **50 ms**, the render thread **takes over**: it runs style → layout → paint →
-    raster → frame submission on its own schedule.
-  * When the task ends, rendering is **handed back**. Main adopts the render thread's animation start times and renders the next
-    frame itself.
-* while the render thread is rendering, synchronous layout queries from script (`offsetHeight`, `getBoundingClientRect()`,
-  `getComputedStyle()`, `elementFromPoint()`, …) **block and ask that page's render thread**, so script sees the geometry that is
-  on screen.
+In normal Chrome, one thread does everything for a page: it runs JavaScript *and* draws the page. If a script runs a long
+loop, the page freezes until it finishes. This patch gives each page a second thread that can draw the page while the first one
+is stuck.
 
-The result: a CSS `height` / `grid-template-rows` transition keeps laying out and painting new frames **while JavaScript busy-loops
-on the main thread**. Script inside the loop reads the *live* geometry, and once the loop ends the main thread continues the same
-animation without a jump.
+![stock vs patched during a 3 s JavaScript loop](media/side-by-side.gif)
 
-![stock vs off-main-thread during a 3 s JS busy loop](media/side-by-side.gif)
-
-*Left: stock Chromium, same binary with the feature off. The layout animation freezes for the whole 3 s synchronous loop.
-Right: `--enable-blink-features=OffMainThreadRendering`. About 64 ms into the loop the render thread takes over. The cyan panel keeps
-growing, the yellow normal-flow sibling moves with it, and afterwards the main thread takes rendering back. Taken from the lossless
-X11 capture of validation run `hybrid-20260927T035246Z`.*
-
-It is **not** a V8-interrupt trick and **not** a compositor-only animation. Height and grid-template-rows cannot be composited; every
-frame during the block is a real style + layout + paint pass, on another thread.
-
-## Results (validation run `hybrid-20260927T035246Z`: **PASS**, binary sha256 `f0693ef1…3e74be6`)
-
-The harness drives Chromium through CDP. Pixels are recorded independently from the X server as lossless FFV1 with absolute
-timestamps, and each result is also checked against the Chrome trace. Details are in [`validation/README.md`](validation/README.md).
-
-| Case (same binary, flag off vs on) | stock: layout steps during block | OMT: layout steps during block | OMT height range | TakeOver after block start | HandBack after block end |
-|---|---:|---:|---:|---:|---:|
-| height transition, 3 s block | 0 | 67 | 222 px | 64.3 ms | 38.9 ms |
-| grid-template-rows, 3 s block | 0 | 67 | 222 px | 64.3 ms | 38.8 ms |
-| sync queries + both transitions, 3 s block | 0 | 68 | 224 px | 64.3 ms | 27.8 ms |
-| height transition, 10 s block | 0 | 234 | 234 px | 64.2 ms | 38.8 ms |
-| grid-template-rows, 10 s block | 0 | 234 | 234 px | 64.2 ms | 38.4 ms |
-| sync queries + both transitions, 10 s block | 0 | 235 | 235 px | 64.3 ms | 24.5 ms |
-
-The capture is 30 samples/s, so these are captured layout steps, not an FPS claim.
-
-Every OMT case passes all of these gates:
-
-* **Hand-off / hand-back.**
-  * Each block has exactly one `ReplicaPage::TakeOver`, one `BeginHandBack`/`HandBack` pair on main, and one `StopPresenting`.
-  * After `StopPresenting` there is **no** render-thread `Paint`, and main paints the following frames (33–90 per case).
-  * The captured panel height never decreases from block start to 264 px, including across the hand-back.
-* **Trace attribution.** During the block, `ReplicaPage::BeginFrame`/`Paint` run on that page's own `BlinkRenderThread` (147 paints per
-  3 s, 483 per 10 s) while `CrRendererMain` is inside one long task.
-* **No main-thread rendering while the render thread owns the page.** `RenderThreadJournal::MainThreadFallback` count is 0.
-* **Synchronous queries are answered by the render thread.**
-  * Inside the busy loop, `offsetHeight`, `getBoundingClientRect().height` and `getComputedStyle().height` grow along the transition.
-    That is 155 (3 s) and 365 (10 s) query round-trips, each `RenderThread::RunQuery` on main enclosing exactly one
-    `ReplicaPage::AnswerQuery` on the render thread (max 1.4 / 3.0 ms).
-  * 68 exact DOM/CSSOM/geometry assertions give the same values as stock.
-* **Native input** (xdotool XTEST click) gives the same target, `offsetX/Y` and focus as stock.
-* **One render thread per page.**
-  * `window.open` to a same-process peer gives 1 → 2 → 1 threads, and navigation keeps it at 1.
-  * A back/forward-cache restore starts a fresh render thread, which takes over a busy block on the restored page.
-* **Unreplicable pages** (see limits) log it, never take over, and render normally on main.
-* **Memory** (renderer PSS, `demo/mem.html`: 20 s of DOM/style churn in 16 ms tasks, then idle):
-
-  | | churn (median) | idle (median of last 10 s) |
-  |---|---:|---:|
-  | stock | 143 MB | 81 MB |
-  | OMT | 226 MB | 106 MB |
-
-  During churn the replica's DOM and its separate Oilpan/V8 heap cost about 80 MB extra, which is released when the page goes idle.
-  Idle overhead is about 25 MB (gate: ≤ 48 MB). There is no growth over time, and 0 takeovers happen during churn because the
-  16 ms tasks never reach the 50 ms threshold.
-* Resize, navigation and DOM/CSSOM smoke tests pass, with no crash or fatal log signatures.
-
-### On a real GPU (RTX 4090)
-
-The validation matrix above runs on Xvfb with software raster. The same binary was also run on the build machine's
-**RTX 4090** (NVIDIA 595 driver, X11 on a 3840×2160 @ 60 Hz virtual monitor, captured at 60 fps). There the render thread's
-raster provider is GPU-backed (`raster provider … (gpu)`). Scripts are in [`smoke/gpu/`](smoke/gpu).
-
-| `h.html` (2.4 s height transition, busy loop at 1.5 s) | stock | OMT |
-|---|---|---|
-| 3 s block: distinct panel heights while the transition runs | frozen, then jumps to 264 px | **144 steps in 145 display frames (60 Hz)** |
-| 1.2 s block: takeover / hand-back | — | takeover after 64 ms, hand-back 13 ms after the block, no backwards step, max 2-frame gap |
-| hand-back after the block (3 runs) | — | 13–38 ms |
-| renderer PSS, churn → idle | 139 → 84 MB | 219 → 93 MB |
-| GPU process PSS / total VRAM while open | 153 MB / 1188 MiB | 197 MB / 1200 MiB |
-
-The first GPU runs showed a 250 ms hand-back (the fallback timer) and only about 1 captured frame per second. The cause was the
-virtual monitor being in DPMS "off": the NVIDIA driver then presents about once a second for *every* window, so presentation
-feedback never arrived in time. Forcing the monitor on (`xset dpms force on`) gives the numbers above. A page on a screen that is
-actually off still hands back correctly, just after the 250 ms fallback.
-
-### v1 → hybrid
-
-The first release rendered *every* frame on the render thread, and main never painted. That had two problems. The main thread
-almost never went idle, so its Oilpan heap was never swept (`blink_gc/main` stayed around 100 MB versus about 2 MB in stock). And
-there was no way back to normal rendering once main was free again. The hybrid model fixes both: main renders normally and gets its
-idle-time GC back, and the render thread only renders while main is actually blocked.
+*Left: normal Chrome. The panel freezes while JavaScript runs a 3-second loop. Right: with the patch, the panel keeps
+growing.*
 
 ## How it works
 
-```
- main thread (CrRendererMain)                          render thread (BlinkRenderThread), one per page
- ─────────────────────────────                          ───────────────────────────────────────────────
- JS mutates DOM / CSSOM ──► RenderThreadJournal          ReplicaPage (own isolate + Oilpan heap)
-   (node ids, ops: create/insert/remove/attr/text/        FOLLOW (main idle): apply committed ops;
-    inline style/sheet text/state/scroll/viewport,          style + animation update at main's style-sync
-    style-sync markers with main's animation time)          markers (main's animation clock); no layout/paint
-        │   committed at end of each task                 TAKEOVER (main task ≥ 50 ms): apply all ops,
-        └──────────► RenderThreadChannel (lock) ─────────►  style → layout → paint → raster → viz surface
- main renders normally (stock lifecycle) when idle        HAND-BACK: answer AnimationTimings, stop presenting,
- JS reads layout during takeover ──► RunQuery ──(blocks)──► submit a transparent frame
- after the task: replay scrolls, adopt R's animation start times, render, then R stops presenting
- main frame paints R's SurfaceLayer as a topmost, hit-test-transparent foreign layer (transparent unless R is presenting)
-```
+- **Normally nothing changes.** The main thread runs JavaScript and draws the page as usual. A second "render thread" quietly
+  keeps its own copy of the page up to date in the background. It doesn't draw anything.
+- **When JavaScript runs for more than 50 ms**, the render thread takes over and starts drawing the page from its copy,
+  including CSS animations.
+- **When JavaScript finishes**, the main thread takes drawing back and continues the animations from where the render thread
+  left off, so there's no jump.
+- **If the script asks about layout** (for example `offsetHeight`) while the render thread is drawing, the render thread
+  answers. The script sees the same sizes that are on screen.
 
-Key pieces (new code in [`overlay/third_party/blink/renderer/core/render_thread/`](overlay/third_party/blink/renderer/core/render_thread)):
+Every page gets its own render thread. The animations that keep running are real layout animations (height, grid), not just the
+simple ones the GPU could already handle alone.
 
-* `render_thread_journal.{h,cc}`: main-thread side.
-  * Assigns node ids and serializes DOM/CSSOM changes. `<link>` sheets are sent as sheet text, and scripts are stripped.
-  * Tracks task boundaries, and emits style-sync markers so the replica's animations run on main's clock.
-  * Runs the hand-back:
-    * replays scrolls made during the takeover;
-    * pulls the running animations' start times from the render thread and sets them on main's animations (`setStartTime`);
-    * finishes transitions that already ended on the render thread;
-    * releases the render thread after main's next frame is presented.
-  * Decides whether a page is replicable, and whether takeover is allowed (for example, not while a Web Animation or a non-1
-    playback rate is running).
-  * Stops the render thread when the page enters the BFCache and starts a new one on restore.
-* `render_thread.{h,cc}`: `RenderThread` wraps one `WorkerBackingThread` per page.
-  * `ReplicaPage` is a non-ordinary `Page`/`LocalFrame`/`Document` with scripting off. It follows, takes over, produces frames through
-    `CanvasResourceDispatcher`, and answers queries.
-  * A 16 ms watchdog, armed only while there are uncommitted ops or running animations, detects the long main task.
-  * `RunQuery` waits on the answer while servicing only render-thread→main GPU/font hops, never arbitrary main tasks. This means no
-    re-entrant JS and no deadlock.
-* `render_thread_channel.{h,cc}`: the op/query protocol, the locked queue, and the atomic mode (`kMain` / `kRender` / `kHandBack`) and
-  main-task start time.
+## Results
 
-Making Blink run a second document lifecycle concurrently on another thread required:
+A test harness runs the same Chrome build with the feature off and on. It records the screen independently of Chrome and checks
+Chrome's own trace.
 
-* **Thread-safety work** in ~100 files, mostly converting process-wide mutable statics to per-thread ones
-  (`platform/wtf/per_thread_static.h`, `constinit thread_local`) or to atomics. Examples:
-  * `QualifiedName` refcount and cache.
-  * DOMNodeIds and WeakIdentifierMap ids.
-  * Scope counters (event dispatch, script forbidden, post style update, display lock memoizer, paint timing, …).
-  * Caches such as computed-style property lists, wavy decoration, slot LCS tables, and the selector-statistics map used under
-    `blink.debug` tracing.
+| Test | Normal Chrome | With the patch |
+|---|---|---|
+| Height animation during a 3 s JavaScript loop | frozen | keeps animating |
+| Same during a 10 s loop | frozen | keeps animating |
+| Layout values read by the script during the loop | stale | live, match the screen |
+| Takes over after the loop starts | — | ~64 ms |
+| Hands back after the loop ends | — | ~20–50 ms, no jump |
+| Memory per page (idle) | 77–81 MB | 100–106 MB |
 
-  See the [audit reports](audit/).
-* **Oilpan affinity:** `kMainThreadOnly` types allocate on the *current* thread's heap (`thread_state_storage.h`).
-* **Main-thread checks** relaxed to `IsMainOrBlinkRenderThread()` where the replica legitimately runs the code.
-* **Hooks.**
-  * Element/HTMLElement/TreeScope/CSSComputedStyleDeclaration/Range/MouseEvent/LocalDOMWindow getters, hit testing, focusability
-    and the scroll setters route to the render thread *while it is rendering*.
-  * `Document::UpdateStyleAndLayoutTree` drives the style-sync and hand-back timing adoption.
-  * `LocalFrameView` sends the viewport and scroll offsets after each main frame, and paints the render thread's surface layer.
+It was tested two ways, and both pass every check:
 
-## Limits (measured, not hidden)
+- **Virtual display (no GPU):** run `hybrid-20260927T035246Z`.
+- **Real GPU (RTX 4090, 60 Hz):** run `gpu-20260927T053414Z`. During a 3 s loop the panel changed height on 135 of the ~145
+  screen refreshes while it was animating, so it animated at close to the full 60 fps.
 
-* **Takeover latency.** The first render-thread frame comes about 50–65 ms after a long task starts. Shorter tasks are handled by main
-  as in stock.
-* **Unreplicable content disables takeover for the page**, which then behaves exactly like stock. This covers `img`, `video`,
-  `audio`, `canvas`, iframes, `embed`/`object`, form controls other than buttons/checkboxes/radios, `dialog`, `popover`, SVG
-  `image`/`use`/`feImage`, and style sheets with `url(` / `image-set(` / `@font-face`. The replica has no resource loading or
-  plugin state.
-* **Compositor scrolling freezes during a takeover.** The render thread's surface covers the viewport. Scroll offsets set by script
-  during the block are replayed on main at hand-back.
-* Composited (transform/opacity) animation start times can drift by 1–2 frames across a hand-back. `:visited` and
-  `:focus-visible` styling can differ on the replica.
-* **Memory.** Idle cost is about 25 MB per page, and heavy DOM churn costs about 80 MB extra while it lasts (a second heap and
-  isolate per page).
-* Linux/X11 only. The full matrix runs on Xvfb with software raster; the GPU runs above are smoke tests on one NVIDIA card, not
-  the full harness. This is a research prototype, not an upstreamable change.
+The checks also cover clicks, back/forward navigation, opening a second window, and memory under heavy page changes.
 
-## Repository layout
+## Limits
 
-| Path | What |
-|---|---|
-| [`patches/chromium-153.0.8010.55-omt.patch`](patches/) | The complete change: `git diff` against tag `153.0.8010.55`, including new files. |
-| `overlay/` | New source files, as they are in the tree. |
-| `edits/` | The individual exact-replacement edit specs from v1, in the order they were applied (history). The hybrid hooks are only in the patch. |
-| `redit.py`, `push.sh`, `errs.sh` | Tooling used to apply edits / sync the overlay to the build machine / show build errors. |
-| `validation/` | CDP + X11-capture validation harness, demo pages, analyzer, tests, and the per-run reports (`validation/results/*/REPORT.md`). |
-| `audit/` | Thread-safety audit reports. |
-| `smoke/` | Small manual test pages. |
-| `media/` | The side-by-side capture above (mp4 + gif). |
+- **Short loops aren't covered.** The takeover only happens after 50 ms, so short hiccups look the same as normal Chrome.
+- **Many pages opt out.** Pages with images, video, canvas, iframes, most form fields, dialogs, or web fonts are drawn the normal
+  way, because the render thread can't load those resources yet.
+- **Scrolling with the mouse pauses** while the render thread is drawing. Scrolls done by the script are applied afterwards.
+- **It uses more memory:** about 25 MB extra per page when idle, and more while a page is changing a lot.
+- Linux only, and a research prototype. It isn't ready to be merged into Chromium.
 
-## Build and run
+## Try it
 
 ```sh
-# Chromium checkout at tag 153.0.8010.55 (Linux)
+# In a Chromium checkout at tag 153.0.8010.55 (Linux)
 cd src && git apply /path/to/patches/chromium-153.0.8010.55-omt.patch
-gn gen out/Omt --args='is_debug=false is_component_build=true symbol_level=1 dcheck_always_on=false'
+gn gen out/Omt --args='is_debug=false is_component_build=true symbol_level=1'
 autoninja -C out/Omt chrome
 out/Omt/chrome --enable-blink-features=OffMainThreadRendering https://example.com/
 ```
 
-Logs with `--enable-logging=stderr --v=0` show `[OMT] …` lines: render thread start, replica creation, each takeover ("took over
-rendering from the busy main thread"), timing adoption, each hand-back, and pages that cannot be replicated. Validation: `cd validation && bash run.sh --build-ready` (see its README).
+Add `--enable-logging=stderr` to see `[OMT]` lines in the log when the render thread takes over and hands back.
+
+## What's in this repo
+
+| Folder | What |
+|---|---|
+| `patches/` | The whole change as one patch file. |
+| `overlay/` | The new source files (the render thread and the change log it replays). |
+| `validation/` | The test harness and a report for every run (`validation/results/*/REPORT.md`). |
+| `smoke/` | Small test pages and scripts, including the GPU tests. |
+| `audit/` | Notes on the shared state that had to be made safe for two threads. |
+| `edits/` | History of the first version's edits. |
+| `media/` | The comparison video above. |
+
+For the technical details, see [`validation/README.md`](validation/README.md) and the code in
+[`overlay/third_party/blink/renderer/core/render_thread/`](overlay/third_party/blink/renderer/core/render_thread).

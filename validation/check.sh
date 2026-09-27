@@ -14,5 +14,5 @@ else
   printf '%s\n' 'shellcheck unavailable; bash syntax checked (no installation attempted).'
 fi
 python3 -m unittest -v test_validation.py test_extended.py
-node --test test_cdp.mjs test_build.mjs test_pointer.mjs test_readiness.mjs
+node --test test_cdp.mjs test_build.mjs test_pointer.mjs test_readiness.mjs test_display.mjs
 printf '%s\n' 'PASS: static checks and evidence unit tests; Chromium NOT launched.'

@@ -114,6 +114,7 @@ def pixel_verdict(samples, start_ms, end_ms, mode):
         "interiorStartEpochMs": interior[0]["epochMs"],
         "interiorEndEpochMs": interior[-1]["epochMs"],
         "maxCaptureGapMs": max(gaps, default=0),
+        "capturedFps": (len(interior) - 1) * 1000 / (interior[-1]["epochMs"] - interior[0]["epochMs"]),
     }
     if mode == "omt":
         require(len(changes) >= MIN_CHANGES, f"OMT: fewer than {MIN_CHANGES} layout pixel changes during block")
@@ -270,12 +271,15 @@ def smoke_pixels(directory, steps):
 
 
 def analyze_run(output):
-    from extended_analysis import analyze_fallbacks, analyze_handoff, analyze_queries, compare_extended, compare_memory, lifecycle_evidence, memory_evidence, smoke_trace_evidence, validate_input, validate_unreplicable
+    from extended_analysis import analyze_fallbacks, analyze_handoff, analyze_queries, compare_extended, compare_memory, gpu_evidence, lifecycle_evidence, memory_evidence, smoke_trace_evidence, validate_input, validate_unreplicable
     run = load(output / "run.json")
     extended = run.get("schemaVersion", 1) >= 2
     hybrid = run.get("schemaVersion", 1) >= 3
     kinds = ("height", "grid", "queries") if extended else ("height", "grid")
-    report = {"passed": False, "failures": list(run.get("failures", [])), "cases": [], "limits": "Xvfb software-display validation, not physical GPU scanout/FPS or cross-platform correctness. CDP smoke screenshots are not block evidence."}
+    capture = run.get("capture", {"kind": "xvfb", "fps": 30})
+    real_display = capture["kind"] == "display"
+    limits = f"Real X display {run.get('display')} (GPU, compositing window manager), {capture['fps']} fps x11grab of the harness window; not physical scanout timing or cross-platform correctness." if real_display else "Xvfb software-display validation, not physical GPU scanout/FPS or cross-platform correctness."
+    report = {"passed": False, "failures": list(run.get("failures", [])), "cases": [], "capture": capture, "limits": limits + " CDP smoke screenshots are not block evidence."}
     expected = {(mode, kind, ms) for mode in ("baseline", "omt") for kind in kinds for ms in (3000, 10000)}
     actual = [(case["mode"], case["kind"], case["ms"]) for case in run["cases"]]
     if set(actual) != expected or len(actual) != len(expected):
@@ -327,6 +331,8 @@ def analyze_run(output):
         checks = [("native-input", validate_input), ("page-threads", lifecycle_evidence)]
         if hybrid:
             checks += [("smoke-trace", smoke_trace_evidence), ("memory", memory_evidence), ("unreplicable", lambda directory, mode: validate_unreplicable(directory) if mode == "omt" else None)]
+        if real_display:
+            checks.append(("gpu", lambda directory, mode: gpu_evidence(directory, mode, run)))
         for mode in ("baseline", "omt"):
             for name, check in checks:
                 try:
@@ -390,10 +396,21 @@ def analyze_run(output):
             replica = life["replicaIdsByStage"][-1][0] if mode == "omt" else "none"
             lines.append(f"| {mode} | {counts} | {cached['pageshow']['persisted']} | {heights}px | {replica} | {cached.get('freshPaints', 'n/a')} |")
     if hybrid:
-        lines += ["", "## Memory (renderer PSS, MB; medians)", "", "| Mode | Churn 5–10s | Churn last 5s | Idle last 10s | TakeOvers during churn |", "|---|---:|---:|---:|---:|"]
+        number = lambda value, unit: "—" if value is None else f"{value:.1f}{unit}"
+        lines += ["", "## Memory (medians)", "", "| Mode | Renderer churn 5–10s | Renderer churn last 5s | Renderer idle last 10s | TakeOvers during churn | GPU process PSS churn/idle | GPU process VRAM churn/idle |", "|---|---:|---:|---:|---:|---:|---:|"]
         for mode in ("baseline", "omt"):
             memory = report.get("extended", {}).get(mode, {}).get("memory")
-            lines.append(f"| {mode} | {memory['warmChurnMedianMb']:.1f} | {memory['lastChurnMedianMb']:.1f} | {memory['idleMedianMb']:.1f} | {memory['takeoversDuringChurn']} |" if memory else f"| {mode} | FAIL / incomplete | — | — | — |")
+            gpu = (memory or {}).get("gpuProcess", {})
+            lines.append(f"| {mode} | {memory['warmChurnMedianMb']:.1f}MB | {memory['lastChurnMedianMb']:.1f}MB | {memory['idleMedianMb']:.1f}MB | {memory['takeoversDuringChurn']} | {number(gpu.get('churnPssMb'), 'MB')} / {number(gpu.get('idlePssMb'), 'MB')} | {number(gpu.get('churnVramMib'), 'MiB')} / {number(gpu.get('idleVramMib'), 'MiB')} |" if memory else f"| {mode} | FAIL / incomplete | — | — | — | — | — |")
+    lines += ["", "## Display / capture", "", f"- Capture: {capture['kind']} {run.get('display')}, {capture['fps']} fps requested"]
+    if real_display:
+        gpu_info = run.get("gpu", {})
+        lines.append(f"- nvidia-smi: {gpu_info.get('nvidiaSmi')}")
+        lines.append(f"- DPMS: before {run.get('dpms', {}).get('before')}, during {run.get('dpms', {}).get('during')}, after {run.get('dpms', {}).get('after')}, restored={run.get('dpms', {}).get('restored')}")
+        for mode in ("baseline", "omt"):
+            evidence = report.get("extended", {}).get(mode, {}).get("gpu")
+            window = gpu_info.get(mode, {}).get("window", {})
+            lines.append(f"- {mode}: {evidence['glRenderer']} ({evidence['glImplementationParts']}), features {evidence['featureStatus']}, raster providers {evidence['rasterProviders']}, window origin {window.get('origin')}" if evidence else f"- {mode}: GPU evidence FAIL / incomplete")
     lines += ["", "## Failures", *[f"- {failure}" for failure in report["failures"]], "", "## Interpretation", "", report["limits"], "", "See pixel-samples.json for absolute capture timestamps and external ROI hashes; trace-inventory.json and trace.json for thread attribution. Frame counts here are captured samples, never document timeline / JS animation counts."]
     (output / "analysis.json").write_text(json.dumps(report, indent=2) + "\n")
     (output / "REPORT.md").write_text("\n".join(lines) + "\n")

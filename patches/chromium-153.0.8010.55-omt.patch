@@ -3719,7 +3719,7 @@ index fdba689bc1..4ddcfd2ae2 100644
  }
  
 diff --git a/third_party/blink/renderer/core/layout/block_node.cc b/third_party/blink/renderer/core/layout/block_node.cc
-index e93083ee24..b2c9584959 100644
+index e93083ee24..dc14217590 100644
 --- a/third_party/blink/renderer/core/layout/block_node.cc
 +++ b/third_party/blink/renderer/core/layout/block_node.cc
 @@ -84,6 +84,7 @@
@@ -3739,6 +3739,15 @@ index e93083ee24..b2c9584959 100644
            Persistent<GCedHeapHashSet<WeakMember<LayoutBox>>>, scrollbar_changed,
            (MakeGarbageCollected<GCedHeapHashSet<WeakMember<LayoutBox>>>()));
        DCHECK(scrollbar_changed->insert(box_.Get()).is_new_entry);
+@@ -1562,7 +1563,7 @@ void BlockNode::UpdateShapeOutsideInfoIfNeeded(
+       constraint_space.PercentageResolutionInlineSize());
+ }
+ 
+-static bool g_devtools_layout = false;
++constinit thread_local bool g_devtools_layout = false;
+ bool DevtoolsReadonlyLayoutScope::InDevtoolsLayout() {
+   return g_devtools_layout;
+ }
 diff --git a/third_party/blink/renderer/core/layout/custom/custom_layout_scope.cc b/third_party/blink/renderer/core/layout/custom/custom_layout_scope.cc
 index 473c4ce5e0..c72184a1a6 100644
 --- a/third_party/blink/renderer/core/layout/custom/custom_layout_scope.cc
@@ -4315,6 +4324,27 @@ index f08fb17445..19c516b6b2 100644
  
  }  // namespace
  
+diff --git a/third_party/blink/renderer/core/paint/box_fragment_painter.cc b/third_party/blink/renderer/core/paint/box_fragment_painter.cc
+index 85393e17a1..d950e613ac 100644
+--- a/third_party/blink/renderer/core/paint/box_fragment_painter.cc
++++ b/third_party/blink/renderer/core/paint/box_fragment_painter.cc
+@@ -73,6 +73,7 @@
+ #include "third_party/blink/renderer/platform/graphics/paint/display_item_cache_skipper.h"
+ #include "third_party/blink/renderer/platform/graphics/paint/drawing_recorder.h"
+ #include "third_party/blink/renderer/platform/graphics/paint/scoped_display_item_fragment.h"
++#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+ #include "third_party/skia/include/utils/SkParsePath.h"
+ 
+ namespace blink {
+@@ -535,7 +536,7 @@ void BoxFragmentPainter::PaintAdHighlightIfNeeded(
+ 
+   // Paint an "AD" text overlay.
+   {
+-    DEFINE_STATIC_LOCAL(SkPath, ad_label_path, ());
++    DEFINE_PER_THREAD_STATIC_LOCAL(SkPath, ad_label_path, ());
+ 
+     // Check if we have parsed the path yet.
+     if (ad_label_path.isEmpty()) {
 diff --git a/third_party/blink/renderer/core/paint/cull_rect_updater.cc b/third_party/blink/renderer/core/paint/cull_rect_updater.cc
 index cf20223bec..b1959e886f 100644
 --- a/third_party/blink/renderer/core/paint/cull_rect_updater.cc
@@ -4414,6 +4444,27 @@ index dc57da420d..665c961e0b 100644
    base::AutoReset<bool> reset_;
  };
  
+diff --git a/third_party/blink/renderer/core/paint/paint_layer_painter.cc b/third_party/blink/renderer/core/paint/paint_layer_painter.cc
+index 28b7948e39..f52bec7859 100644
+--- a/third_party/blink/renderer/core/paint/paint_layer_painter.cc
++++ b/third_party/blink/renderer/core/paint/paint_layer_painter.cc
+@@ -115,13 +115,14 @@ class PaintTimelineReporter {
+     return false;
+   }
+ 
+-  static PaintTimelineReporter* current_reporting_;
++  static thread_local PaintTimelineReporter* current_reporting_;
+   const PaintLayer& layer_;
+   std::optional<base::AutoReset<PaintTimelineReporter*>>
+       reset_current_reporting_;
+ };
+ 
+-PaintTimelineReporter* PaintTimelineReporter::current_reporting_ = nullptr;
++constinit thread_local PaintTimelineReporter*
++    PaintTimelineReporter::current_reporting_ = nullptr;
+ 
+ // Check if the specified node is the scope for a (non-document) scoped view
+ // transition, and if so return the scope snapshot layer, which is used to
 diff --git a/third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc b/third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc
 index b30a34475f..4a5a9f7745 100644
 --- a/third_party/blink/renderer/core/paint/paint_layer_scrollable_area.cc

@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { CDP } from "./cdp.mjs";
 import { fingerprintBuild } from "./build.mjs";
 import { captureArgs } from "./media.mjs";
+import { dpmsRestoreCommands, grabInput, parseDpms, parseShell, vramMib } from "./display.mjs";
 import { memoryChurn, nativeInput, pageThreads, unreplicable } from "./extended.mjs";
 import { waitForResize } from "./readiness.mjs";
 
@@ -25,6 +26,11 @@ const output = resolve(option("--output", join(root, "results", new Date().toISO
 const traceThread = option("--render-thread", "^BlinkRenderThread$");
 const traceEvent = option("--render-event", "^ReplicaPage::(BeginFrame|Paint)$");
 const expectedVersion = "153.0.8010.55";
+// Opt-in real X display (e.g. the RTX 4090 Xorg :20). Default: private Xvfb, unchanged.
+const realDisplay = option("--display", null);
+assert(realDisplay === null || /^:\d+$/.test(realDisplay), "--display takes an X display such as :20");
+const captureFps = Number(option("--capture-fps", realDisplay ? "60" : "30"));
+assert(Number.isInteger(captureFps) && captureFps >= 15 && captureFps <= 120, "--capture-fps must be an integer 15..120");
 const UNREPLICABLE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 async function buildSnapshot(label) {
   const manifest = await fingerprintBuild(binary);
@@ -37,7 +43,7 @@ if (existsSync(join(output, "run.json"))) throw new Error("Output already contai
 // main-thread style/layout entry, including calls when the lifecycle is clean.
 const fallbackTraceEvent = "RenderThreadJournal::MainThreadFallback";
 // Schema 3: hybrid hand-off / hand-back model (TakeOver, BeginHandBack, HandBack, StopPresenting).
-const run = { schemaVersion: 3, binary, expectedVersion, output, traceThread, traceEvent, fallbackTraceEvent, startedMs: Date.now(), cases: [], failures: [] };
+const run = { schemaVersion: 3, binary, expectedVersion, output, traceThread, traceEvent, fallbackTraceEvent, capture: { kind: realDisplay ? "display" : "xvfb", fps: captureFps }, startedMs: Date.now(), cases: [], failures: [] };
 const save = () => writeFileSync(join(output, "run.json"), JSON.stringify(run, null, 2) + "\n");
 save();
 const children = new Set();
@@ -85,9 +91,27 @@ async function stop(child, signal = "SIGTERM") {
   children.delete(child);
 }
 
+// DPMS on the shared real display: record, force on, and always restore.
+const xset = (...args) => {
+  const response = spawnSync("xset", args, { env: { ...process.env, DISPLAY: realDisplay }, encoding: "utf8", timeout: 10000 });
+  assert.equal(response.status, 0, `xset ${args.join(" ")}: ${response.error?.message || response.stderr}`);
+  return response.stdout;
+};
+function restoreDpms() {
+  if (!run.dpms?.before || run.dpms.after) return;
+  try {
+    for (const args of dpmsRestoreCommands(run.dpms.before)) xset(...args);
+    run.dpms.after = parseDpms(xset("q"));
+    run.dpms.restored = JSON.stringify(run.dpms.after) === JSON.stringify(run.dpms.before);
+  } catch (error) { run.dpms.restoreError = String(error); }
+  if (!run.dpms.restored) run.failures.push(`DPMS not restored: ${JSON.stringify(run.dpms)}`);
+  save();
+}
+
 async function cleanup() {
   if (shuttingDown) return;
   shuttingDown = true;
+  restoreDpms();
   for (const socket of sockets) socket.close();
   for (const child of [...children].reverse()) await stop(child);
   server?.close();
@@ -97,6 +121,7 @@ for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, async () => {
   run.failures.push(`Interrupted: ${signal}`);
   save();
   await cleanup();
+  save();
   process.exit(1);
 });
 
@@ -105,8 +130,25 @@ async function screenshot(cdp, path) {
   writeFileSync(path, Buffer.from(image.data, "base64"));
 }
 
-function externalScreenshot(display, path) {
-  const capture = spawnSync("ffmpeg", ["-nostdin", "-y", "-loglevel", "error", "-f", "x11grab", "-draw_mouse", "0", "-video_size", "1280x800", "-i", display, "-frames:v", "1", "-threads", "1", path], { timeout: 10000, encoding: "utf8" });
+// Capture region origin in X screen space: the harness window's client area on a
+// real display (a WM adds decorations), the display origin on private Xvfb.
+let captureWindow = null;
+function screenOrigin() {
+  if (!captureWindow) return { x: 0, y: 0 };
+  const geometry = parseShell(xdotool(["getwindowgeometry", "--shell", captureWindow]));
+  assert(geometry.WIDTH === 1280 && geometry.HEIGHT === 800, `Harness window is ${geometry.WIDTH}x${geometry.HEIGHT}, not 1280x800`);
+  return { x: geometry.X, y: geometry.Y };
+}
+const captureInput = () => grabInput(run.display, captureWindow && screenOrigin());
+
+function xdotool(args) {
+  const response = spawnSync("xdotool", args, { env: { ...process.env, DISPLAY: run.display }, encoding: "utf8", timeout: 10000 });
+  assert.equal(response.status, 0, `xdotool ${args.join(" ")}: ${response.error?.message || response.stderr}`);
+  return response.stdout.trim();
+}
+
+function externalScreenshot(path) {
+  const capture = spawnSync("ffmpeg", ["-nostdin", "-y", "-loglevel", "error", "-f", "x11grab", "-draw_mouse", "0", "-video_size", "1280x800", "-i", captureInput(), "-frames:v", "1", "-threads", "1", path], { timeout: 10000, encoding: "utf8" });
   assert.equal(capture.status, 0, capture.stderr);
 }
 
@@ -147,12 +189,12 @@ async function traceStop(browser, directory) {
   assert(!completed.dataLossOccurred, "Trace data loss; cannot prove render-thread evidence");
 }
 
-async function smoke(cdp, browser, target, base, directory, display) {
+async function smoke(cdp, browser, target, base, directory) {
   await navigate(cdp, `${base}/index.html?mode=smoke`);
   const steps = ["insert", "remove", "text", "inline", "cssom-insert", "cssom-delete"];
   const results = [];
   await screenshot(cdp, join(directory, "smoke-before-cdp.png"));
-  externalScreenshot(display, join(directory, "smoke-before-x11.png"));
+  externalScreenshot(join(directory, "smoke-before-x11.png"));
   // Idle mutations: main renders; the replica only follows (analyzed per mode).
   const traceFolder = join(directory, "smoke-trace");
   mkdirSync(traceFolder);
@@ -176,7 +218,7 @@ async function smoke(cdp, browser, target, base, directory, display) {
       }
       await sleep(250);
       await screenshot(cdp, join(directory, `smoke-${step}-cdp.png`));
-      externalScreenshot(display, join(directory, `smoke-${step}-x11.png`));
+      externalScreenshot(join(directory, `smoke-${step}-x11.png`));
     }
     await traceStop(browser, traceFolder);
     tracing = false;
@@ -217,7 +259,7 @@ async function smoke(cdp, browser, target, base, directory, display) {
   writeFileSync(join(directory, "lifecycle.json"), JSON.stringify({ before, after, navigationReturned: true }, null, 2));
 }
 
-async function caseRun({ cdp, browser, chrome, base, mode, kind, ms, display, directory }) {
+async function caseRun({ cdp, browser, chrome, base, mode, kind, ms, directory }) {
   const name = `${kind}-${ms}`;
   const caseDir = join(directory, name);
   mkdirSync(caseDir);
@@ -234,11 +276,18 @@ async function caseRun({ cdp, browser, chrome, base, mode, kind, ms, display, di
     item.before = await cdp.evaluate("validation.geometry()");
     assert.equal(item.before.dpr, 1, "Capture assumes 1 device pixel per CSS pixel");
     assert.equal(item.before.panelHeight, 24);
+    // Hit-test points, the input button and smoke ROIs assume the Xvfb-sized viewport (1279x651).
+    assert(item.before.width >= 1260 && item.before.height >= 640, `Viewport ${item.before.width}x${item.before.height} smaller than the 1279x651 reference (window frame?)`);
     await screenshot(cdp, join(caseDir, "before-cdp.png"));
     const captureLog = join(caseDir, "ffmpeg.log");
     const progress = join(caseDir, "ffmpeg-progress.log");
     item.captureStartedMs = Date.now();
-    recorder = launch("ffmpeg", captureArgs(display, join(caseDir, "capture.mkv"), progress), captureLog);
+    item.captureInput = captureInput();
+    if (realDisplay) {
+      item.monitor = parseDpms(xset("q")).monitor;
+      assert.equal(item.monitor, "On", "Display monitor asleep (DPMS): capture would be ~1 frame/s");
+    }
+    recorder = launch("ffmpeg", captureArgs(item.captureInput, join(caseDir, "capture.mkv"), progress, captureFps), captureLog);
     await waitFor(() => {
       alive(chrome, "Chromium"); alive(recorder, "ffmpeg");
       return existsSync(progress) && /frame=\s*[1-9]/.test(readFileSync(progress, "utf8"));
@@ -307,7 +356,7 @@ async function caseRun({ cdp, browser, chrome, base, mode, kind, ms, display, di
 try {
   assert(existsSync(binary), `Missing binary ${binary}`);
   assert.equal(typeof WebSocket, "function", "Node 22+ built-in WebSocket required");
-  for (const executable of ["Xvfb", "ffmpeg", "ffprobe", "python3", "xdotool"]) {
+  for (const executable of [...(realDisplay ? ["xset", "nvidia-smi"] : ["Xvfb"]), "ffmpeg", "ffprobe", "python3", "xdotool"]) {
     assert.equal(spawnSync("which", [executable]).status, 0, `Missing ${executable}`);
   }
   const initialBuild = await buildSnapshot("initial");
@@ -325,13 +374,28 @@ try {
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const xlog = openSync(join(output, "xvfb.log"), "a");
-  const xvfb = launch("Xvfb", ["-displayfd", "3", "-screen", "0", "1280x800x24", "-nolisten", "tcp", "-noreset"], join(output, "xvfb.log"), { stdio: ["ignore", xlog, xlog, "pipe"] });
-  closeSync(xlog);
-  let displayNumber = "";
-  xvfb.stdio[3].on("data", (data) => { displayNumber += data; });
-  await waitFor(() => { alive(xvfb, "Xvfb"); return /^\d+\n/.test(displayNumber); });
-  const display = `:${displayNumber.trim()}`;
+  let display = realDisplay;
+  if (realDisplay) {
+    // Asleep, the driver presents ~1 frame/s: keep the monitor on for the run only.
+    // `dpms force on` re-enables DPMS; with Standby/Suspend/Off timeouts 0 it stays on
+    // (monitor state is re-read at every case).
+    run.dpms = { before: parseDpms(xset("q")) };
+    save();
+    xset("-dpms");
+    xset("dpms", "force", "on");
+    run.dpms.during = await waitFor(() => { const state = parseDpms(xset("q")); return state.monitor === "On" ? state : null; });
+    const smi = spawnSync("nvidia-smi", ["--query-gpu=name,driver_version,memory.used,memory.total", "--format=csv,noheader"], { encoding: "utf8", timeout: 10000 });
+    assert.equal(smi.status, 0, smi.stderr);
+    run.gpu = { nvidiaSmi: smi.stdout.trim() };
+  } else {
+    const xlog = openSync(join(output, "xvfb.log"), "a");
+    const xvfb = launch("Xvfb", ["-displayfd", "3", "-screen", "0", "1280x800x24", "-nolisten", "tcp", "-noreset"], join(output, "xvfb.log"), { stdio: ["ignore", xlog, xlog, "pipe"] });
+    closeSync(xlog);
+    let displayNumber = "";
+    xvfb.stdio[3].on("data", (data) => { displayNumber += data; });
+    await waitFor(() => { alive(xvfb, "Xvfb"); return /^\d+\n/.test(displayNumber); });
+    display = `:${displayNumber.trim()}`;
+  }
   run.display = display;
   save();
   for (const mode of ["baseline", "omt"]) {
@@ -339,6 +403,12 @@ try {
     mkdirSync(directory);
     const profile = join(directory, "profile");
     mkdirSync(profile);
+    if (realDisplay) {
+      // Under a compositing WM Chrome's own frame adds transparent, input-transparent
+      // shadow insets (viewport 1248x610): use the system (KWin) title bar and borders.
+      mkdirSync(join(profile, "Default"));
+      writeFileSync(join(profile, "Default", "Preferences"), JSON.stringify({ browser: { custom_chrome_frame: false } }));
+    }
     const args = ["--no-sandbox", `--user-data-dir=${profile}`, "--remote-debugging-address=127.0.0.1", "--remote-debugging-port=0", "--no-first-run", "--no-default-browser-check", "--disable-extensions", "--disable-background-networking", "--disable-component-update", "--disable-sync", "--disable-dev-shm-usage", "--disable-hang-monitor", "--force-device-scale-factor=1", "--ozone-platform=x11", "--window-position=0,0", "--window-size=1280,800", "--enable-logging=stderr", "--v=0",
       mode === "omt" ? "--enable-blink-features=OffMainThreadRendering" : "--disable-blink-features=OffMainThreadRendering", "--app=about:blank"];
     const actualBuild = await buildSnapshot(mode);
@@ -365,13 +435,32 @@ try {
       await cdp.call("Page.enable");
       await cdp.call("Inspector.enable");
       await browser.call("Target.setDiscoverTargets", { discover: true });
+      if (realDisplay) {
+        // GPU identification, and the harness window's client origin (never assume WM decorations).
+        const info = await browser.call("SystemInfo.getInfo");
+        writeFileSync(join(directory, "gpu-info.json"), JSON.stringify(info, null, 2));
+        const aux = info.gpu.auxAttributes;
+        run.gpu[mode] = { devices: info.gpu.devices, featureStatus: info.gpu.featureStatus, ...Object.fromEntries(["glRenderer", "glVendor", "glVersion", "glImplementationParts", "displayType", "skiaBackendType"].map((key) => [key, aux[key]])) };
+        const windows = await waitFor(() => {
+          alive(chrome, "Chromium");
+          const ids = spawnSync("xdotool", ["search", "--onlyvisible", "--pid", String(chrome.pid)], { env: { ...process.env, DISPLAY: display }, encoding: "utf8", timeout: 10000 }).stdout.trim().split("\n").filter(Boolean);
+          const sized = ids.filter((id) => { const geometry = parseShell(xdotool(["getwindowgeometry", "--shell", id])); return geometry.WIDTH === 1280 && geometry.HEIGHT === 800; });
+          return sized.length ? sized : null;
+        });
+        assert.equal(windows.length, 1, `Expected one 1280x800 harness window, found ${windows.join(",")}`);
+        captureWindow = windows[0];
+        xdotool(["windowraise", captureWindow]);
+        run.gpu[mode].window = { id: captureWindow, origin: screenOrigin() };
+        save();
+      }
       for (const ms of [3000, 10000]) for (const kind of ["height", "grid", "queries"]) {
-        await caseRun({ cdp, browser, chrome, base, mode, kind, ms, display, directory });
+        await caseRun({ cdp, browser, chrome, base, mode, kind, ms, directory });
         alive(chrome, "Chromium");
         if (cdp.failure || browser.failure) throw cdp.failure || browser.failure;
       }
-      const context = { cdp, browser, chrome, base, directory, display, root, port, mode, sockets, navigate, screenshot, externalScreenshot, traceStart, traceStop, waitFor };
-      const checks = [["smoke", () => smoke(cdp, browser, target, base, directory, display)], ["native-input", nativeInput], ["page-threads", pageThreads], ["unreplicable", unreplicable], ["memory", memoryChurn]];
+      const vram = realDisplay ? (pid) => vramMib(spawnSync("nvidia-smi", { encoding: "utf8", timeout: 10000 }).stdout ?? "", pid) : null;
+      const context = { cdp, browser, chrome, base, directory, display, root, port, mode, sockets, navigate, screenshot, externalScreenshot, screenOrigin, vram, traceStart, traceStop, waitFor };
+      const checks = [["smoke", () => smoke(cdp, browser, target, base, directory)], ["native-input", nativeInput], ["page-threads", pageThreads], ["unreplicable", unreplicable], ["memory", memoryChurn]];
       for (const [name, check] of checks) {
         try { await check(context); } catch (error) { run.failures.push(`${mode}/${name}: ${error.stack || error}`); save(); }
         // Every stage navigates to a fresh fixture. An assertion failure remains
@@ -385,6 +474,7 @@ try {
     } catch (error) { run.failures.push(`${mode}: ${error.stack || error}`); }
     finally {
       await stop(chrome);
+      captureWindow = null;
       const log = readFileSync(join(directory, "chrome.log"), "utf8");
       const fatal = log.split("\n").filter((line) => /FATAL|Check failed|Received signal|AddressSanitizer|Segmentation fault|Trace\/breakpoint trap|GPU process exited unexpectedly|GPU process launch failed|Render process gone|Out of memory/i.test(line));
       writeFileSync(join(directory, "fatal-lines.json"), JSON.stringify(fatal, null, 2));

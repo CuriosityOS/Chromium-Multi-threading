@@ -4,6 +4,7 @@ import { appendFileSync, mkdirSync, readFileSync, readdirSync, statSync, writeFi
 import { join } from "node:path";
 import { CDP } from "./cdp.mjs";
 import { findMilestone } from "./readiness.mjs";
+import { parseShell } from "./display.mjs";
 
 // Light trace for long cases: marks, TakeOver/hand-back instants, thread names.
 const LIGHT_TRACE = ["blink", "blink.user_timing"];
@@ -22,9 +23,14 @@ async function awaitMilestone({ cdp, browser, chrome, waitFor }, name, from, not
   }, timeout);
 }
 
-export async function procSnapshot(browser, { pss = false } = {}) {
+export async function procSnapshot(browser, { pss = false, vram = null } = {}) {
   const { processInfo } = await browser.call("SystemInfo.getProcessInfo");
   const renderers = [];
+  const gpuPid = processInfo.find((entry) => entry.type === "GPU")?.id;
+  let gpu = null;
+  if (pss && gpuPid) {
+    try { gpu = { pid: gpuPid, pssKb: pssKb(gpuPid), ...(vram ? { vramMib: vram(gpuPid) } : {}) }; } catch (error) { if (error.code !== "ENOENT" && error.code !== "ESRCH") throw error; }
+  }
   for (const process of processInfo.filter((entry) => entry.type === "renderer")) {
     const pid = process.id;
     const tasks = [];
@@ -41,16 +47,13 @@ export async function procSnapshot(browser, { pss = false } = {}) {
       renderers.push({ pid, tasks, ...(pss ? { pssKb: pssKb(pid) } : {}) });
     } catch (error) { if (error.code !== "ENOENT" && error.code !== "ESRCH") throw error; }
   }
-  return { epochMs: Date.now(), renderers, renderThreads: renderers.flatMap((entry) => entry.tasks).filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)) };
+  return { epochMs: Date.now(), renderers, ...(pss ? { gpu } : {}), renderThreads: renderers.flatMap((entry) => entry.tasks).filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)) };
 }
 
 export function movePointer(xdo, x, y) {
   const location = () => {
     const text = xdo(["getmouselocation", "--shell"]);
-    const result = Object.fromEntries(text.split("\n").map((line) => {
-      const [name, value] = line.split("=");
-      return [name, Number(value)];
-    }));
+    const result = parseShell(text);
     assert(Number.isInteger(result.X) && Number.isInteger(result.Y), `Invalid pointer location: ${text}`);
     return result;
   };
@@ -65,7 +68,7 @@ export function movePointer(xdo, x, y) {
 }
 
 export async function nativeInput(context) {
-  const { cdp, browser, chrome, base, directory, display, root, navigate, screenshot, externalScreenshot, traceStart, traceStop, waitFor } = context;
+  const { cdp, browser, chrome, base, directory, display, root, navigate, screenshot, externalScreenshot, screenOrigin, traceStart, traceStop, waitFor } = context;
   const folder = join(directory, "input");
   mkdirSync(folder);
   const log = join(directory, "chrome.log");
@@ -84,7 +87,7 @@ export async function nativeInput(context) {
     tracing = true;
     result.geometry = await cdp.evaluate("validation.inputGeometry()");
     await screenshot(cdp, join(folder, "before-cdp.png"));
-    externalScreenshot(display, join(folder, "before-x11.png"));
+    externalScreenshot(join(folder, "before-x11.png"));
     const alignment = spawnSync("python3", [join(root, "alignment.py"), join(folder, "before-cdp.png"), join(folder, "before-x11.png")], { encoding: "utf8", timeout: 15000 });
     assert.equal(alignment.status, 0, alignment.stderr);
     result.alignment = JSON.parse(alignment.stdout);
@@ -94,8 +97,10 @@ export async function nativeInput(context) {
     xdo(["windowraise", ids[0]]);
     xdo(["windowfocus", "--sync", ids[0]]);
     await cdp.evaluate("validation.inputEvents.length = 0; performance.mark('validation:input-start'); true");
-    const x = Math.round(result.geometry.x + result.alignment.x);
-    const y = Math.round(result.geometry.y + result.alignment.y);
+    // Capture space -> X screen space (window origin; 0,0 on Xvfb).
+    result.captureOrigin = screenOrigin();
+    const x = Math.round(result.geometry.x + result.alignment.x + result.captureOrigin.x);
+    const y = Math.round(result.geometry.y + result.alignment.y + result.captureOrigin.y);
     // A fresh invocation and no --window: XTEST, not XSendEvent/window-stack targeting.
     result.pointer = movePointer(xdo, x, y);
     // Distinct commands identify a stuck press/release instead of hiding it in
@@ -120,7 +125,7 @@ export async function nativeInput(context) {
     assert.equal(result.focused, "input-button");
     await cdp.evaluate("performance.mark('validation:input-end'); true");
     await screenshot(cdp, join(folder, "after-cdp.png"));
-    externalScreenshot(display, join(folder, "after-x11.png"));
+    externalScreenshot(join(folder, "after-x11.png"));
     await traceStop(browser, folder);
     tracing = false;
     result.completed = true;
@@ -134,7 +139,7 @@ export async function nativeInput(context) {
 }
 
 export async function pageThreads(context) {
-  const { cdp, browser, base, directory, port, mode, display, navigate, screenshot, externalScreenshot, traceStart, traceStop, waitFor, sockets } = context;
+  const { cdp, browser, base, directory, port, mode, navigate, screenshot, externalScreenshot, traceStart, traceStop, waitFor, sockets } = context;
   const folder = join(directory, "page-threads");
   mkdirSync(folder);
   const log = join(directory, "chrome.log");
@@ -152,7 +157,7 @@ export async function pageThreads(context) {
     // Settling is outside every measured busy block. The analyzer checks actual
     // external pixels and rejects stale A/B surfaces, rather than trusting time.
     await new Promise((done) => setTimeout(done, 250));
-    externalScreenshot(display, join(folder, `${name}-x11.png`));
+    externalScreenshot(join(folder, `${name}-x11.png`));
     await screenshot(cdp, join(folder, `${name}-cdp.png`));
   }
   async function stage(name, count) {
@@ -271,7 +276,7 @@ export async function pageThreads(context) {
 
 // OMT only: a page the replica cannot reproduce must detach and render stock.
 export async function unreplicable(context) {
-  const { cdp, browser, base, directory, display, mode, navigate, externalScreenshot, traceStart, traceStop } = context;
+  const { cdp, browser, base, directory, mode, navigate, externalScreenshot, traceStart, traceStop } = context;
   if (mode !== "omt") return;
   const folder = join(directory, "unreplicable");
   mkdirSync(folder);
@@ -292,7 +297,7 @@ export async function unreplicable(context) {
     result.after = await cdp.evaluate("validation.geometry()");
     assert(Math.abs(result.after.panelHeight - 264) < 1, "Unreplicable page final layout height missing");
     assert(Math.abs(result.after.followerTop - result.before.followerTop - 240) < 1, "Unreplicable page sibling did not move");
-    externalScreenshot(display, join(folder, "after-x11.png"));
+    externalScreenshot(join(folder, "after-x11.png"));
     await traceStop(browser, folder);
     tracing = false;
     result.completed = true;
@@ -308,7 +313,7 @@ export async function unreplicable(context) {
 // Short-task churn then idle; sample every renderer's PSS. The analyzer picks
 // the page's renderer by the trace-mark PID (no guessing while live).
 export async function memoryChurn(context) {
-  const { cdp, browser, base, directory, navigate, traceStart, traceStop } = context;
+  const { cdp, browser, base, directory, navigate, traceStart, traceStop, vram } = context;
   const folder = join(directory, "mem");
   mkdirSync(folder);
   const log = join(directory, "chrome.log");
@@ -324,8 +329,8 @@ export async function memoryChurn(context) {
       const due = result.churnStart.epochMs + index * result.intervalMs;
       await new Promise((done) => setTimeout(done, Math.max(0, due - Date.now())));
       if (cdp.failure || browser.failure) throw cdp.failure || browser.failure;
-      const snapshot = await procSnapshot(browser, { pss: true });
-      result.samples.push({ epochMs: snapshot.epochMs, renderers: snapshot.renderers.map(({ pid, pssKb, tasks }) => ({ pid, pssKb, renderThreads: tasks.filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)).length })) });
+      const snapshot = await procSnapshot(browser, { pss: true, vram });
+      result.samples.push({ epochMs: snapshot.epochMs, gpu: snapshot.gpu, renderers: snapshot.renderers.map(({ pid, pssKb, tasks }) => ({ pid, pssKb, renderThreads: tasks.filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)).length })) });
     }
     result.churnEnd = await awaitMilestone(context, "churn-end", offset, result.churnStart.epochMs, 5000);
     await traceStop(browser, folder);

@@ -1,0 +1,13 @@
+<!DOCTYPE html><html><head><style>
+body{margin:0;font:14px sans-serif}
+#p{position:relative;left:40px;top:40px;width:600px;height:24px;background:#0ff;overflow:hidden;transition:height 2.4s linear}
+#p.open{height:420px}
+#p img{vertical-align:top}
+#big{width:300px}
+</style></head><body><div id=p><img id=a src=red40.png><img id=rot src=rot.jpg><picture><source media="(min-width: 600px)" srcset="green100x30.png"><img id=pic src=red40.png></picture><img id=big src=big.jpg></div>
+<script>
+const $=id=>document.getElementById(id);
+const q=()=>['a','rot','pic','big'].map(i=>i+'='+$(i).offsetWidth+'x'+$(i).offsetHeight).join(' ')+' h='+$('p').offsetHeight;
+setTimeout(()=>{$('a').src='blue80.png';},700);
+setTimeout(()=>{console.log('BEFORE '+q());$('p').classList.add('open');const t0=performance.now();let n=0;while(performance.now()-t0<3000){if(performance.now()-t0>n*1000){console.log('IN '+q());n++;}}console.log('END '+q());},1500);
+</script></body></html>

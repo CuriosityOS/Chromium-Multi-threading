@@ -1,0 +1,18 @@
+<!DOCTYPE html><html><head><style>
+body{margin:0;font:14px sans-serif}
+#p{position:relative;left:40px;top:40px;width:200px;height:24px;background:#0ff;overflow:hidden;transition:height 2.4s linear}
+#p.open{height:264px}
+#p img{vertical-align:top}
+#y{position:relative;left:40px;top:40px;width:200px;height:40px;background:#ff0}
+#c{position:relative;left:40px;top:40px;display:block}
+</style></head><body><div id=p><img id=a src=red40.png><img id=b srcset="blue80.png 2x"><span id=late></span></div><img id=c src=green100x30.png><div id=y></div>
+<script>
+const p=document.getElementById('p');
+const q=()=>{const a=document.getElementById('a'),b=document.getElementById('b'),c=document.getElementById('c'),d=document.getElementById('d');return 'h='+p.offsetHeight+' a='+a.offsetWidth+'x'+a.offsetHeight+' b='+b.offsetWidth+'x'+b.offsetHeight+' c='+c.offsetWidth+'x'+c.offsetHeight+' d='+(d?d.offsetWidth+'x'+d.offsetHeight:'-')+' yTop='+document.getElementById('y').offsetTop+' complete='+[...document.images].map(i=>i.complete?1:0).join('')};
+// An image added after load: must reach the render thread once it has loaded.
+setTimeout(()=>{const d=new Image();d.id='d';d.src='magenta20.png';document.getElementById('late').appendChild(d);},600);
+function busy(ms){const t0=performance.now();let n=0;while(performance.now()-t0<ms){if(performance.now()-t0>n*500){console.log('IN t='+Math.round(performance.now()-t0)+' '+q());n++;}}}
+setTimeout(()=>{console.log('BEFORE '+q());p.classList.add('open');console.log('BLOCK start');busy(+(new URLSearchParams(location.search).get('block')||3000));console.log('BLOCK end '+q());
+  requestAnimationFrame(()=>console.log('AFTER '+q()));},1500);
+setTimeout(()=>{p.classList.remove('open');console.log('CLOSE idle');},7000);
+</script></body></html>

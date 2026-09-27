@@ -31,7 +31,6 @@ const realDisplay = option("--display", null);
 assert(realDisplay === null || /^:\d+$/.test(realDisplay), "--display takes an X display such as :20");
 const captureFps = Number(option("--capture-fps", realDisplay ? "60" : "30"));
 assert(Number.isInteger(captureFps) && captureFps >= 15 && captureFps <= 120, "--capture-fps must be an integer 15..120");
-const UNREPLICABLE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 async function buildSnapshot(label) {
   const manifest = await fingerprintBuild(binary);
   writeFileSync(join(output, `build-${label}.json`), JSON.stringify(manifest, null, 2));
@@ -369,8 +368,8 @@ try {
     response.writeHead(200, { "Content-Type": files[name], "Cache-Control": "no-store" });
     const aliased = ["/a.html", "/b.html", "/unreplicable.html"].includes(name);
     const body = readFileSync(join(root, "demo", aliased ? "index.html" : name.slice(1)), "utf8");
-    // The same demo plus one <img>: an element the replica cannot reproduce.
-    response.end(name === "/unreplicable.html" ? body.replace("</aside>", `<img id="unreplicable" alt="" width="1" height="1" src="${UNREPLICABLE_IMAGE}"></aside>`) : body);
+    // The same demo plus one <canvas>: an element the replica cannot reproduce.
+    response.end(name === "/unreplicable.html" ? body.replace("</aside>", `<canvas id="unreplicable" width="1" height="1"></canvas></aside>`) : body);
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   const base = `http://127.0.0.1:${server.address().port}`;

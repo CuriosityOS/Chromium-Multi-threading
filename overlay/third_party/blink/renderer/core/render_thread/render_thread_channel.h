@@ -14,6 +14,8 @@
 #include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
 #include "third_party/blink/renderer/platform/wtf/thread_safe_ref_counted.h"
 #include "third_party/blink/renderer/platform/wtf/vector.h"
+#include "third_party/skia/include/core/SkImage.h"
+#include "third_party/skia/include/core/SkRefCnt.h"
 #include "ui/gfx/geometry/rect_f.h"
 
 namespace blink {
@@ -76,6 +78,10 @@ struct RenderThreadOp {
     // end of a main-thread frame, where pending animations get their start
     // time.
     kStyleSync,
+    // The image an <img> shows on the main thread. node, image = decoded
+    // pixels (null while the main thread is still loading it),
+    // float_value = image device pixel ratio, int_value = ImageOrientationEnum.
+    kSetImage,
   };
 
   enum class ElementState : int32_t {
@@ -94,6 +100,8 @@ struct RenderThreadOp {
   float float_value = 0;
   float float_value2 = 0;
   double time = 0;
+  // Immutable and thread-safe; decoded on the main thread.
+  sk_sp<SkImage> image;
   String ns;
   String prefix;
   String local_name;

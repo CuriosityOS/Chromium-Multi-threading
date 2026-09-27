@@ -3479,6 +3479,54 @@ index 934a600d77..fcdd9f836c 100644
    return holder->Value();
  }
  
+diff --git a/third_party/blink/renderer/core/html/html_image_element.cc b/third_party/blink/renderer/core/html/html_image_element.cc
+index 52b523122e..65a031fd4a 100644
+--- a/third_party/blink/renderer/core/html/html_image_element.cc
++++ b/third_party/blink/renderer/core/html/html_image_element.cc
+@@ -1049,10 +1049,28 @@ void HTMLImageElement::ForceReload() const {
+   GetImageLoader().UpdateFromElement(ImageLoader::kUpdateForcedReload);
+ }
+ 
++void HTMLImageElement::SetImageForRenderThread(ImageResourceContent* content,
++                                               float ratio) {
++  DCHECK(GetDocument().IsRenderThreadReplica());
++  if (ratio > 0 && ratio != image_device_pixel_ratio_) {
++    image_device_pixel_ratio_ = ratio;
++    if (auto* layout_image = DynamicTo<LayoutImage>(GetLayoutObject())) {
++      layout_image->SetImageDevicePixelRatio(ratio);
++      layout_image->NaturalSizeChanged();
++    }
++  }
++  GetImageLoader().SetImageForTest(content);
++}
++
+ void HTMLImageElement::SelectSourceURL(
+     ImageLoader::UpdateFromElementBehavior behavior) {
+   if (!GetDocument().IsActive())
+     return;
++  // The replica never selects or loads a source (see
++  // SetImageForRenderThread()).
++  if (GetDocument().IsRenderThreadReplica()) {
++    return;
++  }
+ 
+   HTMLSourceElement* old_source = source_;
+   ImageCandidate candidate = FindBestFitImageFromPictureParent();
+diff --git a/third_party/blink/renderer/core/html/html_image_element.h b/third_party/blink/renderer/core/html/html_image_element.h
+index 6c6a86065d..e07534090f 100644
+--- a/third_party/blink/renderer/core/html/html_image_element.h
++++ b/third_party/blink/renderer/core/html/html_image_element.h
+@@ -92,6 +92,10 @@ class CORE_EXPORT HTMLImageElement
+ 
+   String AltText() const final;
+ 
++  // Off-main-thread rendering: the replica of an <img> gets its image and
++  // density from the main thread instead of selecting a source itself.
++  void SetImageForRenderThread(ImageResourceContent* content, float ratio);
++
+   ImageResourceContent* CachedImage() const {
+     return GetImageLoader().GetContent();
+   }
 diff --git a/third_party/blink/renderer/core/html/html_slot_element.cc b/third_party/blink/renderer/core/html/html_slot_element.cc
 index e932b4fadb..2d97d4de14 100644
 --- a/third_party/blink/renderer/core/html/html_slot_element.cc
@@ -4197,6 +4245,22 @@ index f93a6b3df5..776761fb05 100644
    if (!detached && document_->IsFreezingInProgress() &&
        !resource_request.GetKeepalive()) {
      GetDetachableConsoleLogger().AddConsoleMessage(
+diff --git a/third_party/blink/renderer/core/loader/image_loader.cc b/third_party/blink/renderer/core/loader/image_loader.cc
+index 63d2dcc96d..73c8023fa6 100644
+--- a/third_party/blink/renderer/core/loader/image_loader.cc
++++ b/third_party/blink/renderer/core/loader/image_loader.cc
+@@ -618,6 +618,11 @@ void ImageLoader::UpdateFromElement(UpdateFromElementBehavior update_behavior,
+   if (!element_->GetDocument().IsActive()) {
+     return;
+   }
++  // Off-main-thread rendering: the replica's images are set by the main
++  // thread; the replica never loads.
++  if (element_->GetDocument().IsRenderThreadReplica()) {
++    return;
++  }
+ 
+   AtomicString image_source_url = element_->ImageSourceURL();
+   suppress_error_events_ = (update_behavior == kUpdateSizeChanged);
 diff --git a/third_party/blink/renderer/core/loader/long_task_detector.cc b/third_party/blink/renderer/core/loader/long_task_detector.cc
 index 22094adc64..bec025a2ff 100644
 --- a/third_party/blink/renderer/core/loader/long_task_detector.cc
@@ -4655,10 +4719,10 @@ index 0000000000..4bffb726e6
 +]
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread.cc b/third_party/blink/renderer/core/render_thread/render_thread.cc
 new file mode 100644
-index 0000000000..6795f1a435
+index 0000000000..224f0179d9
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread.cc
-@@ -0,0 +1,1296 @@
+@@ -0,0 +1,1316 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4712,11 +4776,13 @@ index 0000000000..6795f1a435
 +#include "third_party/blink/renderer/core/geometry/dom_rect_list.h"
 +#include "third_party/blink/renderer/core/html/forms/html_input_element.h"
 +#include "third_party/blink/renderer/core/html/html_element.h"
++#include "third_party/blink/renderer/core/html/html_image_element.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_location.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_request.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_result.h"
 +#include "third_party/blink/renderer/core/layout/layout_view.h"
 +#include "third_party/blink/renderer/core/loader/empty_clients.h"
++#include "third_party/blink/renderer/core/loader/resource/image_resource_content.h"
 +#include "third_party/blink/renderer/core/page/focus_controller.h"
 +#include "third_party/blink/renderer/core/page/page.h"
 +#include "third_party/blink/renderer/core/page/page_animator.h"
@@ -4730,6 +4796,8 @@ index 0000000000..6795f1a435
 +#include "third_party/blink/renderer/platform/graphics/canvas_resource_dispatcher.h"
 +#include "third_party/blink/renderer/platform/graphics/exported_canvas_resource.h"
 +#include "third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h"
++#include "third_party/blink/renderer/platform/graphics/image_orientation.h"
++#include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
 +#include "third_party/blink/renderer/platform/heap/collection_support/heap_hash_map.h"
 +#include "third_party/blink/renderer/platform/heap/persistent.h"
 +#include "third_party/blink/renderer/platform/scheduler/public/agent_group_scheduler.h"
@@ -5662,6 +5730,22 @@ index 0000000000..6795f1a435
 +        }
 +        return;
 +      }
++      case Type::kSetImage: {
++        auto* element = DynamicTo<HTMLImageElement>(NodeFor(op.node));
++        if (!element) {
++          return;
++        }
++        // "Not loaded yet" is a content that never starts loading, so that
++        // the replica, like the main thread, shows no fallback content.
++        ImageResourceContent* content =
++            op.image ? ImageResourceContent::CreateLoaded(
++                           UnacceleratedStaticBitmapImage::Create(
++                               std::move(op.image),
++                               static_cast<ImageOrientationEnum>(op.int_value)))
++                     : ImageResourceContent::CreateNotStarted();
++        element->SetImageForRenderThread(content, op.float_value);
++        return;
++      }
 +      case Type::kScrollElement: {
 +        Node* target = NodeFor(op.node);
 +        auto* element = DynamicTo<Element>(target);
@@ -6116,10 +6200,10 @@ index 0000000000..f3ada8ec67
 +}  // namespace blink
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_channel.h b/third_party/blink/renderer/core/render_thread/render_thread_channel.h
 new file mode 100644
-index 0000000000..583978999b
+index 0000000000..c106e10f56
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_channel.h
-@@ -0,0 +1,286 @@
+@@ -0,0 +1,294 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -6136,6 +6220,8 @@ index 0000000000..583978999b
 +#include "third_party/blink/renderer/platform/wtf/text/wtf_string.h"
 +#include "third_party/blink/renderer/platform/wtf/thread_safe_ref_counted.h"
 +#include "third_party/blink/renderer/platform/wtf/vector.h"
++#include "third_party/skia/include/core/SkImage.h"
++#include "third_party/skia/include/core/SkRefCnt.h"
 +#include "ui/gfx/geometry/rect_f.h"
 +
 +namespace blink {
@@ -6198,6 +6284,10 @@ index 0000000000..583978999b
 +    // end of a main-thread frame, where pending animations get their start
 +    // time.
 +    kStyleSync,
++    // The image an <img> shows on the main thread. node, image = decoded
++    // pixels (null while the main thread is still loading it),
++    // float_value = image device pixel ratio, int_value = ImageOrientationEnum.
++    kSetImage,
 +  };
 +
 +  enum class ElementState : int32_t {
@@ -6216,6 +6306,8 @@ index 0000000000..583978999b
 +  float float_value = 0;
 +  float float_value2 = 0;
 +  double time = 0;
++  // Immutable and thread-safe; decoded on the main thread.
++  sk_sp<SkImage> image;
 +  String ns;
 +  String prefix;
 +  String local_name;
@@ -6408,10 +6500,10 @@ index 0000000000..583978999b
 +#endif  // THIRD_PARTY_BLINK_RENDERER_CORE_RENDER_THREAD_RENDER_THREAD_CHANNEL_H_
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_journal.cc b/third_party/blink/renderer/core/render_thread/render_thread_journal.cc
 new file mode 100644
-index 0000000000..5fbb24a65d
+index 0000000000..005a05e214
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_journal.cc
-@@ -0,0 +1,1408 @@
+@@ -0,0 +1,1504 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -6445,12 +6537,15 @@ index 0000000000..5fbb24a65d
 +#include "third_party/blink/renderer/core/frame/local_frame_view.h"
 +#include "third_party/blink/renderer/core/frame/settings.h"
 +#include "third_party/blink/renderer/core/html/forms/html_input_element.h"
++#include "third_party/blink/renderer/core/html/html_image_element.h"
 +#include "third_party/blink/renderer/core/html/html_link_element.h"
 +#include "third_party/blink/renderer/core/html_names.h"
 +#include "third_party/blink/renderer/core/input_type_names.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_location.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_result.h"
 +#include "third_party/blink/renderer/core/layout/layout_box.h"
++#include "third_party/blink/renderer/core/layout/layout_image.h"
++#include "third_party/blink/renderer/core/loader/resource/image_resource_content.h"
 +#include "third_party/blink/renderer/core/page/chrome_client.h"
 +#include "third_party/blink/renderer/core/page/page.h"
 +#include "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h"
@@ -6458,6 +6553,7 @@ index 0000000000..5fbb24a65d
 +#include "third_party/blink/renderer/core/svg_names.h"
 +#include "third_party/blink/renderer/platform/bindings/exception_state.h"
 +#include "third_party/blink/renderer/platform/graphics/graphics_context.h"
++#include "third_party/blink/renderer/platform/graphics/image.h"
 +#include "third_party/blink/renderer/platform/graphics/paint/foreign_layer_display_item.h"
 +#include "third_party/blink/renderer/platform/graphics/paint/property_tree_state.h"
 +#include "third_party/blink/renderer/platform/graphics/surface_layer_bridge.h"
@@ -6679,8 +6775,8 @@ index 0000000000..5fbb24a65d
 +void RenderThreadJournal::CheckReplicable(const Element& element) {
 +  // The replica does not load subresources, run plugins or nested frames,
 +  // or know form control values edited by the user.
-+  if (element.HasTagName(html_names::kImgTag) ||
-+      element.HasTagName(html_names::kVideoTag) ||
++  // <img> is supported: the main thread sends the decoded image.
++  if (element.HasTagName(html_names::kVideoTag) ||
 +      element.HasTagName(html_names::kAudioTag) ||
 +      element.HasTagName(html_names::kCanvasTag) ||
 +      element.HasTagName(html_names::kIFrameTag) ||
@@ -6735,7 +6831,88 @@ index 0000000000..5fbb24a65d
 +  visitor->Trace(nodes_by_id_);
 +  visitor->Trace(opaque_);
 +  visitor->Trace(converted_links_);
++  visitor->Trace(images_);
 +  DisplayItemClient::Trace(visitor);
++}
++
++void RenderThreadJournal::SentImage::Trace(Visitor* visitor) const {
++  visitor->Trace(content);
++}
++
++void RenderThreadJournal::SyncImages() {
++  if (detached_ || unreplicable_reason_ || images_.empty()) {
++    return;
++  }
++  HeapVector<Member<const HTMLImageElement>> removed;
++  for (const auto& entry : images_) {
++    if (!IdOf(*entry.key)) {
++      removed.push_back(entry.key);
++      continue;
++    }
++    SyncImage(*entry.key, *entry.value);
++    if (unreplicable_reason_) {
++      return;
++    }
++  }
++  for (const auto& element : removed) {
++    images_.erase(element);
++  }
++}
++
++void RenderThreadJournal::SyncImage(const HTMLImageElement& element,
++                                    SentImage& sent) {
++  const uint32_t id = IdOf(element);
++  if (!id) {
++    return;
++  }
++  ImageResourceContent* content = element.CachedImage();
++  if (content && content->ErrorOccurred()) {
++    // Fallback (alt text or broken image) rendering is not replicated.
++    MarkUnreplicable("image that failed to load");
++    return;
++  }
++  if (content && (!content->IsLoaded() || !content->HasImage())) {
++    content = nullptr;
++  }
++  float device_pixel_ratio = 1;
++  if (const auto* layout_image =
++          DynamicTo<LayoutImage>(element.GetLayoutObject())) {
++    device_pixel_ratio = layout_image->ImageDevicePixelRatio();
++  }
++  if (sent.device_pixel_ratio && content == sent.content &&
++      device_pixel_ratio == sent.device_pixel_ratio) {
++    return;
++  }
++  RenderThreadOp op{.type = RenderThreadOp::Type::kSetImage,
++                    .node = id,
++                    .float_value = device_pixel_ratio};
++  if (content) {
++    Image* image = content->GetImage();
++    if (image->IsSVGImage()) {
++      MarkUnreplicable("SVG image");
++      return;
++    }
++    if (image->MaybeAnimated()) {
++      MarkUnreplicable("animated image");
++      return;
++    }
++    // Decode here so that the render thread only gets plain pixels.
++    sk_sp<SkImage> pixels = image->PaintImageForCurrentFrame().GetSwSkImage();
++    if (pixels && pixels->isLazyGenerated()) {
++      pixels = pixels->makeRasterImage(nullptr);
++    }
++    if (!pixels) {
++      MarkUnreplicable("image that cannot be decoded");
++      return;
++    }
++    TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::SendImage", "width",
++                        pixels->width(), "height", pixels->height());
++    op.image = std::move(pixels);
++    op.int_value = static_cast<int32_t>(image->Orientation().Orientation());
++  }
++  sent.content = content;
++  sent.device_pixel_ratio = device_pixel_ratio;
++  Push(std::move(op));
 +}
 +
 +void RenderThreadJournal::Push(RenderThreadOp op) {
@@ -6773,6 +6950,7 @@ index 0000000000..5fbb24a65d
 +    return;
 +  }
 +  channel_->SetMainTaskStart(base::TimeTicks());
++  SyncImages();
 +  CommitTask();
 +  if (unreplicable_reason_) {
 +    DetachUnreplicable();
@@ -6933,6 +7111,10 @@ index 0000000000..5fbb24a65d
 +  journal->SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
 +  journal->SendScrollOffsets(view);
 +  journal->UpdateTakeoverAllowed();
++  journal->SyncImages();
++  if (journal->detached_) {
++    return;
++  }
 +  if (journal->style_sync_since_frame_ || journal->ops_since_style_sync_) {
 +    // The main thread started pending animations at this frame's time.
 +    journal->style_sync_since_frame_ = false;
@@ -7483,6 +7665,12 @@ index 0000000000..5fbb24a65d
 +    }
 +  }
 +
++  if (const auto* image = DynamicTo<HTMLImageElement>(element)) {
++    auto* sent = MakeGarbageCollected<SentImage>();
++    images_.Set(image, sent);
++    SyncImage(*image, *sent);
++  }
++
 +  if (is_style_link) {
 +    SendSheetText(element, id);
 +    return;
@@ -7822,10 +8010,10 @@ index 0000000000..5fbb24a65d
 +}  // namespace blink
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_journal.h b/third_party/blink/renderer/core/render_thread/render_thread_journal.h
 new file mode 100644
-index 0000000000..7d743898fd
+index 0000000000..81d4563e0e
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_journal.h
-@@ -0,0 +1,274 @@
+@@ -0,0 +1,292 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -7862,6 +8050,8 @@ index 0000000000..7d743898fd
 +class Element;
 +class GraphicsContext;
 +class HitTestLocation;
++class HTMLImageElement;
++class ImageResourceContent;
 +class HitTestResult;
 +class Range;
 +class LocalFrameView;
@@ -8036,6 +8226,21 @@ index 0000000000..7d743898fd
 +  void CheckReplicable(const Element& element);
 +  void CheckReplicableStyle(const Element& owner, const String& css_text);
 +  void InvalidateOverlay();
++
++  // The image last sent to the render thread for an <img>.
++  class SentImage final : public GarbageCollected<SentImage> {
++   public:
++    void Trace(Visitor* visitor) const;
++    // Null: sent as "not loaded yet".
++    Member<ImageResourceContent> content;
++    // 0: nothing sent yet.
++    float device_pixel_ratio = 0;
++  };
++  // Sends the images of <img> elements that finished loading or changed.
++  // The main thread loads and decodes them; the replica never loads.
++  void SyncImages();
++  void SyncImage(const HTMLImageElement& element, SentImage& sent);
++
 +  Element* ElementForId(uint32_t id) const;
 +  Node* NodeForId(uint32_t id) const;
 +
@@ -8073,6 +8278,7 @@ index 0000000000..7d743898fd
 +  HeapHashSet<WeakMember<const Element>> opaque_;
 +  // <link rel=stylesheet> elements, replicated as <style>.
 +  HeapHashSet<WeakMember<const Element>> converted_links_;
++  HeapHashMap<WeakMember<const HTMLImageElement>, Member<SentImage>> images_;
 +  std::unique_ptr<CommitObserver> commit_observer_;
 +  std::unique_ptr<SurfaceLayerBridge> bridge_;
 +  gfx::Size viewport_size_;

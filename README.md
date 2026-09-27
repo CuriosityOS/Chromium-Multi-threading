@@ -37,21 +37,22 @@ Chrome's own trace.
 | Layout values read by the script during the loop | stale | live, match the screen |
 | Takes over after the loop starts | — | ~64 ms |
 | Hands back after the loop ends | — | ~20–50 ms, no jump |
-| Memory per page (idle) | 77–81 MB | 100–106 MB |
+| Memory per page (idle) | 62–81 MB | 92–107 MB |
 
 It was tested two ways, and both pass every check:
 
-- **Virtual display (no GPU):** run `hybrid-20260927T035246Z`.
-- **Real GPU (RTX 4090, 60 Hz):** run `gpu-20260927T053414Z`. During a 3 s loop the panel changed height on 135 of the ~145
+- **Virtual display (no GPU):** run `2026-09-27T06-08-28.532Z`.
+- **Real GPU (RTX 4090, 60 Hz):** run `2026-09-27T06-16-54.769Z`. During a 3 s loop the panel changed height on 135 of the ~145
   screen refreshes while it was animating, so it animated at close to the full 60 fps.
 
-The checks also cover clicks, back/forward navigation, opening a second window, and memory under heavy page changes.
+Both runs are on the current build, with `<img>` support. The checks also cover clicks, back/forward navigation, opening a second window, and memory under heavy page changes.
 
 ## Limits
 
 - **Short loops aren't covered.** The takeover only happens after 50 ms, so short hiccups look the same as normal Chrome.
-- **Many pages opt out.** Pages with images, video, canvas, iframes, most form fields, dialogs, or web fonts are drawn the normal
-  way, because the render thread can't load those resources yet.
+- **Many pages opt out.** Pages with video, canvas, iframes, most form fields, dialogs, web fonts, CSS background images,
+  or animated, SVG or broken `<img>` images are drawn the normal way. The render thread never loads anything itself; the
+  main thread hands it finished results. For now that covers still `<img>` images (PNG, JPEG, WebP and so on).
 - **Scrolling with the mouse pauses** while the render thread is drawing. Scrolls done by the script are applied afterwards.
 - **It uses more memory:** about 25 MB extra per page when idle, and more while a page is changing a lot.
 - Linux only, and a research prototype. It isn't ready to be merged into Chromium.

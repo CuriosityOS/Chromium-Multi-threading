@@ -34,6 +34,8 @@ class Document;
 class Element;
 class GraphicsContext;
 class HitTestLocation;
+class HTMLImageElement;
+class ImageResourceContent;
 class HitTestResult;
 class Range;
 class LocalFrameView;
@@ -208,6 +210,21 @@ class CORE_EXPORT RenderThreadJournal final
   void CheckReplicable(const Element& element);
   void CheckReplicableStyle(const Element& owner, const String& css_text);
   void InvalidateOverlay();
+
+  // The image last sent to the render thread for an <img>.
+  class SentImage final : public GarbageCollected<SentImage> {
+   public:
+    void Trace(Visitor* visitor) const;
+    // Null: sent as "not loaded yet".
+    Member<ImageResourceContent> content;
+    // 0: nothing sent yet.
+    float device_pixel_ratio = 0;
+  };
+  // Sends the images of <img> elements that finished loading or changed.
+  // The main thread loads and decodes them; the replica never loads.
+  void SyncImages();
+  void SyncImage(const HTMLImageElement& element, SentImage& sent);
+
   Element* ElementForId(uint32_t id) const;
   Node* NodeForId(uint32_t id) const;
 
@@ -245,6 +262,7 @@ class CORE_EXPORT RenderThreadJournal final
   HeapHashSet<WeakMember<const Element>> opaque_;
   // <link rel=stylesheet> elements, replicated as <style>.
   HeapHashSet<WeakMember<const Element>> converted_links_;
+  HeapHashMap<WeakMember<const HTMLImageElement>, Member<SentImage>> images_;
   std::unique_ptr<CommitObserver> commit_observer_;
   std::unique_ptr<SurfaceLayerBridge> bridge_;
   gfx::Size viewport_size_;

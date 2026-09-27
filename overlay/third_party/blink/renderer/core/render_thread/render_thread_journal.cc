@@ -31,12 +31,15 @@
 #include "third_party/blink/renderer/core/frame/local_frame_view.h"
 #include "third_party/blink/renderer/core/frame/settings.h"
 #include "third_party/blink/renderer/core/html/forms/html_input_element.h"
+#include "third_party/blink/renderer/core/html/html_image_element.h"
 #include "third_party/blink/renderer/core/html/html_link_element.h"
 #include "third_party/blink/renderer/core/html_names.h"
 #include "third_party/blink/renderer/core/input_type_names.h"
 #include "third_party/blink/renderer/core/layout/hit_test_location.h"
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
 #include "third_party/blink/renderer/core/layout/layout_box.h"
+#include "third_party/blink/renderer/core/layout/layout_image.h"
+#include "third_party/blink/renderer/core/loader/resource/image_resource_content.h"
 #include "third_party/blink/renderer/core/page/chrome_client.h"
 #include "third_party/blink/renderer/core/page/page.h"
 #include "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h"
@@ -44,6 +47,7 @@
 #include "third_party/blink/renderer/core/svg_names.h"
 #include "third_party/blink/renderer/platform/bindings/exception_state.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
+#include "third_party/blink/renderer/platform/graphics/image.h"
 #include "third_party/blink/renderer/platform/graphics/paint/foreign_layer_display_item.h"
 #include "third_party/blink/renderer/platform/graphics/paint/property_tree_state.h"
 #include "third_party/blink/renderer/platform/graphics/surface_layer_bridge.h"
@@ -265,8 +269,8 @@ void RenderThreadJournal::DetachUnreplicable() {
 void RenderThreadJournal::CheckReplicable(const Element& element) {
   // The replica does not load subresources, run plugins or nested frames,
   // or know form control values edited by the user.
-  if (element.HasTagName(html_names::kImgTag) ||
-      element.HasTagName(html_names::kVideoTag) ||
+  // <img> is supported: the main thread sends the decoded image.
+  if (element.HasTagName(html_names::kVideoTag) ||
       element.HasTagName(html_names::kAudioTag) ||
       element.HasTagName(html_names::kCanvasTag) ||
       element.HasTagName(html_names::kIFrameTag) ||
@@ -321,7 +325,88 @@ void RenderThreadJournal::Trace(Visitor* visitor) const {
   visitor->Trace(nodes_by_id_);
   visitor->Trace(opaque_);
   visitor->Trace(converted_links_);
+  visitor->Trace(images_);
   DisplayItemClient::Trace(visitor);
+}
+
+void RenderThreadJournal::SentImage::Trace(Visitor* visitor) const {
+  visitor->Trace(content);
+}
+
+void RenderThreadJournal::SyncImages() {
+  if (detached_ || unreplicable_reason_ || images_.empty()) {
+    return;
+  }
+  HeapVector<Member<const HTMLImageElement>> removed;
+  for (const auto& entry : images_) {
+    if (!IdOf(*entry.key)) {
+      removed.push_back(entry.key);
+      continue;
+    }
+    SyncImage(*entry.key, *entry.value);
+    if (unreplicable_reason_) {
+      return;
+    }
+  }
+  for (const auto& element : removed) {
+    images_.erase(element);
+  }
+}
+
+void RenderThreadJournal::SyncImage(const HTMLImageElement& element,
+                                    SentImage& sent) {
+  const uint32_t id = IdOf(element);
+  if (!id) {
+    return;
+  }
+  ImageResourceContent* content = element.CachedImage();
+  if (content && content->ErrorOccurred()) {
+    // Fallback (alt text or broken image) rendering is not replicated.
+    MarkUnreplicable("image that failed to load");
+    return;
+  }
+  if (content && (!content->IsLoaded() || !content->HasImage())) {
+    content = nullptr;
+  }
+  float device_pixel_ratio = 1;
+  if (const auto* layout_image =
+          DynamicTo<LayoutImage>(element.GetLayoutObject())) {
+    device_pixel_ratio = layout_image->ImageDevicePixelRatio();
+  }
+  if (sent.device_pixel_ratio && content == sent.content &&
+      device_pixel_ratio == sent.device_pixel_ratio) {
+    return;
+  }
+  RenderThreadOp op{.type = RenderThreadOp::Type::kSetImage,
+                    .node = id,
+                    .float_value = device_pixel_ratio};
+  if (content) {
+    Image* image = content->GetImage();
+    if (image->IsSVGImage()) {
+      MarkUnreplicable("SVG image");
+      return;
+    }
+    if (image->MaybeAnimated()) {
+      MarkUnreplicable("animated image");
+      return;
+    }
+    // Decode here so that the render thread only gets plain pixels.
+    sk_sp<SkImage> pixels = image->PaintImageForCurrentFrame().GetSwSkImage();
+    if (pixels && pixels->isLazyGenerated()) {
+      pixels = pixels->makeRasterImage(nullptr);
+    }
+    if (!pixels) {
+      MarkUnreplicable("image that cannot be decoded");
+      return;
+    }
+    TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::SendImage", "width",
+                        pixels->width(), "height", pixels->height());
+    op.image = std::move(pixels);
+    op.int_value = static_cast<int32_t>(image->Orientation().Orientation());
+  }
+  sent.content = content;
+  sent.device_pixel_ratio = device_pixel_ratio;
+  Push(std::move(op));
 }
 
 void RenderThreadJournal::Push(RenderThreadOp op) {
@@ -359,6 +444,7 @@ void RenderThreadJournal::DidProcessTask() {
     return;
   }
   channel_->SetMainTaskStart(base::TimeTicks());
+  SyncImages();
   CommitTask();
   if (unreplicable_reason_) {
     DetachUnreplicable();
@@ -519,6 +605,10 @@ void RenderThreadJournal::DidUpdateMainFrame(LocalFrameView& view) {
   journal->SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
   journal->SendScrollOffsets(view);
   journal->UpdateTakeoverAllowed();
+  journal->SyncImages();
+  if (journal->detached_) {
+    return;
+  }
   if (journal->style_sync_since_frame_ || journal->ops_since_style_sync_) {
     // The main thread started pending animations at this frame's time.
     journal->style_sync_since_frame_ = false;
@@ -1067,6 +1157,12 @@ void RenderThreadJournal::SerializeElement(const Element& element,
                 static_cast<int32_t>(RenderThreadOp::ElementState::kChecked),
             .int_value2 = input->Checked() ? 1 : 0});
     }
+  }
+
+  if (const auto* image = DynamicTo<HTMLImageElement>(element)) {
+    auto* sent = MakeGarbageCollected<SentImage>();
+    images_.Set(image, sent);
+    SyncImage(*image, *sent);
   }
 
   if (is_style_link) {

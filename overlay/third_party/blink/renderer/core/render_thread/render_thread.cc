@@ -51,11 +51,13 @@
 #include "third_party/blink/renderer/core/geometry/dom_rect_list.h"
 #include "third_party/blink/renderer/core/html/forms/html_input_element.h"
 #include "third_party/blink/renderer/core/html/html_element.h"
+#include "third_party/blink/renderer/core/html/html_image_element.h"
 #include "third_party/blink/renderer/core/layout/hit_test_location.h"
 #include "third_party/blink/renderer/core/layout/hit_test_request.h"
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
 #include "third_party/blink/renderer/core/layout/layout_view.h"
 #include "third_party/blink/renderer/core/loader/empty_clients.h"
+#include "third_party/blink/renderer/core/loader/resource/image_resource_content.h"
 #include "third_party/blink/renderer/core/page/focus_controller.h"
 #include "third_party/blink/renderer/core/page/page.h"
 #include "third_party/blink/renderer/core/page/page_animator.h"
@@ -69,6 +71,8 @@
 #include "third_party/blink/renderer/platform/graphics/canvas_resource_dispatcher.h"
 #include "third_party/blink/renderer/platform/graphics/exported_canvas_resource.h"
 #include "third_party/blink/renderer/platform/graphics/gpu/shared_gpu_context.h"
+#include "third_party/blink/renderer/platform/graphics/image_orientation.h"
+#include "third_party/blink/renderer/platform/graphics/unaccelerated_static_bitmap_image.h"
 #include "third_party/blink/renderer/platform/heap/collection_support/heap_hash_map.h"
 #include "third_party/blink/renderer/platform/heap/persistent.h"
 #include "third_party/blink/renderer/platform/scheduler/public/agent_group_scheduler.h"
@@ -999,6 +1003,22 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
           document.GetPendingAnimations().Update(nullptr,
                                                  /*start_on_compositor=*/false);
         }
+        return;
+      }
+      case Type::kSetImage: {
+        auto* element = DynamicTo<HTMLImageElement>(NodeFor(op.node));
+        if (!element) {
+          return;
+        }
+        // "Not loaded yet" is a content that never starts loading, so that
+        // the replica, like the main thread, shows no fallback content.
+        ImageResourceContent* content =
+            op.image ? ImageResourceContent::CreateLoaded(
+                           UnacceleratedStaticBitmapImage::Create(
+                               std::move(op.image),
+                               static_cast<ImageOrientationEnum>(op.int_value)))
+                     : ImageResourceContent::CreateNotStarted();
+        element->SetImageForRenderThread(content, op.float_value);
         return;
       }
       case Type::kScrollElement: {

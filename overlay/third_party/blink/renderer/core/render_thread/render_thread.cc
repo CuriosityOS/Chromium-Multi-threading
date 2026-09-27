@@ -23,6 +23,13 @@
 #include "services/network/public/cpp/single_request_url_loader_factory.h"
 #include "third_party/blink/public/common/tokens/tokens.h"
 #include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
+#include "third_party/blink/renderer/core/animation/animation_clock.h"
+#include "third_party/blink/renderer/core/animation/animation_effect.h"
+#include "third_party/blink/renderer/core/animation/css/css_animation.h"
+#include "third_party/blink/renderer/core/animation/css/css_transition.h"
+#include "third_party/blink/renderer/core/animation/document_animations.h"
+#include "third_party/blink/renderer/core/animation/document_timeline.h"
+#include "third_party/blink/renderer/core/animation/pending_animations.h"
 #include "third_party/blink/renderer/core/css/css_computed_style_declaration.h"
 #include "third_party/blink/renderer/core/dom/character_data.h"
 #include "third_party/blink/renderer/core/dom/comment.h"
@@ -147,11 +154,20 @@ class RenderThreadReplicaAccess {
 
 namespace {
 
-// Journal entries that were recorded inside a task that is still running are
-// applied once they are this old. This is what keeps the page rendering while
-// the main thread is stuck in a long script task.
+// While the render thread renders, journal entries that were recorded inside
+// a task that is still running are applied once they are this old. This is
+// what keeps the page updating while the main thread is stuck in a long
+// script task.
 constexpr base::TimeDelta kApplyUncommittedAfter = base::Milliseconds(20);
 constexpr base::TimeDelta kResourceRetryDelay = base::Milliseconds(100);
+// The render thread takes over rendering once the main thread has been inside
+// one task for this long while the page is changing (about three frames).
+constexpr base::TimeDelta kTakeoverDelay = base::Milliseconds(50);
+// How often the render thread checks whether the main thread is stuck, while
+// the page is changing.
+constexpr base::TimeDelta kWatchdogInterval = base::Milliseconds(16);
+
+using Mode = RenderThreadChannel::Mode;
 
 class ReplicaPage;
 
@@ -275,7 +291,7 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
         gfx::Size(1, 1));
     LOG(INFO) << "[OMT] replica " << id_
               << " created on render thread, gpu=" << gpu_compositing_;
-    RequestFrame();
+    Wake();
   }
 
   ~ReplicaPage() override {
@@ -285,28 +301,204 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
         isolate_,
         v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
     frame_request_timer_.Stop();
+    watchdog_.Stop();
     chrome_client_->ClearHost();
     // Return exported resources while their provider is still alive.
     dispatcher_.reset();
     provider_.reset();
+    clear_provider_.reset();
     // Keep all GC roots until frame/document teardown has completed.
     if (page_) {
       page_->WillBeDestroyed();
     }
   }
 
+  // The main thread pushed journal entries or changed the mode.
   void Wake() {
     channel_->ClearWakePending();
-    if (dispatcher_) {
+    if (channel_->GetMode() != Mode::kMain) {
+      presenting_ = true;
       dispatcher_->SetNeedsBeginFrame(true);
+      return;
     }
+    Follow();
   }
 
   void RequestFrame() {
     frame_requested_ = true;
-    if (dispatcher_) {
+    if (presenting_) {
       dispatcher_->SetNeedsBeginFrame(true);
     }
+  }
+
+  // While the main thread renders (Mode::kMain): keep the replica's DOM and
+  // style in step with the main thread, without layout, paint or frames, and
+  // watch for the main thread getting stuck.
+  void Follow() {
+    TRACE_EVENT0("blink", "ReplicaPage::Follow");
+    if (presenting_) {
+      StopPresenting();
+    }
+    v8::Isolate::Scope isolate_scope(isolate_);
+    v8::HandleScope handle_scope(isolate_);
+    v8::Isolate::DisallowJavascriptExecutionScope no_script(
+        isolate_,
+        v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
+    bool has_uncommitted = false;
+    Vector<RenderThreadOp> ops = channel_->TakeReadyOps(
+        base::TimeTicks::Now(), base::TimeDelta::Max(), &has_uncommitted);
+    if (!ops.empty()) {
+      ApplyOps(ops);
+    }
+    if (clear_frame_needed_) {
+      SubmitClearFrame();
+    }
+    // Creating raster resources needs the main thread (see
+    // RenderThreadMainCalls), which is only reliably available while it is
+    // responsive. Keep the raster provider ready for a takeover.
+    if (!size_.IsEmpty() && (!provider_ || !provider_->IsValid())) {
+      EnsureProvider();
+    }
+    if (has_uncommitted || HasRunningAnimations()) {
+      if (!watchdog_.IsRunning()) {
+        watchdog_.Start(FROM_HERE, kWatchdogInterval, this,
+                        &ReplicaPage::CheckMainThread);
+      }
+    } else {
+      watchdog_.Stop();
+    }
+  }
+
+  void CheckMainThread() {
+    if (channel_->GetMode() != Mode::kMain) {
+      watchdog_.Stop();
+      return;
+    }
+    const base::TimeTicks now = base::TimeTicks::Now();
+    if (channel_->TakeoverAllowed() && !size_.IsEmpty() &&
+        channel_->MainTaskDuration(now) >= kTakeoverDelay &&
+        (channel_->HasOps() || HasRunningAnimations())) {
+      TakeOver();
+      return;
+    }
+    Follow();
+  }
+
+  // The main thread is stuck in a long task while the page is changing.
+  void TakeOver() {
+    if (!channel_->ChangeMode(Mode::kMain, Mode::kRender)) {
+      return;
+    }
+    watchdog_.Stop();
+    ++takeovers_;
+    TRACE_EVENT_INSTANT(
+        "blink", "ReplicaPage::TakeOver", "main_task_ms",
+        channel_->MainTaskDuration(base::TimeTicks::Now()).InMillisecondsF());
+    if (takeovers_ <= 10 || takeovers_ % 100 == 0) {
+      LOG(INFO)
+          << "[OMT] replica " << id_
+          << " took over rendering from the busy main thread (#" << takeovers_
+          << ", main task running for "
+          << channel_->MainTaskDuration(base::TimeTicks::Now()).InMilliseconds()
+          << " ms)";
+    }
+    v8::Isolate::Scope isolate_scope(isolate_);
+    v8::HandleScope handle_scope(isolate_);
+    v8::Isolate::DisallowJavascriptExecutionScope no_script(
+        isolate_,
+        v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
+    // Everything the main thread did so far, including the running task.
+    bool has_uncommitted = false;
+    Vector<RenderThreadOp> ops = channel_->TakeReadyOps(
+        base::TimeTicks::Now(), base::TimeDelta(), &has_uncommitted);
+    if (!ops.empty()) {
+      ApplyOps(ops);
+    }
+    ApplyScrollOffsets();
+    presenting_ = true;
+    RequestFrame();
+  }
+
+  // Rendering is back on the main thread and its frames are on screen.
+  void StopPresenting() {
+    TRACE_EVENT0("blink", "ReplicaPage::StopPresenting");
+    presenting_ = false;
+    frame_requested_ = false;
+    frame_request_timer_.Stop();
+    dispatcher_->SetNeedsBeginFrame(false);
+    SubmitClearFrame();
+  }
+
+  bool HasRunningAnimations() {
+    Document& document = *frame_->GetDocument();
+    DocumentTimeline& timeline = document.Timeline();
+    const AnimationTimeDelta now(base::TimeTicks::Now().since_origin());
+    for (Animation* animation : timeline.GetAnimations()) {
+      if (!animation) {
+        continue;
+      }
+      const V8AnimationPlayState::Enum state =
+          animation->CalculateAnimationPlayState();
+      if (state != V8AnimationPlayState::Enum::kRunning) {
+        continue;
+      }
+      std::optional<AnimationTimeDelta> start = animation->StartTimeInternal();
+      AnimationEffect* effect = animation->effect();
+      if (!start || !effect) {
+        return true;
+      }
+      if (timeline.ZeroTime() + *start + effect->NormalizedTiming().end_time >
+          now) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void ApplyScrollOffsets() {
+    for (const auto& entry : scroll_offsets_) {
+      Node* target = NodeFor(entry.key);
+      auto* element = DynamicTo<Element>(target);
+      if (auto* target_document = DynamicTo<Document>(target)) {
+        element = target_document->ScrollingElementNoLayout();
+      }
+      if (!element) {
+        continue;
+      }
+      element->setScrollLeft(entry.value.x());
+      element->setScrollTop(entry.value.y());
+    }
+    scroll_offsets_.clear();
+  }
+
+  // Makes the render thread's surface transparent, so that the main thread's
+  // own rendering below it shows. A 1x1 transparent resource is stretched
+  // over the surface; the surface keeps the viewport size, since resizing it
+  // needs the main thread.
+  void SubmitClearFrame() {
+    clear_frame_needed_ = false;
+    if (size_.IsEmpty()) {
+      return;
+    }
+    if (!clear_provider_ || !clear_provider_->IsValid()) {
+      clear_provider_ = CreateProvider(gfx::Size(1, 1));
+      if (!clear_provider_) {
+        return;
+      }
+    }
+    cc::PaintRecorder recorder;
+    recorder.beginRecording()->drawColor(SkColors::kTransparent,
+                                         SkBlendMode::kSrc);
+    clear_provider_->RasterRecord(recorder.finishRecordingAsPicture());
+    scoped_refptr<CanvasResource> resource =
+        clear_provider_->ProduceCanvasResource();
+    if (!resource) {
+      clear_provider_.reset();
+      return;
+    }
+    dispatcher_->DispatchFrame(
+        base::MakeRefCounted<ExportedCanvasResource>(std::move(resource)),
+        gfx::Rect(size_), /*is_opaque=*/false);
   }
 
   void RequestFrameAfter(base::TimeDelta delay) {
@@ -322,6 +514,11 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
   // CanvasResourceDispatcherClient:
   bool BeginFrame() override {
     TRACE_EVENT0("blink", "ReplicaPage::BeginFrame");
+    if (channel_->GetMode() == Mode::kMain) {
+      dispatcher_->SetNeedsBeginFrame(false);
+      Follow();
+      return false;
+    }
     v8::Isolate::Scope isolate_scope(isolate_);
     v8::HandleScope handle_scope(isolate_);
     v8::Isolate::DisallowJavascriptExecutionScope no_script(
@@ -540,6 +737,38 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
                           RenderThreadReplicaAccess::FocusableStateOf(*element))
                     : static_cast<int>(FocusableState::kNotFocusable);
         break;
+      case Type::kAnimationTimings: {
+        Document& document = *frame_->GetDocument();
+        for (Animation* animation :
+             document.GetDocumentAnimations().getAnimations(document)) {
+          auto* transition = DynamicTo<CSSTransition>(animation);
+          auto* css_animation = DynamicTo<CSSAnimation>(animation);
+          auto* timeline =
+              DynamicTo<DocumentTimeline>(animation->TimelineInternal());
+          std::optional<AnimationTimeDelta> start =
+              animation->StartTimeInternal();
+          if ((!transition && !css_animation) || !timeline || !start ||
+              animation->CalculateAnimationPlayState() !=
+                  V8AnimationPlayState::Enum::kRunning) {
+            continue;
+          }
+          Element* owner = transition ? transition->OwningElement()
+                                      : css_animation->OwningElement();
+          const uint32_t id = IdOf(owner);
+          if (!id) {
+            continue;
+          }
+          query.timings.push_back(RenderThreadAnimationTiming{
+              .node = id,
+              .is_transition = !!transition,
+              .name = transition ? transition->TransitionCSSPropertyName()
+                                       .ToAtomicString()
+                                       .GetString()
+                                 : css_animation->animationName(),
+              .start_ms = (timeline->ZeroTime() + *start).InMillisecondsF()});
+        }
+        break;
+      }
       case Type::kElementsFromPoint:
         if (scope) {
           for (Element* hit : scope->ElementsFromPoint(query.x, query.y)) {
@@ -560,6 +789,7 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
   // CanvasResourceProviderDelegate:
   void NotifyGpuContextLost() override {
     provider_.reset();
+    clear_provider_.reset();
     RequestFrame();
   }
   void InitializeForRecording(cc::PaintCanvas*) const override {}
@@ -742,6 +972,8 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
           page_->GetVisualViewport().SetSize(size);
           if (!size.IsEmpty()) {
             dispatcher_->Reshape(size);
+            // The main thread embeds the resized surface once it has a frame.
+            clear_frame_needed_ = !presenting_;
           }
           provider_.reset();
         }
@@ -749,7 +981,26 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
         return;
       }
       case Type::kSetScrollOffset:
+        scroll_offsets_.Set(op.node,
+                            gfx::PointF(op.float_value, op.float_value2));
+        if (presenting_) {
+          ApplyScrollOffsets();
+        }
         return;
+      case Type::kStyleSync: {
+        // The main thread updated style at this point, with this animation
+        // time. Do the same, so that CSS transitions and animations start
+        // exactly as on the main thread.
+        AnimationClock& clock = page_->Animator().Clock();
+        clock.SetAllowedToDynamicallyUpdateTime(false);
+        clock.UpdateTime(base::TimeTicks() + base::Microseconds(op.time));
+        document.UpdateStyleAndLayoutTree();
+        if (op.int_value == 1) {
+          document.GetPendingAnimations().Update(nullptr,
+                                                 /*start_on_compositor=*/false);
+        }
+        return;
+      }
       case Type::kScrollElement: {
         Node* target = NodeFor(op.node);
         auto* element = DynamicTo<Element>(target);
@@ -777,37 +1028,42 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
     }
   }
 
-  bool EnsureProvider() {
-    if (provider_ && provider_->IsValid()) {
-      return true;
-    }
-    provider_.reset();
+  std::unique_ptr<Canvas2DResourceProvider> CreateProvider(
+      const gfx::Size& size) {
+    std::unique_ptr<Canvas2DResourceProvider> provider;
     const Canvas2DColorParams color_params;
     // Re-query after context loss: viz may have fallen back to software.
     gpu_compositing_ = SharedGpuContext::IsGpuCompositingEnabled();
     if (gpu_compositing_) {
       auto context_provider = SharedGpuContext::ContextProviderWrapper();
-      provider_ = Canvas2DResourceProvider::CreateWithClear(
-          size_, color_params.GetSharedImageFormat(),
+      provider = Canvas2DResourceProvider::CreateWithClear(
+          size, color_params.GetSharedImageFormat(),
           color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
           context_provider, RasterMode::kGPU,
           gpu::SHARED_IMAGE_USAGE_DISPLAY_READ, this);
-      if (!provider_) {
+      if (!provider) {
         // CPU raster with GPU compositing still requires a GPU-backed shared
         // image; the software-compositor factory explicitly rejects this mode.
-        provider_ = Canvas2DResourceProvider::CreateWithClear(
-            size_, color_params.GetSharedImageFormat(),
+        provider = Canvas2DResourceProvider::CreateWithClear(
+            size, color_params.GetSharedImageFormat(),
             color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
             context_provider, RasterMode::kCPU,
             gpu::SHARED_IMAGE_USAGE_DISPLAY_READ, this);
       }
     } else {
-      provider_ =
-          Canvas2DResourceProvider::CreateWithClearForSoftwareCompositor(
-              size_, color_params.GetSharedImageFormat(),
-              color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
-              SharedGpuContext::SharedImageInterfaceProvider(), this);
+      provider = Canvas2DResourceProvider::CreateWithClearForSoftwareCompositor(
+          size, color_params.GetSharedImageFormat(),
+          color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
+          SharedGpuContext::SharedImageInterfaceProvider(), this);
     }
+    return provider;
+  }
+
+  bool EnsureProvider() {
+    if (provider_ && provider_->IsValid()) {
+      return true;
+    }
+    provider_ = CreateProvider(size_);
     if (!provider_) {
       LOG(ERROR) << "[OMT] could not create a resource provider";
       return false;
@@ -858,9 +1114,18 @@ class ReplicaPage final : public CanvasResourceDispatcherClient,
   Persistent<NodeIdMap> node_ids_;
   std::unique_ptr<CanvasResourceDispatcher> dispatcher_;
   std::unique_ptr<Canvas2DResourceProvider> provider_;
+  // 1x1 transparent resource shown while the main thread renders.
+  std::unique_ptr<Canvas2DResourceProvider> clear_provider_;
   gfx::Size size_;
   bool gpu_compositing_ = false;
   bool frame_requested_ = false;
+  // Producing frames (Mode::kRender or kHandBack).
+  bool presenting_ = false;
+  bool clear_frame_needed_ = false;
+  // Main-thread scroll offsets, applied when taking over, by node id.
+  HashMap<uint32_t, gfx::PointF> scroll_offsets_;
+  base::RepeatingTimer watchdog_;
+  uint64_t takeovers_ = 0;
   uint64_t frames_ = 0;
   uint64_t queries_ = 0;
   size_t ops_applied_ = 0;

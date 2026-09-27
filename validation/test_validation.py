@@ -60,6 +60,13 @@ class EvidenceTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "fewer"):
             pixel_verdict(sample_frames(False), 1000, 4000, "omt")
 
+    def test_omt_hand_back_flash_after_block_fails(self):
+        frames = sample_frames(True)
+        frames[-1].update(cyanHeight=24, followerY=24)  # after the guarded interior: a jump back
+        with self.assertRaisesRegex(ValueError, "decreased"):
+            pixel_verdict(frames, 1000, 4000, "omt")
+        self.assertEqual(pixel_verdict(sample_frames(True), 1000, 4000, "omt")["continuityFrames"], len(frames))
+
     def test_baseline_changing_fails(self):
         with self.assertRaisesRegex(ValueError, "Baseline"):
             pixel_verdict(sample_frames(True), 1000, 4000, "baseline")

@@ -9,7 +9,12 @@
 #include "base/logging.h"
 #include "base/trace_event/trace_event.h"
 #include "cc/layers/layer.h"
-#include "cc/view_transition/view_transition_request.h"
+#include "components/viz/common/frame_timing_details.h"
+#include "third_party/blink/renderer/bindings/core/v8/v8_union_cssnumericvalue_double.h"
+#include "third_party/blink/renderer/core/animation/css/css_animation.h"
+#include "third_party/blink/renderer/core/animation/css/css_transition.h"
+#include "third_party/blink/renderer/core/animation/document_animations.h"
+#include "third_party/blink/renderer/core/animation/document_timeline.h"
 #include "third_party/blink/renderer/core/css/css_import_rule.h"
 #include "third_party/blink/renderer/core/css/css_property_value_set.h"
 #include "third_party/blink/renderer/core/css/css_rule.h"
@@ -28,16 +33,18 @@
 #include "third_party/blink/renderer/core/html/forms/html_input_element.h"
 #include "third_party/blink/renderer/core/html/html_link_element.h"
 #include "third_party/blink/renderer/core/html_names.h"
+#include "third_party/blink/renderer/core/input_type_names.h"
 #include "third_party/blink/renderer/core/layout/hit_test_location.h"
 #include "third_party/blink/renderer/core/layout/hit_test_result.h"
+#include "third_party/blink/renderer/core/layout/layout_box.h"
 #include "third_party/blink/renderer/core/page/chrome_client.h"
 #include "third_party/blink/renderer/core/page/page.h"
-#include "third_party/blink/renderer/core/page/scrolling/scrolling_coordinator.h"
+#include "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h"
 #include "third_party/blink/renderer/core/render_thread/render_thread.h"
-#include "third_party/blink/renderer/platform/graphics/compositing/paint_artifact_compositor.h"
+#include "third_party/blink/renderer/core/svg_names.h"
+#include "third_party/blink/renderer/platform/bindings/exception_state.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
 #include "third_party/blink/renderer/platform/graphics/paint/foreign_layer_display_item.h"
-#include "third_party/blink/renderer/platform/graphics/paint/paint_controller.h"
 #include "third_party/blink/renderer/platform/graphics/paint/property_tree_state.h"
 #include "third_party/blink/renderer/platform/graphics/surface_layer_bridge.h"
 #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
@@ -47,6 +54,15 @@
 namespace blink {
 
 namespace {
+
+bool ContainsResourceReference(const String& css_text) {
+  for (const char* needle : {"url(", "image-set(", "@font-face"}) {
+    if (css_text.FindIgnoringAsciiCase(needle) != String::npos) {
+      return true;
+    }
+  }
+  return false;
+}
 
 bool IsStyleSheetLink(const Element& element) {
   const auto* link = DynamicTo<HTMLLinkElement>(element);
@@ -99,10 +115,14 @@ class RenderThreadJournal::CommitObserver final : public Thread::TaskObserver {
  public:
   explicit CommitObserver(RenderThreadJournal* journal) : journal_(journal) {}
 
-  void WillProcessTask(const base::PendingTask&, bool) override {}
+  void WillProcessTask(const base::PendingTask&, bool) override {
+    if (journal_) {
+      journal_->WillProcessTask();
+    }
+  }
   void DidProcessTask(const base::PendingTask&) override {
     if (journal_) {
-      journal_->CommitTask();
+      journal_->DidProcessTask();
     }
   }
 
@@ -143,7 +163,8 @@ RenderThreadJournal::RenderThreadJournal(Document& document)
       page->GetChromeClient().GetFrameSinkId(frame), this,
       base::NullCallback());
   bridge_->CreateSolidColorLayer();
-  bridge_->SetContentsOpaque(true);
+  // Transparent unless the render thread renders.
+  bridge_->SetContentsOpaque(false);
 
   auto params = std::make_unique<RenderThreadReplicaParams>();
   params->channel = channel_;
@@ -167,6 +188,7 @@ RenderThreadJournal::RenderThreadJournal(Document& document)
 
   commit_observer_ = std::make_unique<CommitObserver>(this);
   Thread::Current()->AddTaskObserver(commit_observer_.get());
+  InvalidateOverlay();
   LOG(INFO) << "[OMT] render thread journal attached to " << document.Url();
 }
 
@@ -198,6 +220,7 @@ void RenderThreadJournal::Detach() {
     Thread::Current()->RemoveTaskObserver(commit_observer_.get());
     commit_observer_.reset();
   }
+  channel_->SetMainTaskStart(base::TimeTicks());
   // Stops the page's render thread; its replica is destroyed on it.
   render_thread_.reset();
   if (bridge_) {
@@ -206,6 +229,90 @@ void RenderThreadJournal::Detach() {
   }
   ids_.clear();
   nodes_by_id_.clear();
+  InvalidateOverlay();
+}
+
+void RenderThreadJournal::InvalidateOverlay() {
+  if (LocalFrameView* view = document_->View()) {
+    view->SetVisualViewportOrOverlayNeedsRepaint();
+    view->ScheduleAnimation();
+  }
+}
+
+void RenderThreadJournal::MarkUnreplicable(const char* reason) {
+  if (detached_ || unreplicable_reason_) {
+    return;
+  }
+  unreplicable_reason_ = reason;
+  if (!task_depth_) {
+    DetachUnreplicable();
+  }
+}
+
+void RenderThreadJournal::DetachUnreplicable() {
+  if (detached_ || document_->GetRenderThreadJournal() != this) {
+    return;
+  }
+  LOG(INFO) << "[OMT] the render thread cannot reproduce this page ("
+            << unreplicable_reason_ << "); it renders on the main thread only";
+  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::Unreplicable", "reason",
+                      unreplicable_reason_);
+  Document& document = *document_;
+  Detach();
+  document.SetRenderThreadJournal(nullptr);
+}
+
+void RenderThreadJournal::CheckReplicable(const Element& element) {
+  // The replica does not load subresources, run plugins or nested frames,
+  // or know form control values edited by the user.
+  if (element.HasTagName(html_names::kImgTag) ||
+      element.HasTagName(html_names::kVideoTag) ||
+      element.HasTagName(html_names::kAudioTag) ||
+      element.HasTagName(html_names::kCanvasTag) ||
+      element.HasTagName(html_names::kIFrameTag) ||
+      element.HasTagName(html_names::kFrameTag) ||
+      element.HasTagName(html_names::kEmbedTag) ||
+      element.HasTagName(html_names::kObjectTag) ||
+      element.HasTagName(html_names::kTextareaTag) ||
+      element.HasTagName(html_names::kSelectTag) ||
+      element.HasTagName(html_names::kDialogTag)) {
+    MarkUnreplicable("element that needs resources or state");
+    return;
+  }
+  if (const auto* input = DynamicTo<HTMLInputElement>(element)) {
+    const AtomicString& type = input->type();
+    if (type != input_type_names::kButton &&
+        type != input_type_names::kSubmit && type != input_type_names::kReset &&
+        type != input_type_names::kCheckbox &&
+        type != input_type_names::kRadio && type != input_type_names::kHidden) {
+      MarkUnreplicable("form field");
+      return;
+    }
+  }
+  if (element.namespaceURI() == svg_names::kNamespaceURI &&
+      (element.localName() == svg_names::kImageTag.LocalName() ||
+       element.localName() == svg_names::kFEImageTag.LocalName() ||
+       element.localName() == svg_names::kUseTag.LocalName())) {
+    MarkUnreplicable("SVG resource reference");
+    return;
+  }
+  if (element.FastHasAttribute(html_names::kPopoverAttr)) {
+    MarkUnreplicable("popover");
+    return;
+  }
+  if (element.HasTagName(html_names::kStyleTag)) {
+    CheckReplicableStyle(element, element.textContent());
+  }
+  if (const CSSPropertyValueSet* style = element.InlineStyle()) {
+    CheckReplicableStyle(element, style->AsText());
+  }
+}
+
+void RenderThreadJournal::CheckReplicableStyle(const Element&,
+                                               const String& css_text) {
+  if (ContainsResourceReference(css_text)) {
+    MarkUnreplicable("CSS that loads resources");
+  }
 }
 
 void RenderThreadJournal::Trace(Visitor* visitor) const {
@@ -214,13 +321,15 @@ void RenderThreadJournal::Trace(Visitor* visitor) const {
   visitor->Trace(nodes_by_id_);
   visitor->Trace(opaque_);
   visitor->Trace(converted_links_);
-  visitor->Trace(paint_data_);
   DisplayItemClient::Trace(visitor);
 }
 
 void RenderThreadJournal::Push(RenderThreadOp op) {
-  if (detached_) {
+  if (detached_ || unreplicable_reason_) {
     return;
+  }
+  if (op.type != RenderThreadOp::Type::kStyleSync) {
+    ops_since_style_sync_ = true;
   }
   if (channel_->Push(std::move(op)) && channel_->MarkWakePending()) {
     render_thread_->Wake();
@@ -234,6 +343,307 @@ void RenderThreadJournal::CommitTask() {
   if (channel_->Commit() && channel_->MarkWakePending()) {
     render_thread_->Wake();
   }
+}
+
+void RenderThreadJournal::WillProcessTask() {
+  if (task_depth_++ == 0 && !detached_) {
+    channel_->SetMainTaskStart(base::TimeTicks::Now());
+  }
+}
+
+void RenderThreadJournal::DidProcessTask() {
+  if (task_depth_ > 0 && --task_depth_ > 0) {
+    return;
+  }
+  if (detached_) {
+    return;
+  }
+  channel_->SetMainTaskStart(base::TimeTicks());
+  CommitTask();
+  if (unreplicable_reason_) {
+    DetachUnreplicable();
+    return;
+  }
+  if (channel_->GetMode() == RenderThreadChannel::Mode::kRender) {
+    BeginHandBack();
+  }
+}
+
+bool RenderThreadJournal::IsRendering() const {
+  return !detached_ &&
+         channel_->GetMode() == RenderThreadChannel::Mode::kRender;
+}
+
+// static
+bool RenderThreadJournal::IsRendering(const Document& document) {
+  RenderThreadJournal* journal = document.GetRenderThreadJournal();
+  return journal && journal->IsRendering();
+}
+
+void RenderThreadJournal::BeginHandBack() {
+  if (!channel_->ChangeMode(RenderThreadChannel::Mode::kRender,
+                            RenderThreadChannel::Mode::kHandBack)) {
+    return;
+  }
+  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::BeginHandBack");
+  needs_timing_sync_ = true;
+  hand_back_presentation_requested_ = false;
+  // Scrolls that script did while the render thread rendered were applied to
+  // the replica only. Apply them here too (this updates style first, which
+  // adopts the replica's animation timing, see DidUpdateStyle()).
+  Vector<PendingScroll> scrolls;
+  scrolls.swap(pending_scrolls_);
+  for (const PendingScroll& scroll : scrolls) {
+    Node* node = NodeForId(scroll.node);
+    if (!node) {
+      continue;
+    }
+    auto* element = DynamicTo<Element>(node);
+    if (!element) {
+      element = document_->scrollingElement();
+    }
+    if (!element) {
+      continue;
+    }
+    if (scroll.left) {
+      element->setScrollLeft(*scroll.left +
+                             (scroll.relative ? element->scrollLeft() : 0));
+    }
+    if (scroll.top) {
+      element->setScrollTop(*scroll.top +
+                            (scroll.relative ? element->scrollTop() : 0));
+    }
+  }
+  // Repaint, so that the main thread commits (and presents) a frame.
+  InvalidateOverlay();
+}
+
+void RenderThreadJournal::DidUpdateStyle() {
+  if (!needs_timing_sync_ || detached_ ||
+      channel_->GetMode() != RenderThreadChannel::Mode::kHandBack) {
+    return;
+  }
+  needs_timing_sync_ = false;
+  // The first frame after a long task was requested while the task ran, so
+  // its frame time is stale. The render thread has shown the page up to now;
+  // continue from there.
+  document_->GetAnimationClock().UpdateTime(base::TimeTicks::Now());
+  SyncAnimationTimings();
+  document_->UpdateStyleAndLayoutTree();
+}
+
+void RenderThreadJournal::SyncAnimationTimings() {
+  TRACE_EVENT0("blink", "RenderThreadJournal::SyncAnimationTimings");
+  RenderThreadQuery query{.type = RenderThreadQuery::Type::kAnimationTimings};
+  if (!SendQuery(*document_, query)) {
+    return;
+  }
+  HashMap<String, double> replica_starts;
+  auto key = [](uint32_t node, bool is_transition, const String& name) {
+    return String::Number(node) + (is_transition ? "/t/" : "/a/") + name;
+  };
+  for (const RenderThreadAnimationTiming& timing : query.timings) {
+    replica_starts.Set(key(timing.node, timing.is_transition, timing.name),
+                       timing.start_ms);
+  }
+  int adjusted = 0;
+  int finished = 0;
+  for (Animation* animation :
+       document_->GetDocumentAnimations().getAnimations(*document_)) {
+    auto* transition = DynamicTo<CSSTransition>(animation);
+    auto* css_animation = DynamicTo<CSSAnimation>(animation);
+    if (!transition && !css_animation) {
+      continue;
+    }
+    Element* owner = transition ? transition->OwningElement()
+                                : css_animation->OwningElement();
+    auto* timeline = DynamicTo<DocumentTimeline>(animation->TimelineInternal());
+    const uint32_t id = owner ? IdOf(*owner) : 0;
+    if (!id || !timeline) {
+      continue;
+    }
+    const String name =
+        transition ? transition->TransitionCSSPropertyName().ToAtomicString()
+                   : css_animation->animationName();
+    auto it = replica_starts.find(key(id, !!transition, name));
+    if (it == replica_starts.end()) {
+      // The replica already finished this transition while the main thread
+      // was busy; do not play it again from the start.
+      if (transition && animation->CalculateAnimationPlayState() !=
+                            V8AnimationPlayState::Enum::kFinished) {
+        animation->finish(IGNORE_EXCEPTION);
+        ++finished;
+      }
+      continue;
+    }
+    const double start_ms = it->value - timeline->ZeroTime().InMillisecondsF();
+    std::optional<AnimationTimeDelta> current = animation->StartTimeInternal();
+    if (current && std::abs(current->InMillisecondsF() - start_ms) < 0.5) {
+      continue;
+    }
+    animation->setStartTime(MakeGarbageCollected<V8CSSNumberish>(start_ms),
+                            IGNORE_EXCEPTION);
+    ++adjusted;
+  }
+  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::AnimationTimingsAdopted",
+                      "adjusted", adjusted, "finished", finished);
+  if (takeovers_ < 10) {
+    LOG(INFO) << "[OMT] main thread adopted the render thread's animation "
+                 "timing ("
+              << query.timings.size() << " running, " << adjusted
+              << " adjusted, " << finished << " finished)";
+  }
+}
+
+void RenderThreadJournal::FinishHandBack() {
+  if (detached_ || !channel_->ChangeMode(RenderThreadChannel::Mode::kHandBack,
+                                         RenderThreadChannel::Mode::kMain)) {
+    return;
+  }
+  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::HandBack");
+  if (takeovers_ <= 10 || takeovers_ % 100 == 0) {
+    LOG(INFO) << "[OMT] main thread took rendering back (hand-back #"
+              << takeovers_ << ")";
+  }
+  render_thread_->Wake();
+}
+
+// static
+void RenderThreadJournal::DidUpdateMainFrame(LocalFrameView& view) {
+  Document* document = view.GetFrame().GetDocument();
+  RenderThreadJournal* journal =
+      document ? document->GetRenderThreadJournal() : nullptr;
+  if (!journal || journal->detached_) {
+    return;
+  }
+  journal->SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
+  journal->SendScrollOffsets(view);
+  journal->UpdateTakeoverAllowed();
+  if (journal->style_sync_since_frame_ || journal->ops_since_style_sync_) {
+    // The main thread started pending animations at this frame's time.
+    journal->style_sync_since_frame_ = false;
+    journal->ops_since_style_sync_ = false;
+    journal->Push({.type = RenderThreadOp::Type::kStyleSync,
+                   .int_value = 1,
+                   .time = document->GetAnimationClock()
+                               .CurrentTime()
+                               .since_origin()
+                               .InMicrosecondsF()});
+  }
+  journal->CommitTask();
+  if (journal->channel_->GetMode() != RenderThreadChannel::Mode::kHandBack) {
+    return;
+  }
+  if (journal->needs_timing_sync_) {
+    // No style update ran in this frame; adopt the timing now and render the
+    // result in the next frame.
+    journal->DidUpdateStyle();
+    view.ScheduleAnimation();
+    return;
+  }
+  if (journal->hand_back_presentation_requested_) {
+    return;
+  }
+  journal->hand_back_presentation_requested_ = true;
+  ++journal->takeovers_;
+  // The render thread keeps presenting until this frame (rendered by the main
+  // thread, with the adopted timing) is on screen. A frame without damage may
+  // never be presented; nothing changed on screen then, so stop waiting after
+  // a while.
+  if (Page* page = view.GetFrame().GetPage()) {
+    page->GetChromeClient().NotifyPresentationTime(
+        view.GetFrame(),
+        BindOnce(
+            [](RenderThreadJournal* journal, const viz::FrameTimingDetails&) {
+              if (journal) {
+                journal->FinishHandBack();
+              }
+            },
+            WrapWeakPersistent(journal)));
+  }
+  document->GetTaskRunner(TaskType::kInternalDefault)
+      ->PostDelayedTask(FROM_HERE,
+                        BindOnce(&RenderThreadJournal::FinishHandBack,
+                                 WrapWeakPersistent(journal)),
+                        base::Milliseconds(250));
+}
+
+void RenderThreadJournal::SendScrollOffsets(const LocalFrameView& view) {
+  const float zoom = view.GetFrame().LayoutZoomFactor();
+  for (const auto& entry : view.ScrollableAreas()) {
+    PaintLayerScrollableArea* area = entry.value.Get();
+    LayoutBox* box = area ? area->GetLayoutBox() : nullptr;
+    Node* node = box ? box->GetNode() : nullptr;
+    const uint32_t id = node ? IdOf(*node) : 0;
+    if (!id) {
+      continue;
+    }
+    const ScrollOffset offset = area->GetScrollOffset();
+    const gfx::PointF css(offset.x() / zoom, offset.y() / zoom);
+    auto it = sent_scroll_offsets_.find(id);
+    if (it != sent_scroll_offsets_.end() && it->value == css) {
+      continue;
+    }
+    if (it == sent_scroll_offsets_.end() && css.IsOrigin()) {
+      continue;
+    }
+    sent_scroll_offsets_.Set(id, css);
+    Push({.type = RenderThreadOp::Type::kSetScrollOffset,
+          .node = id,
+          .float_value = css.x(),
+          .float_value2 = css.y()});
+  }
+}
+
+void RenderThreadJournal::UpdateTakeoverAllowed() {
+  // Script-driven animations, and CSS animations controlled through the Web
+  // Animations API, exist only on the main thread.
+  bool allowed = true;
+  for (Animation* animation : document_->Timeline().GetAnimations()) {
+    if (!animation) {
+      continue;
+    }
+    const V8AnimationPlayState::Enum state =
+        animation->CalculateAnimationPlayState();
+    if (state == V8AnimationPlayState::Enum::kIdle ||
+        state == V8AnimationPlayState::Enum::kFinished) {
+      continue;
+    }
+    auto* css_animation = DynamicTo<CSSAnimation>(animation);
+    if ((!css_animation && !IsA<CSSTransition>(animation)) ||
+        (css_animation && css_animation->GetIgnoreCSSPlayState()) ||
+        animation->playbackRate() != 1) {
+      allowed = false;
+      break;
+    }
+  }
+  if (allowed != channel_->TakeoverAllowed()) {
+    channel_->SetTakeoverAllowed(allowed);
+    TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::TakeoverAllowed",
+                        "allowed", allowed);
+  }
+}
+
+// static
+void RenderThreadJournal::PaintOverlay(GraphicsContext& context,
+                                       const LocalFrameView& view) {
+  Document* document = view.GetFrame().GetDocument();
+  RenderThreadJournal* journal =
+      document ? document->GetRenderThreadJournal() : nullptr;
+  if (!journal || journal->detached_ || !journal->bridge_) {
+    return;
+  }
+  cc::Layer* layer = journal->bridge_->GetCcLayer();
+  if (!layer) {
+    return;
+  }
+  layer->SetBounds(view.Size());
+  layer->SetIsDrawable(true);
+  // Input and scrolling are hit tested against the main thread's layers.
+  layer->SetHitTestOpaqueness(cc::HitTestOpaqueness::kTransparent);
+  const PropertyTreeState root_state = PropertyTreeState::Root();
+  RecordForeignLayer(context, *journal, DisplayItem::kForeignLayerCanvas, layer,
+                     gfx::Point(), &root_state);
 }
 
 namespace {
@@ -251,6 +661,26 @@ RenderThreadJournal::FocusScope::~FocusScope() {
 bool RenderThreadJournal::NoteMainThreadRendering(const char* phase,
                                                   int reason) {
   if (detached_) {
+    return true;
+  }
+  if (!IsRendering()) {
+    // The main thread renders. The replica updates its style at the same
+    // point, with the same animation time.
+    if (ops_since_style_sync_) {
+      ops_since_style_sync_ = false;
+      style_sync_since_frame_ = true;
+      Push({.type = RenderThreadOp::Type::kStyleSync,
+            .time = document_->GetAnimationClock()
+                        .CurrentTime()
+                        .since_origin()
+                        .InMicrosecondsF()});
+    }
+    // Forced layout updates style without going through
+    // Document::UpdateStyleAndLayoutTree(); adopt the render thread's
+    // animation timing first.
+    if (needs_timing_sync_ && std::string_view(phase) == "layout") {
+      document_->UpdateStyleAndLayoutTree();
+    }
     return true;
   }
   if (g_focus_scope_depth) {
@@ -365,21 +795,29 @@ bool RenderThreadJournal::HitTest(Document& document,
 // static
 bool RenderThreadJournal::RunQuery(const Node& node, RenderThreadQuery& query) {
   RenderThreadJournal* journal = node.GetDocument().GetRenderThreadJournal();
-  if (!journal || journal->detached_ || !journal->render_thread_) {
+  if (!journal || !journal->IsRendering()) {
     return false;
   }
-  query.node = journal->IdOf(node);
+  return journal->SendQuery(node, query);
+}
+
+bool RenderThreadJournal::SendQuery(const Node& node,
+                                    RenderThreadQuery& query) {
+  if (detached_ || !render_thread_) {
+    return false;
+  }
+  query.node = IdOf(node);
   if (!query.node) {
     return false;
   }
   // The viewport may have been resized since the last frame (for example,
   // script in a resize event handler runs before the next frame is prepared).
-  if (LocalFrameView* view = journal->document_->View()) {
-    journal->SendViewport(view->Size(), view->GetFrame().LayoutZoomFactor());
+  if (LocalFrameView* view = document_->View()) {
+    SendViewport(view->Size(), view->GetFrame().LayoutZoomFactor());
   }
   // Everything the script did so far must be visible to the query.
-  journal->channel_->Commit();
-  journal->render_thread_->RunQuery(query);
+  channel_->Commit();
+  render_thread_->RunQuery(query);
   return query.answered;
 }
 
@@ -569,6 +1007,7 @@ uint32_t RenderThreadJournal::Serialize(const Node& node) {
 
 void RenderThreadJournal::SerializeElement(const Element& element,
                                            uint32_t id) {
+  CheckReplicable(element);
   const bool is_style_link = IsStyleSheetLink(element);
   RenderThreadOp create{.type = RenderThreadOp::Type::kCreateElement,
                         .node = id};
@@ -800,6 +1239,9 @@ void RenderThreadJournal::ChildrenChanged(
         return;
       }
       if (uint32_t id = IdOf(*data)) {
+        if (container.HasTagName(html_names::kStyleTag)) {
+          CheckReplicableStyle(To<Element>(container), data->data());
+        }
         RenderThreadOp op{.type = RenderThreadOp::Type::kSetText, .node = id};
         op.text = data->data();
         Push(std::move(op));
@@ -829,6 +1271,12 @@ void RenderThreadJournal::AttributeChanged(const Element& element,
   } else if (ShouldSkipAttribute(element, name)) {
     return;
   }
+  if (name == html_names::kStyleAttr) {
+    CheckReplicableStyle(element, new_value);
+  } else if (name == html_names::kTypeAttr ||
+             name == html_names::kPopoverAttr) {
+    CheckReplicable(element);
+  }
   RenderThreadOp op{.type = new_value.IsNull()
                                 ? RenderThreadOp::Type::kRemoveAttribute
                                 : RenderThreadOp::Type::kSetAttribute,
@@ -850,6 +1298,7 @@ void RenderThreadJournal::InlineStyleChanged(const Element& element) {
   op.local_name = html_names::kStyleAttr.LocalName();
   op.text =
       element.InlineStyle() ? element.InlineStyle()->AsText() : g_empty_string;
+  CheckReplicableStyle(element, op.text);
   Push(std::move(op));
 }
 
@@ -859,13 +1308,15 @@ bool RenderThreadJournal::Scroll(const Node& element,
                                  std::optional<double> top,
                                  bool relative) {
   RenderThreadJournal* journal = element.GetDocument().GetRenderThreadJournal();
-  if (!journal || journal->detached_ || !journal->render_thread_) {
+  if (!journal || !journal->IsRendering()) {
     return false;
   }
   const uint32_t id = journal->IdOf(element);
   if (!id) {
     return false;
   }
+  journal->pending_scrolls_.push_back(PendingScroll{
+      .node = id, .left = left, .top = top, .relative = relative});
   journal->Push(
       {.type = RenderThreadOp::Type::kScrollElement,
        .node = id,
@@ -903,6 +1354,7 @@ void RenderThreadJournal::SendSheetText(const Element& owner, uint32_t id) {
   AppendSheetText(*sheet, document_->GetExecutionContext(), builder, 0);
   RenderThreadOp op{.type = RenderThreadOp::Type::kSetSheetText, .node = id};
   op.text = builder.ReleaseString();
+  CheckReplicableStyle(owner, op.text);
   Push(std::move(op));
 }
 
@@ -923,6 +1375,7 @@ void RenderThreadJournal::StyleSheetChanged(const CSSStyleSheet& sheet) {
                   document_->GetExecutionContext(), builder, 0);
   RenderThreadOp op{.type = RenderThreadOp::Type::kSetSheetText, .node = id};
   op.text = builder.ReleaseString();
+  CheckReplicableStyle(*owner, op.text);
   Push(std::move(op));
 }
 
@@ -945,78 +1398,11 @@ void RenderThreadJournal::SendViewport(const gfx::Size& size, float zoom) {
   CommitTask();
 }
 
-cc::Layer* RenderThreadJournal::PrepareMainFrame(const LocalFrameView& view) {
-  if (detached_ || !bridge_) {
-    return nullptr;
-  }
-  SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
-  cc::Layer* layer = bridge_->GetCcLayer();
-  if (layer) {
-    layer->SetBounds(view.Size());
-    layer->SetIsDrawable(true);
-  }
-  return layer;
-}
-
-PaintControllerPersistentData& RenderThreadJournal::PaintData() {
-  if (!paint_data_) {
-    paint_data_ = MakeGarbageCollected<PaintControllerPersistentData>();
-  }
-  return *paint_data_;
-}
-
 void RenderThreadJournal::OnWebLayerUpdated() {
-  if (!detached_ && document_->View()) {
-    document_->View()->ScheduleAnimation();
+  // The render thread's surface was (re)embedded; repaint the overlay layer.
+  if (!detached_) {
+    InvalidateOverlay();
   }
-}
-
-// static
-bool RenderThreadPresenter::UpdateMainFrame(LocalFrameView& view) {
-  Document* document = view.GetFrame().GetDocument();
-  RenderThreadJournal* journal =
-      document ? document->GetRenderThreadJournal() : nullptr;
-  if (!journal) {
-    return false;
-  }
-  Page* page = view.GetFrame().GetPage();
-  if (!page) {
-    return false;
-  }
-  cc::Layer* layer = journal->PrepareMainFrame(view);
-  if (!layer) {
-    return false;
-  }
-
-  if (!view.paint_artifact_compositor_) {
-    view.paint_artifact_compositor_ =
-        MakeGarbageCollected<PaintArtifactCompositor>(
-            page->GetScrollingCoordinator()->GetScrollCallbacks());
-    page->GetChromeClient().AttachRootLayer(
-        view.paint_artifact_compositor_->RootLayer(), &view.GetFrame());
-  }
-
-  PaintControllerPersistentData& data = journal->PaintData();
-  const PropertyTreeState root_state = PropertyTreeState::Root();
-  // The compositor update must happen while the PaintController is alive:
-  // destroying it clears the previous artifact, which the compositor's old
-  // pending layers still reference for layer matching.
-  PaintController paint_controller(/*record_debug_info=*/false, &data);
-  {
-    GraphicsContext context(paint_controller);
-    RecordForeignLayer(context, *journal, DisplayItem::kForeignLayerCanvas,
-                       layer, gfx::Point(), &root_state);
-  }
-  paint_controller.CommitNewDisplayItems();
-
-  PaintArtifactCompositor& compositor = *view.paint_artifact_compositor_;
-  compositor.SetDevicePixelRatio(document->DevicePixelRatio());
-  compositor.SetNeedsUpdate();
-  compositor.Update(data.GetPaintArtifact(),
-                    PaintArtifactCompositor::ViewportProperties(),
-                    StackTransformPaintPropertyNodeVector(),
-                    Vector<std::unique_ptr<cc::ViewTransitionRequest>>());
-  return true;
 }
 
 }  // namespace blink

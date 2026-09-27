@@ -32,6 +32,7 @@ class DemoParser(HTMLParser):
 for name, required in {
     "index.html": {"proof", "panel", "fill", "follower", "smoke", "heartbeat"},
     "queries.html": {"height-panel", "grid-panel", "shadow-host", "input-button", "query-container"},
+    "mem.html": {"panel", "fill", "churn-list", "status"},
 }.items():
     parser = DemoParser()
     parser.feed((root / "demo" / name).read_text())
@@ -47,6 +48,11 @@ query_task = queries.split("function runQueryBlock", 1)[1].split("window.validat
 for forbidden in ("requestAnimationFrame(", "setTimeout(", "await "):
     assert forbidden not in query_task, f"Yield in query task: {forbidden}"
 assert query_task.count('classList.toggle("open")') == 2, "Both transitions must start in one task"
+before_assertions = query_task.split("mutationQueries(viewport", 1)[0]
+assert "TAKEOVER_WAIT_MS" in before_assertions.split('milestone("block-start"', 1)[1], "Immediate assertions must follow the synchronous takeover wait"
+churn = (root / "demo/mem.js").read_text()
+for forbidden in ("while (", "for (;;)"):
+    assert forbidden not in churn, f"Memory churn must use short tasks only: {forbidden}"
 for path in (root / "demo").glob("*.css"):
     css = path.read_text()
     assert css.count("{") == css.count("}"), f"Unbalanced CSS blocks: {path.name}"

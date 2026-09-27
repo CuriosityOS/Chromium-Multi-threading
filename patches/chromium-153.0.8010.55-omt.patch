@@ -569,17 +569,56 @@ index a6a71a0b1e..3d3934841c 100644
    bool invalidate_matched_properties_cache = false;
    if (ownerNode() && ownerNode()->isConnected()) {
      document->GetStyleEngine().SetNeedsActiveStyleUpdate(
+diff --git a/third_party/blink/renderer/core/css/element_rule_collector.cc b/third_party/blink/renderer/core/css/element_rule_collector.cc
+index 7f5102d20d..127bc01960 100644
+--- a/third_party/blink/renderer/core/css/element_rule_collector.cc
++++ b/third_party/blink/renderer/core/css/element_rule_collector.cc
+@@ -71,6 +71,7 @@
+ #include "third_party/blink/renderer/core/page/scrolling/fragment_anchor.h"
+ #include "third_party/blink/renderer/core/probe/core_probes.h"
+ #include "third_party/blink/renderer/core/style/computed_style.h"
++#include "third_party/blink/renderer/platform/wtf/per_thread_static.h"
+ 
+ namespace blink {
+ namespace {
+@@ -133,7 +134,8 @@ struct ContextWithStyleScopeFrame {
+     Element* originating_element = context.element;
+     Element* pseudo_element = context.pseudo_element;
+ 
+-    if (!pseudo_element && context.pseudo_id != kPseudoIdNone && originating_element) {
++    if (!pseudo_element && context.pseudo_id != kPseudoIdNone &&
++        originating_element) {
+       pseudo_element = originating_element->GetPseudoElement(
+           context.pseudo_id, *context.pseudo_argument);
+     }
+@@ -383,7 +385,7 @@ struct CumulativeRulePerfData {
+ using SelectorStatisticsRuleMap =
+     HashMap<CumulativeRulePerfKey, CumulativeRulePerfData>;
+ SelectorStatisticsRuleMap& GetSelectorStatisticsRuleMap() {
+-  DEFINE_STATIC_LOCAL(SelectorStatisticsRuleMap, rule_map, {});
++  DEFINE_PER_THREAD_STATIC_LOCAL(SelectorStatisticsRuleMap, rule_map, ());
+   return rule_map;
+ }
+ 
 diff --git a/third_party/blink/renderer/core/css/font_face_set_document.cc b/third_party/blink/renderer/core/css/font_face_set_document.cc
-index dcdafce560..bb7b6d4e39 100644
+index dcdafce560..d407acfeb3 100644
 --- a/third_party/blink/renderer/core/css/font_face_set_document.cc
 +++ b/third_party/blink/renderer/core/css/font_face_set_document.cc
-@@ -156,7 +156,10 @@ void FontFaceSetDocument::FireDoneEventIfPossible() {
+@@ -47,6 +47,7 @@
+ #include "third_party/blink/renderer/core/frame/local_frame.h"
+ #include "third_party/blink/renderer/core/frame/local_frame_view.h"
+ #include "third_party/blink/renderer/core/loader/document_loader.h"
++#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+ #include "third_party/blink/renderer/core/style/computed_style.h"
+ #include "third_party/blink/renderer/platform/bindings/script_state.h"
+ #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
+@@ -156,7 +157,10 @@ void FontFaceSetDocument::FireDoneEventIfPossible() {
    // FireDoneEventIfPossible gets scheduled via PostTask at the end of a
    // successful style+layout update. An invalidation may have occurred in
    // the interim, so update style and layout synchronously here.
 -  document->UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
-+  // With off-main-thread rendering the main thread does not lay out.
-+  if (!document->GetRenderThreadJournal()) {
++  // While the render thread renders, the main thread does not lay out.
++  if (!RenderThreadJournal::IsRendering(*document)) {
 +    document->UpdateStyleAndLayout(DocumentUpdateReason::kUnknown);
 +  }
  
@@ -992,10 +1031,18 @@ index 1ded273f72..091735779c 100644
      HTMLFrameOwnerElement::PluginDisposeSuspendScope suspend_plugin_dispose;
      TreeOrderedMap::RemoveScope tree_remove_scope;
 diff --git a/third_party/blink/renderer/core/dom/document.cc b/third_party/blink/renderer/core/dom/document.cc
-index aeb4b0b597..efaf56e98d 100644
+index aeb4b0b597..d6fcf60f70 100644
 --- a/third_party/blink/renderer/core/dom/document.cc
 +++ b/third_party/blink/renderer/core/dom/document.cc
-@@ -347,6 +347,7 @@
+@@ -64,6 +64,7 @@
+ #include "services/network/public/mojom/permissions_policy/permissions_policy_feature.mojom-blink-forward.h"
+ #include "services/network/public/mojom/trust_tokens.mojom-blink.h"
+ #include "services/network/public/mojom/web_sandbox_flags.mojom-blink.h"
++#include "third_party/abseil-cpp/absl/cleanup/cleanup.h"
+ #include "third_party/blink/public/common/features.h"
+ #include "third_party/blink/public/common/permissions_policy/document_policy_features.h"
+ #include "third_party/blink/public/common/thread_safe_browser_interface_broker_proxy.h"
+@@ -347,6 +348,7 @@
  #include "third_party/blink/renderer/core/permissions_policy/dom_feature_policy.h"
  #include "third_party/blink/renderer/core/permissions_policy/permissions_policy_parser.h"
  #include "third_party/blink/renderer/core/probe/core_probes.h"
@@ -1003,7 +1050,7 @@ index aeb4b0b597..efaf56e98d 100644
  #include "third_party/blink/renderer/core/resize_observer/resize_observer.h"
  #include "third_party/blink/renderer/core/resize_observer/resize_observer_controller.h"
  #include "third_party/blink/renderer/core/resize_observer/resize_observer_entry.h"
-@@ -420,6 +421,8 @@
+@@ -420,6 +422,8 @@
  #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
  #include "third_party/blink/renderer/platform/wtf/functional.h"
  #include "third_party/blink/renderer/platform/wtf/hash_functions.h"
@@ -1012,7 +1059,7 @@ index aeb4b0b597..efaf56e98d 100644
  #include "third_party/blink/renderer/platform/wtf/std_lib_extras.h"
  #include "third_party/blink/renderer/platform/wtf/text/character_names.h"
  #include "third_party/blink/renderer/platform/wtf/text/character_visitor.h"
-@@ -448,8 +451,9 @@ using WeakDocumentSet = blink::HeapHashSet<blink::WeakMember<blink::Document>>;
+@@ -448,8 +452,9 @@ using WeakDocumentSet = blink::HeapHashSet<blink::WeakMember<blink::Document>>;
  
  WeakDocumentSet& LiveDocumentSet() {
    using WeakDocumentSetHolder = blink::DisallowNewWrapper<WeakDocumentSet>;
@@ -1024,7 +1071,7 @@ index aeb4b0b597..efaf56e98d 100644
    return holder->Value();
  }
  #endif
-@@ -743,7 +747,7 @@ static bool AcceptsEditingFocus(const Element& element) {
+@@ -743,7 +748,7 @@ static bool AcceptsEditingFocus(const Element& element) {
    return element.GetDocument().GetFrame() && RootEditableElement(element);
  }
  
@@ -1033,7 +1080,7 @@ index aeb4b0b597..efaf56e98d 100644
  
  static bool g_force_synchronous_parsing_for_testing = false;
  
-@@ -889,7 +893,7 @@ Document::URLCache::~URLCache() = default;
+@@ -889,7 +894,7 @@ Document::URLCache::~URLCache() = default;
  
  KURL Document::URLCache::Get(const KURL& base, const String& relative) {
    if (base::FeatureList::IsEnabled(features::kOptimizeHTMLElementUrls)) {
@@ -1042,7 +1089,7 @@ index aeb4b0b597..efaf56e98d 100644
      const auto it = cache_.Get(std::make_pair(base, relative));
      if (it != cache_.end()) {
        return it->second;
-@@ -902,14 +906,14 @@ void Document::URLCache::Put(const KURL& base,
+@@ -902,14 +907,14 @@ void Document::URLCache::Put(const KURL& base,
                               const String& relative,
                               KURL url) {
    if (base::FeatureList::IsEnabled(features::kOptimizeHTMLElementUrls)) {
@@ -1059,7 +1106,7 @@ index aeb4b0b597..efaf56e98d 100644
      for (auto it = cache_.rbegin(); it != cache_.rend();) {
        if (it->first.first != base) {
          ++it;
-@@ -994,7 +998,8 @@ Document::Document(const DocumentInit& initializer,
+@@ -994,7 +999,8 @@ Document::Document(const DocumentInit& initializer,
            GetTaskRunner(TaskType::kInternalUserInteraction),
            this,
            &Document::ClearFocusedElementTimerFired),
@@ -1069,7 +1116,7 @@ index aeb4b0b597..efaf56e98d 100644
        // https://html.spec.whatwg.org/multipage/dom.html#current-document-readiness
        // says the ready state starts as 'loading' if there's an associated
        // parser and 'complete' otherwise. We don't know whether there's an
-@@ -1223,6 +1228,9 @@ void Document::SetCompatibilityMode(CompatibilityMode mode) {
+@@ -1223,6 +1229,9 @@ void Document::SetCompatibilityMode(CompatibilityMode mode) {
  
    compatibility_mode_ = mode;
    GetSelectorQueryCache().Invalidate();
@@ -1079,7 +1126,7 @@ index aeb4b0b597..efaf56e98d 100644
  }
  
  String Document::compatMode() const {
-@@ -2613,6 +2621,10 @@ void Document::UpdateStyleAndLayoutTree(LayoutUpgrade& upgrade) {
+@@ -2613,6 +2622,17 @@ void Document::UpdateStyleAndLayoutTree(LayoutUpgrade& upgrade) {
      owner->GetDocument().UpdateStyleAndLayoutTree(parent_upgrade);
    }
  
@@ -1087,10 +1134,17 @@ index aeb4b0b597..efaf56e98d 100644
 +      !render_thread_journal_->NoteMainThreadRendering("style", 0)) {
 +    return;
 +  }
++  // Runs after PostStyleUpdateScope. A pending rendering hand-back adopts the
++  // render thread's animation timing here.
++  absl::Cleanup did_update_style = [this] {
++    if (render_thread_journal_) {
++      render_thread_journal_->DidUpdateStyle();
++    }
++  };
    PostStyleUpdateScope post_style_update_scope(*this);
  
    do {
-@@ -3103,6 +3115,11 @@ void Document::UpdateStyleAndLayout(DocumentUpdateReason reason) {
+@@ -3103,6 +3123,11 @@ void Document::UpdateStyleAndLayout(DocumentUpdateReason reason) {
      return;
    }
    TRACE_EVENT("blink", "Document::UpdateStyleAndLayout");
@@ -1102,7 +1156,7 @@ index aeb4b0b597..efaf56e98d 100644
    LocalFrameView* frame_view = View();
  
    if (reason != DocumentUpdateReason::kBeginMainFrame && frame_view)
-@@ -3263,6 +3280,10 @@ StyleResolver& Document::GetStyleResolver() const {
+@@ -3263,6 +3288,10 @@ StyleResolver& Document::GetStyleResolver() const {
    return style_engine_->GetStyleResolver();
  }
  
@@ -1113,7 +1167,7 @@ index aeb4b0b597..efaf56e98d 100644
  void Document::Initialize() {
    TRACE_EVENT("blink", "Document::Initialize",
                perfetto::Flow::FromPointer(this));
-@@ -3284,6 +3305,7 @@ void Document::Initialize() {
+@@ -3284,6 +3313,7 @@ void Document::Initialize() {
  
    if (View())
      View()->DidAttachDocument();
@@ -1121,7 +1175,7 @@ index aeb4b0b597..efaf56e98d 100644
  }
  
  void Document::Shutdown() {
-@@ -3314,6 +3336,10 @@ void Document::Shutdown() {
+@@ -3314,6 +3344,10 @@ void Document::Shutdown() {
    ScriptForbiddenScope forbid_script;
  
    lifecycle_.AdvanceTo(DocumentLifecycle::kStopping);
@@ -1132,22 +1186,23 @@ index aeb4b0b597..efaf56e98d 100644
  
    // Do not add code before this without a documented reason. A postcondition of
    // Shutdown() is that |dom_window_| must not have an attached Document.
-@@ -4327,7 +4353,8 @@ void Document::DispatchLoadEventAndFinalize() {
+@@ -4327,7 +4361,9 @@ void Document::DispatchLoadEventAndFinalize() {
    // expensive layout thrashing of the embedding document. Since this is a
    // common scenario, special-casing it here, and avoiding that layout if
    // this is a subframe that is either initial or hidden.
 -  if (HaveRenderBlockingStylesheetsLoaded() &&
-+  // With off-main-thread rendering the render thread lays the page out.
-+  if (!render_thread_journal_ && HaveRenderBlockingStylesheetsLoaded() &&
++  // While the render thread renders, it lays the page out.
++  if (!RenderThreadJournal::IsRendering(*this) &&
++      HaveRenderBlockingStylesheetsLoaded() &&
        (GetFrame()->IsMainFrame() ||
         (Loader()->HasLoadedNonInitialEmptyDocument() &&
          GetFrame()->View()->IsVisible()))) {
-@@ -5384,6 +5411,19 @@ MouseEventWithHitTestResults Document::PerformMouseEventHitTest(
+@@ -5384,6 +5420,19 @@ MouseEventWithHitTestResults Document::PerformMouseEventHitTest(
      const WebMouseEvent& event) {
    DCHECK(!GetLayoutView() || IsA<LayoutView>(GetLayoutView()));
  
 +  if (render_thread_journal_) {
-+    // The render thread owns layout; it answers the hit test.
++    // While the render thread renders, it answers the hit test.
 +    HitTestLocation location(document_point);
 +    HitTestResult result(request, location);
 +    if (RenderThreadJournal::HitTest(*this, location, result)) {
@@ -1162,7 +1217,7 @@ index aeb4b0b597..efaf56e98d 100644
    // LayoutView::hitTest causes a layout, and we don't want to hit that until
    // the first layout because until then, there is nothing shown on the screen -
    // the user can't have intentionally clicked on something belonging to this
-@@ -5870,6 +5910,8 @@ void Document::SetLastFocusType(mojom::blink::FocusType last_focus_type) {
+@@ -5870,6 +5919,8 @@ void Document::SetLastFocusType(mojom::blink::FocusType last_focus_type) {
  bool Document::SetFocusedElement(Element* new_focused_element,
                                   const FocusParams& params) {
    DCHECK(!lifecycle_.InDetach());
@@ -1171,7 +1226,7 @@ index aeb4b0b597..efaf56e98d 100644
  
    clear_focused_element_timer_.Stop();
  
-@@ -6464,6 +6506,9 @@ void Document::NotifyUpdateCharacterData(CharacterData* character_data,
+@@ -6464,6 +6515,9 @@ void Document::NotifyUpdateCharacterData(CharacterData* character_data,
  void Document::NotifyChangeChildren(
      const ContainerNode& container,
      const ContainerNode::ChildrenChange& change) {
@@ -1181,7 +1236,7 @@ index aeb4b0b597..efaf56e98d 100644
    if (LocalFrameView* frame_view = View()) {
      if (FragmentAnchor* anchor = frame_view->GetFragmentAnchor()) {
        anchor->NewContentMayBeAvailable();
-@@ -6479,6 +6524,9 @@ void Document::NotifyAttributeChanged(const Element& element,
+@@ -6479,6 +6533,9 @@ void Document::NotifyAttributeChanged(const Element& element,
                                        const QualifiedName& name,
                                        const AtomicString& old_value,
                                        const AtomicString& new_value) {
@@ -1191,17 +1246,18 @@ index aeb4b0b597..efaf56e98d 100644
    // There are other attributes (not to mention style changes) that could
    // potentially make more content available to the fragment anchor but
    // this is a best effort heuristic, based on commonly seen patterns in the
-@@ -8076,7 +8124,8 @@ void Document::FinishedParsing() {
+@@ -8076,7 +8133,9 @@ void Document::FinishedParsing() {
      // the window load event too early.  To avoid this we force the styles to be
      // up to date before calling FrameLoader::finishedParsing().  See
      // https://bugs.webkit.org/show_bug.cgi?id=36864 starting around comment 35.
 -    if (!is_initial_empty_document_ && HaveRenderBlockingStylesheetsLoaded()) {
-+    if (!is_initial_empty_document_ && !render_thread_journal_ &&
++    if (!is_initial_empty_document_ &&
++        !RenderThreadJournal::IsRendering(*this) &&
 +        HaveRenderBlockingStylesheetsLoaded()) {
        // The is_initial_empty_document_ flag is only true when the document is
        // initialized, but then it is synchronously loaded and the flag goes out
        // of sync. Loader()->HasLoadedNonInitialEmptyDocument() is more correct.
-@@ -9556,6 +9605,7 @@ void Document::Trace(Visitor* visitor) const {
+@@ -9556,6 +9615,7 @@ void Document::Trace(Visitor* visitor) const {
    visitor->Trace(ranges_);
    visitor->Trace(document_explicit_root_intersection_observer_data_);
    visitor->Trace(style_engine_);
@@ -2672,16 +2728,24 @@ index 35a938a6e5..10423b9e3e 100644
    // boxes in the layout tree.
    GetDocument().UpdateStyleAndLayoutForNode(this,
 diff --git a/third_party/blink/renderer/core/editing/frame_selection.cc b/third_party/blink/renderer/core/editing/frame_selection.cc
-index 67b7f82819..c2a1922947 100644
+index 67b7f82819..9cd583c7bd 100644
 --- a/third_party/blink/renderer/core/editing/frame_selection.cc
 +++ b/third_party/blink/renderer/core/editing/frame_selection.cc
-@@ -1218,7 +1218,10 @@ void FrameSelection::FocusedOrActiveStateChanged() {
+@@ -96,6 +96,7 @@
+ #include "third_party/blink/renderer/core/page/page_animator.h"
+ #include "third_party/blink/renderer/core/page/spatial_navigation.h"
+ #include "third_party/blink/renderer/core/paint/paint_layer.h"
++#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+ #include "third_party/blink/renderer/core/scroll/scroll_into_view_util.h"
+ #include "third_party/blink/renderer/platform/bindings/exception_state.h"
+ #include "third_party/blink/renderer/platform/graphics/graphics_context.h"
+@@ -1218,7 +1219,10 @@ void FrameSelection::FocusedOrActiveStateChanged() {
    if (GetDocument().GetLayoutView()) {
      layout_selection_->InvalidateStyleAndPaintForSelection();
    }
 -  GetDocument().UpdateStyleAndLayoutTree();
-+  // With off-main-thread rendering the render thread owns style.
-+  if (!GetDocument().GetRenderThreadJournal()) {
++  // While the render thread renders, it owns style.
++  if (!RenderThreadJournal::IsRendering(GetDocument())) {
 +    GetDocument().UpdateStyleAndLayoutTree();
 +  }
  
@@ -3015,7 +3079,7 @@ index c283a89b00..0130b0cda0 100644
  }
  
 diff --git a/third_party/blink/renderer/core/frame/local_frame_view.cc b/third_party/blink/renderer/core/frame/local_frame_view.cc
-index 8f5ddf6183..3b9255107d 100644
+index 8f5ddf6183..10bf7c7a04 100644
 --- a/third_party/blink/renderer/core/frame/local_frame_view.cc
 +++ b/third_party/blink/renderer/core/frame/local_frame_view.cc
 @@ -162,6 +162,7 @@
@@ -3026,34 +3090,32 @@ index 8f5ddf6183..3b9255107d 100644
  #include "third_party/blink/renderer/core/resize_observer/resize_observer_controller.h"
  #include "third_party/blink/renderer/core/scroll/scroll_alignment.h"
  #include "third_party/blink/renderer/core/scroll/scroll_animator_base.h"
-@@ -2358,6 +2359,15 @@ bool LocalFrameView::UpdateLifecyclePhases(
-   if (!frame_->GetDocument()->IsActive())
-     return false;
+@@ -2410,6 +2411,12 @@ bool LocalFrameView::UpdateLifecyclePhases(
+   // Run the lifecycle updates.
+   UpdateLifecyclePhasesInternal(target_state, reason);
  
 +  if (target_state == DocumentLifecycle::kPaintClean &&
 +      reason == DocumentUpdateReason::kBeginMainFrame &&
-+      RenderThreadPresenter::UpdateMainFrame(*this)) {
-+    // The main document was not brought to PaintClean. Only the independent
-+    // render-thread surface was embedded. Forced layout queries still use
-+    // the main document's lazy lifecycle in this first implementation.
-+    return false;
++      frame_->IsOutermostMainFrame()) {
++    RenderThreadJournal::DidUpdateMainFrame(*this);
 +  }
 +
-   // If we're throttling and we aren't required to run the IntersectionObserver
-   // steps, then we don't need to update lifecycle phases. The throttling status
-   // will get updated in RunPostLifecycleSteps().
-diff --git a/third_party/blink/renderer/core/frame/local_frame_view.h b/third_party/blink/renderer/core/frame/local_frame_view.h
-index 7a2cfc58cb..b366700ab2 100644
---- a/third_party/blink/renderer/core/frame/local_frame_view.h
-+++ b/third_party/blink/renderer/core/frame/local_frame_view.h
-@@ -154,6 +154,7 @@ class CORE_EXPORT LocalFrameView final
-       public FrameView {
-   friend class PaintControllerPaintTestBase;
-   friend class Internals;
-+  friend class RenderThreadPresenter;
+   if (target_state == DocumentLifecycle::kPaintClean) {
+     TRACE_EVENT0("blink", "LocalFrameView::DidFinishLifecycleUpdate");
  
-  public:
-   class CORE_EXPORT LifecycleNotificationObserver
+@@ -3225,6 +3232,12 @@ void LocalFrameView::PaintTree(
+     // Link highlights paint after all other paintings.
+     GetPage()->GetLinkHighlight().Paint(graphics_context);
+ 
++    // The off-main-thread rendering surface is the topmost layer. It is
++    // transparent unless the render thread renders for a busy main thread.
++    if (frame_->IsOutermostMainFrame()) {
++      RenderThreadJournal::PaintOverlay(graphics_context, *this);
++    }
++
+     paint_controller->CommitNewDisplayItems();
+ 
+     needs_clear_repaint_flags = true;
 diff --git a/third_party/blink/renderer/core/frame/page_dismissal_scope.cc b/third_party/blink/renderer/core/frame/page_dismissal_scope.cc
 index 18531cc47d..b2c5337af6 100644
 --- a/third_party/blink/renderer/core/frame/page_dismissal_scope.cc
@@ -3586,17 +3648,25 @@ index 51615ed97a..bd23e85139 100644
      return result;
    if (LocalFrameView* frame_view = frame->View()) {
 diff --git a/third_party/blink/renderer/core/input/mouse_event_manager.cc b/third_party/blink/renderer/core/input/mouse_event_manager.cc
-index 09de09bc42..33f7da40c1 100644
+index 09de09bc42..3d76ff3854 100644
 --- a/third_party/blink/renderer/core/input/mouse_event_manager.cc
 +++ b/third_party/blink/renderer/core/input/mouse_event_manager.cc
-@@ -542,7 +542,11 @@ WebInputEventResult MouseEventManager::HandleMouseFocus(
+@@ -47,6 +47,7 @@
+ #include "third_party/blink/renderer/core/paint/paint_layer.h"
+ #include "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h"
+ #include "third_party/blink/renderer/core/paint/timing/paint_timing.h"
++#include "third_party/blink/renderer/core/render_thread/render_thread_journal.h"
+ #include "third_party/blink/renderer/core/svg/svg_document_extensions.h"
+ #include "third_party/blink/renderer/core/timing/event_timing.h"
+ #include "third_party/blink/renderer/platform/runtime_enabled_features.h"
+@@ -542,7 +543,11 @@ WebInputEventResult MouseEventManager::HandleMouseFocus(
    }
  
    // The layout needs to be up to date to determine if an element is focusable.
 -  frame_->GetDocument()->UpdateStyleAndLayout(DocumentUpdateReason::kFocus);
 +  // (With off-main-thread rendering, focusability is answered by the render
 +  // thread instead.)
-+  if (!frame_->GetDocument()->GetRenderThreadJournal()) {
++  if (!RenderThreadJournal::IsRendering(*frame_->GetDocument())) {
 +    frame_->GetDocument()->UpdateStyleAndLayout(DocumentUpdateReason::kFocus);
 +  }
  
@@ -4534,10 +4604,10 @@ index 0000000000..4bffb726e6
 +]
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread.cc b/third_party/blink/renderer/core/render_thread/render_thread.cc
 new file mode 100644
-index 0000000000..6cdb488255
+index 0000000000..6795f1a435
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread.cc
-@@ -0,0 +1,1031 @@
+@@ -0,0 +1,1296 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -4563,6 +4633,13 @@ index 0000000000..6cdb488255
 +#include "services/network/public/cpp/single_request_url_loader_factory.h"
 +#include "third_party/blink/public/common/tokens/tokens.h"
 +#include "third_party/blink/public/mojom/input/focus_type.mojom-blink.h"
++#include "third_party/blink/renderer/core/animation/animation_clock.h"
++#include "third_party/blink/renderer/core/animation/animation_effect.h"
++#include "third_party/blink/renderer/core/animation/css/css_animation.h"
++#include "third_party/blink/renderer/core/animation/css/css_transition.h"
++#include "third_party/blink/renderer/core/animation/document_animations.h"
++#include "third_party/blink/renderer/core/animation/document_timeline.h"
++#include "third_party/blink/renderer/core/animation/pending_animations.h"
 +#include "third_party/blink/renderer/core/css/css_computed_style_declaration.h"
 +#include "third_party/blink/renderer/core/dom/character_data.h"
 +#include "third_party/blink/renderer/core/dom/comment.h"
@@ -4687,11 +4764,20 @@ index 0000000000..6cdb488255
 +
 +namespace {
 +
-+// Journal entries that were recorded inside a task that is still running are
-+// applied once they are this old. This is what keeps the page rendering while
-+// the main thread is stuck in a long script task.
++// While the render thread renders, journal entries that were recorded inside
++// a task that is still running are applied once they are this old. This is
++// what keeps the page updating while the main thread is stuck in a long
++// script task.
 +constexpr base::TimeDelta kApplyUncommittedAfter = base::Milliseconds(20);
 +constexpr base::TimeDelta kResourceRetryDelay = base::Milliseconds(100);
++// The render thread takes over rendering once the main thread has been inside
++// one task for this long while the page is changing (about three frames).
++constexpr base::TimeDelta kTakeoverDelay = base::Milliseconds(50);
++// How often the render thread checks whether the main thread is stuck, while
++// the page is changing.
++constexpr base::TimeDelta kWatchdogInterval = base::Milliseconds(16);
++
++using Mode = RenderThreadChannel::Mode;
 +
 +class ReplicaPage;
 +
@@ -4815,7 +4901,7 @@ index 0000000000..6cdb488255
 +        gfx::Size(1, 1));
 +    LOG(INFO) << "[OMT] replica " << id_
 +              << " created on render thread, gpu=" << gpu_compositing_;
-+    RequestFrame();
++    Wake();
 +  }
 +
 +  ~ReplicaPage() override {
@@ -4825,28 +4911,204 @@ index 0000000000..6cdb488255
 +        isolate_,
 +        v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
 +    frame_request_timer_.Stop();
++    watchdog_.Stop();
 +    chrome_client_->ClearHost();
 +    // Return exported resources while their provider is still alive.
 +    dispatcher_.reset();
 +    provider_.reset();
++    clear_provider_.reset();
 +    // Keep all GC roots until frame/document teardown has completed.
 +    if (page_) {
 +      page_->WillBeDestroyed();
 +    }
 +  }
 +
++  // The main thread pushed journal entries or changed the mode.
 +  void Wake() {
 +    channel_->ClearWakePending();
-+    if (dispatcher_) {
++    if (channel_->GetMode() != Mode::kMain) {
++      presenting_ = true;
 +      dispatcher_->SetNeedsBeginFrame(true);
++      return;
 +    }
++    Follow();
 +  }
 +
 +  void RequestFrame() {
 +    frame_requested_ = true;
-+    if (dispatcher_) {
++    if (presenting_) {
 +      dispatcher_->SetNeedsBeginFrame(true);
 +    }
++  }
++
++  // While the main thread renders (Mode::kMain): keep the replica's DOM and
++  // style in step with the main thread, without layout, paint or frames, and
++  // watch for the main thread getting stuck.
++  void Follow() {
++    TRACE_EVENT0("blink", "ReplicaPage::Follow");
++    if (presenting_) {
++      StopPresenting();
++    }
++    v8::Isolate::Scope isolate_scope(isolate_);
++    v8::HandleScope handle_scope(isolate_);
++    v8::Isolate::DisallowJavascriptExecutionScope no_script(
++        isolate_,
++        v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
++    bool has_uncommitted = false;
++    Vector<RenderThreadOp> ops = channel_->TakeReadyOps(
++        base::TimeTicks::Now(), base::TimeDelta::Max(), &has_uncommitted);
++    if (!ops.empty()) {
++      ApplyOps(ops);
++    }
++    if (clear_frame_needed_) {
++      SubmitClearFrame();
++    }
++    // Creating raster resources needs the main thread (see
++    // RenderThreadMainCalls), which is only reliably available while it is
++    // responsive. Keep the raster provider ready for a takeover.
++    if (!size_.IsEmpty() && (!provider_ || !provider_->IsValid())) {
++      EnsureProvider();
++    }
++    if (has_uncommitted || HasRunningAnimations()) {
++      if (!watchdog_.IsRunning()) {
++        watchdog_.Start(FROM_HERE, kWatchdogInterval, this,
++                        &ReplicaPage::CheckMainThread);
++      }
++    } else {
++      watchdog_.Stop();
++    }
++  }
++
++  void CheckMainThread() {
++    if (channel_->GetMode() != Mode::kMain) {
++      watchdog_.Stop();
++      return;
++    }
++    const base::TimeTicks now = base::TimeTicks::Now();
++    if (channel_->TakeoverAllowed() && !size_.IsEmpty() &&
++        channel_->MainTaskDuration(now) >= kTakeoverDelay &&
++        (channel_->HasOps() || HasRunningAnimations())) {
++      TakeOver();
++      return;
++    }
++    Follow();
++  }
++
++  // The main thread is stuck in a long task while the page is changing.
++  void TakeOver() {
++    if (!channel_->ChangeMode(Mode::kMain, Mode::kRender)) {
++      return;
++    }
++    watchdog_.Stop();
++    ++takeovers_;
++    TRACE_EVENT_INSTANT(
++        "blink", "ReplicaPage::TakeOver", "main_task_ms",
++        channel_->MainTaskDuration(base::TimeTicks::Now()).InMillisecondsF());
++    if (takeovers_ <= 10 || takeovers_ % 100 == 0) {
++      LOG(INFO)
++          << "[OMT] replica " << id_
++          << " took over rendering from the busy main thread (#" << takeovers_
++          << ", main task running for "
++          << channel_->MainTaskDuration(base::TimeTicks::Now()).InMilliseconds()
++          << " ms)";
++    }
++    v8::Isolate::Scope isolate_scope(isolate_);
++    v8::HandleScope handle_scope(isolate_);
++    v8::Isolate::DisallowJavascriptExecutionScope no_script(
++        isolate_,
++        v8::Isolate::DisallowJavascriptExecutionScope::CRASH_ON_FAILURE);
++    // Everything the main thread did so far, including the running task.
++    bool has_uncommitted = false;
++    Vector<RenderThreadOp> ops = channel_->TakeReadyOps(
++        base::TimeTicks::Now(), base::TimeDelta(), &has_uncommitted);
++    if (!ops.empty()) {
++      ApplyOps(ops);
++    }
++    ApplyScrollOffsets();
++    presenting_ = true;
++    RequestFrame();
++  }
++
++  // Rendering is back on the main thread and its frames are on screen.
++  void StopPresenting() {
++    TRACE_EVENT0("blink", "ReplicaPage::StopPresenting");
++    presenting_ = false;
++    frame_requested_ = false;
++    frame_request_timer_.Stop();
++    dispatcher_->SetNeedsBeginFrame(false);
++    SubmitClearFrame();
++  }
++
++  bool HasRunningAnimations() {
++    Document& document = *frame_->GetDocument();
++    DocumentTimeline& timeline = document.Timeline();
++    const AnimationTimeDelta now(base::TimeTicks::Now().since_origin());
++    for (Animation* animation : timeline.GetAnimations()) {
++      if (!animation) {
++        continue;
++      }
++      const V8AnimationPlayState::Enum state =
++          animation->CalculateAnimationPlayState();
++      if (state != V8AnimationPlayState::Enum::kRunning) {
++        continue;
++      }
++      std::optional<AnimationTimeDelta> start = animation->StartTimeInternal();
++      AnimationEffect* effect = animation->effect();
++      if (!start || !effect) {
++        return true;
++      }
++      if (timeline.ZeroTime() + *start + effect->NormalizedTiming().end_time >
++          now) {
++        return true;
++      }
++    }
++    return false;
++  }
++
++  void ApplyScrollOffsets() {
++    for (const auto& entry : scroll_offsets_) {
++      Node* target = NodeFor(entry.key);
++      auto* element = DynamicTo<Element>(target);
++      if (auto* target_document = DynamicTo<Document>(target)) {
++        element = target_document->ScrollingElementNoLayout();
++      }
++      if (!element) {
++        continue;
++      }
++      element->setScrollLeft(entry.value.x());
++      element->setScrollTop(entry.value.y());
++    }
++    scroll_offsets_.clear();
++  }
++
++  // Makes the render thread's surface transparent, so that the main thread's
++  // own rendering below it shows. A 1x1 transparent resource is stretched
++  // over the surface; the surface keeps the viewport size, since resizing it
++  // needs the main thread.
++  void SubmitClearFrame() {
++    clear_frame_needed_ = false;
++    if (size_.IsEmpty()) {
++      return;
++    }
++    if (!clear_provider_ || !clear_provider_->IsValid()) {
++      clear_provider_ = CreateProvider(gfx::Size(1, 1));
++      if (!clear_provider_) {
++        return;
++      }
++    }
++    cc::PaintRecorder recorder;
++    recorder.beginRecording()->drawColor(SkColors::kTransparent,
++                                         SkBlendMode::kSrc);
++    clear_provider_->RasterRecord(recorder.finishRecordingAsPicture());
++    scoped_refptr<CanvasResource> resource =
++        clear_provider_->ProduceCanvasResource();
++    if (!resource) {
++      clear_provider_.reset();
++      return;
++    }
++    dispatcher_->DispatchFrame(
++        base::MakeRefCounted<ExportedCanvasResource>(std::move(resource)),
++        gfx::Rect(size_), /*is_opaque=*/false);
 +  }
 +
 +  void RequestFrameAfter(base::TimeDelta delay) {
@@ -4862,6 +5124,11 @@ index 0000000000..6cdb488255
 +  // CanvasResourceDispatcherClient:
 +  bool BeginFrame() override {
 +    TRACE_EVENT0("blink", "ReplicaPage::BeginFrame");
++    if (channel_->GetMode() == Mode::kMain) {
++      dispatcher_->SetNeedsBeginFrame(false);
++      Follow();
++      return false;
++    }
 +    v8::Isolate::Scope isolate_scope(isolate_);
 +    v8::HandleScope handle_scope(isolate_);
 +    v8::Isolate::DisallowJavascriptExecutionScope no_script(
@@ -5080,6 +5347,38 @@ index 0000000000..6cdb488255
 +                          RenderThreadReplicaAccess::FocusableStateOf(*element))
 +                    : static_cast<int>(FocusableState::kNotFocusable);
 +        break;
++      case Type::kAnimationTimings: {
++        Document& document = *frame_->GetDocument();
++        for (Animation* animation :
++             document.GetDocumentAnimations().getAnimations(document)) {
++          auto* transition = DynamicTo<CSSTransition>(animation);
++          auto* css_animation = DynamicTo<CSSAnimation>(animation);
++          auto* timeline =
++              DynamicTo<DocumentTimeline>(animation->TimelineInternal());
++          std::optional<AnimationTimeDelta> start =
++              animation->StartTimeInternal();
++          if ((!transition && !css_animation) || !timeline || !start ||
++              animation->CalculateAnimationPlayState() !=
++                  V8AnimationPlayState::Enum::kRunning) {
++            continue;
++          }
++          Element* owner = transition ? transition->OwningElement()
++                                      : css_animation->OwningElement();
++          const uint32_t id = IdOf(owner);
++          if (!id) {
++            continue;
++          }
++          query.timings.push_back(RenderThreadAnimationTiming{
++              .node = id,
++              .is_transition = !!transition,
++              .name = transition ? transition->TransitionCSSPropertyName()
++                                       .ToAtomicString()
++                                       .GetString()
++                                 : css_animation->animationName(),
++              .start_ms = (timeline->ZeroTime() + *start).InMillisecondsF()});
++        }
++        break;
++      }
 +      case Type::kElementsFromPoint:
 +        if (scope) {
 +          for (Element* hit : scope->ElementsFromPoint(query.x, query.y)) {
@@ -5100,6 +5399,7 @@ index 0000000000..6cdb488255
 +  // CanvasResourceProviderDelegate:
 +  void NotifyGpuContextLost() override {
 +    provider_.reset();
++    clear_provider_.reset();
 +    RequestFrame();
 +  }
 +  void InitializeForRecording(cc::PaintCanvas*) const override {}
@@ -5282,6 +5582,8 @@ index 0000000000..6cdb488255
 +          page_->GetVisualViewport().SetSize(size);
 +          if (!size.IsEmpty()) {
 +            dispatcher_->Reshape(size);
++            // The main thread embeds the resized surface once it has a frame.
++            clear_frame_needed_ = !presenting_;
 +          }
 +          provider_.reset();
 +        }
@@ -5289,7 +5591,26 @@ index 0000000000..6cdb488255
 +        return;
 +      }
 +      case Type::kSetScrollOffset:
++        scroll_offsets_.Set(op.node,
++                            gfx::PointF(op.float_value, op.float_value2));
++        if (presenting_) {
++          ApplyScrollOffsets();
++        }
 +        return;
++      case Type::kStyleSync: {
++        // The main thread updated style at this point, with this animation
++        // time. Do the same, so that CSS transitions and animations start
++        // exactly as on the main thread.
++        AnimationClock& clock = page_->Animator().Clock();
++        clock.SetAllowedToDynamicallyUpdateTime(false);
++        clock.UpdateTime(base::TimeTicks() + base::Microseconds(op.time));
++        document.UpdateStyleAndLayoutTree();
++        if (op.int_value == 1) {
++          document.GetPendingAnimations().Update(nullptr,
++                                                 /*start_on_compositor=*/false);
++        }
++        return;
++      }
 +      case Type::kScrollElement: {
 +        Node* target = NodeFor(op.node);
 +        auto* element = DynamicTo<Element>(target);
@@ -5317,37 +5638,42 @@ index 0000000000..6cdb488255
 +    }
 +  }
 +
-+  bool EnsureProvider() {
-+    if (provider_ && provider_->IsValid()) {
-+      return true;
-+    }
-+    provider_.reset();
++  std::unique_ptr<Canvas2DResourceProvider> CreateProvider(
++      const gfx::Size& size) {
++    std::unique_ptr<Canvas2DResourceProvider> provider;
 +    const Canvas2DColorParams color_params;
 +    // Re-query after context loss: viz may have fallen back to software.
 +    gpu_compositing_ = SharedGpuContext::IsGpuCompositingEnabled();
 +    if (gpu_compositing_) {
 +      auto context_provider = SharedGpuContext::ContextProviderWrapper();
-+      provider_ = Canvas2DResourceProvider::CreateWithClear(
-+          size_, color_params.GetSharedImageFormat(),
++      provider = Canvas2DResourceProvider::CreateWithClear(
++          size, color_params.GetSharedImageFormat(),
 +          color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
 +          context_provider, RasterMode::kGPU,
 +          gpu::SHARED_IMAGE_USAGE_DISPLAY_READ, this);
-+      if (!provider_) {
++      if (!provider) {
 +        // CPU raster with GPU compositing still requires a GPU-backed shared
 +        // image; the software-compositor factory explicitly rejects this mode.
-+        provider_ = Canvas2DResourceProvider::CreateWithClear(
-+            size_, color_params.GetSharedImageFormat(),
++        provider = Canvas2DResourceProvider::CreateWithClear(
++            size, color_params.GetSharedImageFormat(),
 +            color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
 +            context_provider, RasterMode::kCPU,
 +            gpu::SHARED_IMAGE_USAGE_DISPLAY_READ, this);
 +      }
 +    } else {
-+      provider_ =
-+          Canvas2DResourceProvider::CreateWithClearForSoftwareCompositor(
-+              size_, color_params.GetSharedImageFormat(),
-+              color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
-+              SharedGpuContext::SharedImageInterfaceProvider(), this);
++      provider = Canvas2DResourceProvider::CreateWithClearForSoftwareCompositor(
++          size, color_params.GetSharedImageFormat(),
++          color_params.GetAlphaType(), color_params.GetGfxColorSpace(),
++          SharedGpuContext::SharedImageInterfaceProvider(), this);
 +    }
++    return provider;
++  }
++
++  bool EnsureProvider() {
++    if (provider_ && provider_->IsValid()) {
++      return true;
++    }
++    provider_ = CreateProvider(size_);
 +    if (!provider_) {
 +      LOG(ERROR) << "[OMT] could not create a resource provider";
 +      return false;
@@ -5398,9 +5724,18 @@ index 0000000000..6cdb488255
 +  Persistent<NodeIdMap> node_ids_;
 +  std::unique_ptr<CanvasResourceDispatcher> dispatcher_;
 +  std::unique_ptr<Canvas2DResourceProvider> provider_;
++  // 1x1 transparent resource shown while the main thread renders.
++  std::unique_ptr<Canvas2DResourceProvider> clear_provider_;
 +  gfx::Size size_;
 +  bool gpu_compositing_ = false;
 +  bool frame_requested_ = false;
++  // Producing frames (Mode::kRender or kHandBack).
++  bool presenting_ = false;
++  bool clear_frame_needed_ = false;
++  // Main-thread scroll offsets, applied when taking over, by node id.
++  HashMap<uint32_t, gfx::PointF> scroll_offsets_;
++  base::RepeatingTimer watchdog_;
++  uint64_t takeovers_ = 0;
 +  uint64_t frames_ = 0;
 +  uint64_t queries_ = 0;
 +  size_t ops_applied_ = 0;
@@ -5656,10 +5991,10 @@ index 0000000000..0a98f77425
 +#endif  // THIRD_PARTY_BLINK_RENDERER_CORE_RENDER_THREAD_RENDER_THREAD_H_
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_channel.cc b/third_party/blink/renderer/core/render_thread/render_thread_channel.cc
 new file mode 100644
-index 0000000000..78887cb433
+index 0000000000..f3ada8ec67
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_channel.cc
-@@ -0,0 +1,63 @@
+@@ -0,0 +1,68 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -5689,6 +6024,11 @@ index 0000000000..78887cb433
 +
 +bool RenderThreadChannel::MarkWakePending() {
 +  return !wake_pending_.exchange(true, std::memory_order_acq_rel);
++}
++
++bool RenderThreadChannel::HasOps() {
++  base::AutoLock locker(lock_);
++  return !ops_.empty();
 +}
 +
 +void RenderThreadChannel::ClearWakePending() {
@@ -5725,10 +6065,10 @@ index 0000000000..78887cb433
 +}  // namespace blink
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_channel.h b/third_party/blink/renderer/core/render_thread/render_thread_channel.h
 new file mode 100644
-index 0000000000..156ca74b21
+index 0000000000..583978999b
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_channel.h
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,286 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -5788,7 +6128,9 @@ index 0000000000..156ca74b21
 +    // int_value = width, int_value2 = height (physical pixels),
 +    // float_value = layout zoom factor (includes the device scale factor).
 +    kSetViewport,
-+    // float_value = x, float_value2 = y (root scroll offset)
++    // The main thread rendered with this scroll offset. Applied when the
++    // render thread takes over. node (the document for the viewport),
++    // float_value = x, float_value2 = y in CSS pixels.
 +    kSetScrollOffset,
 +    // int_value = Document::CompatibilityMode
 +    kSetCompatMode,
@@ -5797,6 +6139,14 @@ index 0000000000..156ca74b21
 +    // node, float_value = left, float_value2 = top,
 +    // int_value = bit 0: has left, bit 1: has top, bit 2: relative (scrollBy).
 +    kScrollElement,
++    // The main thread is about to update style. `time` = its animation clock
++    // (microseconds since the TimeTicks origin). While the main thread
++    // renders, the render thread updates the replica's style at the same
++    // points and with the same animation time, so CSS transitions and
++    // animations start identically on both threads. int_value = 1 marks the
++    // end of a main-thread frame, where pending animations get their start
++    // time.
++    kStyleSync,
 +  };
 +
 +  enum class ElementState : int32_t {
@@ -5814,17 +6164,29 @@ index 0000000000..156ca74b21
 +  int32_t int_value2 = 0;
 +  float float_value = 0;
 +  float float_value2 = 0;
++  double time = 0;
 +  String ns;
 +  String prefix;
 +  String local_name;
 +  String text;
 +};
 +
++// A running CSS transition or animation on the replica, reported when the
++// render thread hands rendering back to the main thread.
++struct RenderThreadAnimationTiming {
++  uint32_t node = 0;
++  bool is_transition = false;
++  // Transition property name or animation name.
++  String name;
++  // Absolute start time (milliseconds since the TimeTicks origin).
++  double start_ms = 0;
++};
++
 +// A synchronous layout or style query made by main-thread script (element
-+// geometry, computed style, hit testing). The main thread never lays out a
-+// document that has a render thread: it commits the journal, sends the query
-+// to the page's render thread and blocks until the render thread has brought
-+// the replica's style and layout up to date and filled in the answer.
++// geometry, computed style, hit testing) while the render thread renders the
++// page. The main thread commits the journal, sends the query to the page's
++// render thread and blocks until the render thread has brought the replica's
++// style and layout up to date and filled in the answer.
 +struct RenderThreadQuery {
 +  enum class Type : uint8_t {
 +    // Answer in `number`. `node` is an element.
@@ -5879,6 +6241,9 @@ index 0000000000..156ca74b21
 +    kInnerHeight,
 +    kWindowScrollX,
 +    kWindowScrollY,
++    // Hand-back: running CSS transitions and animations. `node` is the
++    // document. Answer in `timings`.
++    kAnimationTimings,
 +  };
 +
 +  Type type;
@@ -5897,10 +6262,20 @@ index 0000000000..156ca74b21
 +  double result_y = 0;
 +  Vector<uint32_t> result_nodes;
 +  Vector<gfx::RectF> rects;
++  Vector<RenderThreadAnimationTiming> timings;
 +};
 +
 +// Thread-safe queue of journal entries between the main thread (producer)
-+// and the render thread (consumer).
++// and the render thread (consumer), plus the page's rendering mode.
++//
++// The main thread renders the page as usual (kMain). The render thread only
++// keeps its replica's DOM and style current. If the main thread stays inside
++// one task for longer than kTakeoverDelay while something on the page is
++// changing, the render thread takes over (kRender): it lays out, paints and
++// presents the page and answers the main thread's layout queries. When that
++// task ends, the main thread takes rendering back (kHandBack) with the
++// replica's animation timing, and once its first frame is presented the
++// render thread stops producing frames again (kMain).
 +//
 +// The main thread marks a "commit point" at the end of every task so the
 +// render thread never shows the DOM in the middle of a task. If the main
@@ -5929,6 +6304,39 @@ index 0000000000..156ca74b21
 +                                      bool* has_uncommitted);
 +  // Render thread.
 +  void ClearWakePending();
++  // Render thread. Returns false if nothing is queued.
++  bool HasOps();
++
++  enum class Mode : int { kMain, kRender, kHandBack };
++  Mode GetMode() const { return mode_.load(std::memory_order_acquire); }
++  // Returns true if the mode was `from` and is now `to`.
++  bool ChangeMode(Mode from, Mode to) {
++    return mode_.compare_exchange_strong(from, to, std::memory_order_acq_rel);
++  }
++
++  // Main thread: the start of the current outermost task, or null between
++  // tasks.
++  void SetMainTaskStart(base::TimeTicks start) {
++    main_task_start_us_.store(start.since_origin().InMicroseconds(),
++                              std::memory_order_release);
++  }
++  // Render thread. How long the main thread has been inside its current task.
++  base::TimeDelta MainTaskDuration(base::TimeTicks now) const {
++    const int64_t start = main_task_start_us_.load(std::memory_order_acquire);
++    if (!start) {
++      return base::TimeDelta();
++    }
++    return now - (base::TimeTicks() + base::Microseconds(start));
++  }
++
++  // Main thread: whether the replica can currently reproduce the page (for
++  // example, no script-driven animations are running).
++  void SetTakeoverAllowed(bool allowed) {
++    takeover_allowed_.store(allowed, std::memory_order_release);
++  }
++  bool TakeoverAllowed() const {
++    return takeover_allowed_.load(std::memory_order_acquire);
++  }
 +
 + private:
 +  friend class ThreadSafeRefCounted<RenderThreadChannel>;
@@ -5939,6 +6347,9 @@ index 0000000000..156ca74b21
 +  wtf_size_t committed_ GUARDED_BY(lock_) = 0;
 +  base::TimeTicks oldest_uncommitted_ GUARDED_BY(lock_);
 +  std::atomic<bool> wake_pending_{false};
++  std::atomic<Mode> mode_{Mode::kMain};
++  std::atomic<int64_t> main_task_start_us_{0};
++  std::atomic<bool> takeover_allowed_{true};
 +};
 +
 +}  // namespace blink
@@ -5946,10 +6357,10 @@ index 0000000000..156ca74b21
 +#endif  // THIRD_PARTY_BLINK_RENDERER_CORE_RENDER_THREAD_RENDER_THREAD_CHANNEL_H_
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_journal.cc b/third_party/blink/renderer/core/render_thread/render_thread_journal.cc
 new file mode 100644
-index 0000000000..2a5bc3b8e6
+index 0000000000..5fbb24a65d
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_journal.cc
-@@ -0,0 +1,1022 @@
+@@ -0,0 +1,1408 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -5961,7 +6372,12 @@ index 0000000000..2a5bc3b8e6
 +#include "base/logging.h"
 +#include "base/trace_event/trace_event.h"
 +#include "cc/layers/layer.h"
-+#include "cc/view_transition/view_transition_request.h"
++#include "components/viz/common/frame_timing_details.h"
++#include "third_party/blink/renderer/bindings/core/v8/v8_union_cssnumericvalue_double.h"
++#include "third_party/blink/renderer/core/animation/css/css_animation.h"
++#include "third_party/blink/renderer/core/animation/css/css_transition.h"
++#include "third_party/blink/renderer/core/animation/document_animations.h"
++#include "third_party/blink/renderer/core/animation/document_timeline.h"
 +#include "third_party/blink/renderer/core/css/css_import_rule.h"
 +#include "third_party/blink/renderer/core/css/css_property_value_set.h"
 +#include "third_party/blink/renderer/core/css/css_rule.h"
@@ -5980,16 +6396,18 @@ index 0000000000..2a5bc3b8e6
 +#include "third_party/blink/renderer/core/html/forms/html_input_element.h"
 +#include "third_party/blink/renderer/core/html/html_link_element.h"
 +#include "third_party/blink/renderer/core/html_names.h"
++#include "third_party/blink/renderer/core/input_type_names.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_location.h"
 +#include "third_party/blink/renderer/core/layout/hit_test_result.h"
++#include "third_party/blink/renderer/core/layout/layout_box.h"
 +#include "third_party/blink/renderer/core/page/chrome_client.h"
 +#include "third_party/blink/renderer/core/page/page.h"
-+#include "third_party/blink/renderer/core/page/scrolling/scrolling_coordinator.h"
++#include "third_party/blink/renderer/core/paint/paint_layer_scrollable_area.h"
 +#include "third_party/blink/renderer/core/render_thread/render_thread.h"
-+#include "third_party/blink/renderer/platform/graphics/compositing/paint_artifact_compositor.h"
++#include "third_party/blink/renderer/core/svg_names.h"
++#include "third_party/blink/renderer/platform/bindings/exception_state.h"
 +#include "third_party/blink/renderer/platform/graphics/graphics_context.h"
 +#include "third_party/blink/renderer/platform/graphics/paint/foreign_layer_display_item.h"
-+#include "third_party/blink/renderer/platform/graphics/paint/paint_controller.h"
 +#include "third_party/blink/renderer/platform/graphics/paint/property_tree_state.h"
 +#include "third_party/blink/renderer/platform/graphics/surface_layer_bridge.h"
 +#include "third_party/blink/renderer/platform/runtime_enabled_features.h"
@@ -5999,6 +6417,15 @@ index 0000000000..2a5bc3b8e6
 +namespace blink {
 +
 +namespace {
++
++bool ContainsResourceReference(const String& css_text) {
++  for (const char* needle : {"url(", "image-set(", "@font-face"}) {
++    if (css_text.FindIgnoringAsciiCase(needle) != String::npos) {
++      return true;
++    }
++  }
++  return false;
++}
 +
 +bool IsStyleSheetLink(const Element& element) {
 +  const auto* link = DynamicTo<HTMLLinkElement>(element);
@@ -6051,10 +6478,14 @@ index 0000000000..2a5bc3b8e6
 + public:
 +  explicit CommitObserver(RenderThreadJournal* journal) : journal_(journal) {}
 +
-+  void WillProcessTask(const base::PendingTask&, bool) override {}
++  void WillProcessTask(const base::PendingTask&, bool) override {
++    if (journal_) {
++      journal_->WillProcessTask();
++    }
++  }
 +  void DidProcessTask(const base::PendingTask&) override {
 +    if (journal_) {
-+      journal_->CommitTask();
++      journal_->DidProcessTask();
 +    }
 +  }
 +
@@ -6095,7 +6526,8 @@ index 0000000000..2a5bc3b8e6
 +      page->GetChromeClient().GetFrameSinkId(frame), this,
 +      base::NullCallback());
 +  bridge_->CreateSolidColorLayer();
-+  bridge_->SetContentsOpaque(true);
++  // Transparent unless the render thread renders.
++  bridge_->SetContentsOpaque(false);
 +
 +  auto params = std::make_unique<RenderThreadReplicaParams>();
 +  params->channel = channel_;
@@ -6119,6 +6551,7 @@ index 0000000000..2a5bc3b8e6
 +
 +  commit_observer_ = std::make_unique<CommitObserver>(this);
 +  Thread::Current()->AddTaskObserver(commit_observer_.get());
++  InvalidateOverlay();
 +  LOG(INFO) << "[OMT] render thread journal attached to " << document.Url();
 +}
 +
@@ -6150,6 +6583,7 @@ index 0000000000..2a5bc3b8e6
 +    Thread::Current()->RemoveTaskObserver(commit_observer_.get());
 +    commit_observer_.reset();
 +  }
++  channel_->SetMainTaskStart(base::TimeTicks());
 +  // Stops the page's render thread; its replica is destroyed on it.
 +  render_thread_.reset();
 +  if (bridge_) {
@@ -6158,6 +6592,90 @@ index 0000000000..2a5bc3b8e6
 +  }
 +  ids_.clear();
 +  nodes_by_id_.clear();
++  InvalidateOverlay();
++}
++
++void RenderThreadJournal::InvalidateOverlay() {
++  if (LocalFrameView* view = document_->View()) {
++    view->SetVisualViewportOrOverlayNeedsRepaint();
++    view->ScheduleAnimation();
++  }
++}
++
++void RenderThreadJournal::MarkUnreplicable(const char* reason) {
++  if (detached_ || unreplicable_reason_) {
++    return;
++  }
++  unreplicable_reason_ = reason;
++  if (!task_depth_) {
++    DetachUnreplicable();
++  }
++}
++
++void RenderThreadJournal::DetachUnreplicable() {
++  if (detached_ || document_->GetRenderThreadJournal() != this) {
++    return;
++  }
++  LOG(INFO) << "[OMT] the render thread cannot reproduce this page ("
++            << unreplicable_reason_ << "); it renders on the main thread only";
++  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::Unreplicable", "reason",
++                      unreplicable_reason_);
++  Document& document = *document_;
++  Detach();
++  document.SetRenderThreadJournal(nullptr);
++}
++
++void RenderThreadJournal::CheckReplicable(const Element& element) {
++  // The replica does not load subresources, run plugins or nested frames,
++  // or know form control values edited by the user.
++  if (element.HasTagName(html_names::kImgTag) ||
++      element.HasTagName(html_names::kVideoTag) ||
++      element.HasTagName(html_names::kAudioTag) ||
++      element.HasTagName(html_names::kCanvasTag) ||
++      element.HasTagName(html_names::kIFrameTag) ||
++      element.HasTagName(html_names::kFrameTag) ||
++      element.HasTagName(html_names::kEmbedTag) ||
++      element.HasTagName(html_names::kObjectTag) ||
++      element.HasTagName(html_names::kTextareaTag) ||
++      element.HasTagName(html_names::kSelectTag) ||
++      element.HasTagName(html_names::kDialogTag)) {
++    MarkUnreplicable("element that needs resources or state");
++    return;
++  }
++  if (const auto* input = DynamicTo<HTMLInputElement>(element)) {
++    const AtomicString& type = input->type();
++    if (type != input_type_names::kButton &&
++        type != input_type_names::kSubmit && type != input_type_names::kReset &&
++        type != input_type_names::kCheckbox &&
++        type != input_type_names::kRadio && type != input_type_names::kHidden) {
++      MarkUnreplicable("form field");
++      return;
++    }
++  }
++  if (element.namespaceURI() == svg_names::kNamespaceURI &&
++      (element.localName() == svg_names::kImageTag.LocalName() ||
++       element.localName() == svg_names::kFEImageTag.LocalName() ||
++       element.localName() == svg_names::kUseTag.LocalName())) {
++    MarkUnreplicable("SVG resource reference");
++    return;
++  }
++  if (element.FastHasAttribute(html_names::kPopoverAttr)) {
++    MarkUnreplicable("popover");
++    return;
++  }
++  if (element.HasTagName(html_names::kStyleTag)) {
++    CheckReplicableStyle(element, element.textContent());
++  }
++  if (const CSSPropertyValueSet* style = element.InlineStyle()) {
++    CheckReplicableStyle(element, style->AsText());
++  }
++}
++
++void RenderThreadJournal::CheckReplicableStyle(const Element&,
++                                               const String& css_text) {
++  if (ContainsResourceReference(css_text)) {
++    MarkUnreplicable("CSS that loads resources");
++  }
 +}
 +
 +void RenderThreadJournal::Trace(Visitor* visitor) const {
@@ -6166,13 +6684,15 @@ index 0000000000..2a5bc3b8e6
 +  visitor->Trace(nodes_by_id_);
 +  visitor->Trace(opaque_);
 +  visitor->Trace(converted_links_);
-+  visitor->Trace(paint_data_);
 +  DisplayItemClient::Trace(visitor);
 +}
 +
 +void RenderThreadJournal::Push(RenderThreadOp op) {
-+  if (detached_) {
++  if (detached_ || unreplicable_reason_) {
 +    return;
++  }
++  if (op.type != RenderThreadOp::Type::kStyleSync) {
++    ops_since_style_sync_ = true;
 +  }
 +  if (channel_->Push(std::move(op)) && channel_->MarkWakePending()) {
 +    render_thread_->Wake();
@@ -6186,6 +6706,307 @@ index 0000000000..2a5bc3b8e6
 +  if (channel_->Commit() && channel_->MarkWakePending()) {
 +    render_thread_->Wake();
 +  }
++}
++
++void RenderThreadJournal::WillProcessTask() {
++  if (task_depth_++ == 0 && !detached_) {
++    channel_->SetMainTaskStart(base::TimeTicks::Now());
++  }
++}
++
++void RenderThreadJournal::DidProcessTask() {
++  if (task_depth_ > 0 && --task_depth_ > 0) {
++    return;
++  }
++  if (detached_) {
++    return;
++  }
++  channel_->SetMainTaskStart(base::TimeTicks());
++  CommitTask();
++  if (unreplicable_reason_) {
++    DetachUnreplicable();
++    return;
++  }
++  if (channel_->GetMode() == RenderThreadChannel::Mode::kRender) {
++    BeginHandBack();
++  }
++}
++
++bool RenderThreadJournal::IsRendering() const {
++  return !detached_ &&
++         channel_->GetMode() == RenderThreadChannel::Mode::kRender;
++}
++
++// static
++bool RenderThreadJournal::IsRendering(const Document& document) {
++  RenderThreadJournal* journal = document.GetRenderThreadJournal();
++  return journal && journal->IsRendering();
++}
++
++void RenderThreadJournal::BeginHandBack() {
++  if (!channel_->ChangeMode(RenderThreadChannel::Mode::kRender,
++                            RenderThreadChannel::Mode::kHandBack)) {
++    return;
++  }
++  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::BeginHandBack");
++  needs_timing_sync_ = true;
++  hand_back_presentation_requested_ = false;
++  // Scrolls that script did while the render thread rendered were applied to
++  // the replica only. Apply them here too (this updates style first, which
++  // adopts the replica's animation timing, see DidUpdateStyle()).
++  Vector<PendingScroll> scrolls;
++  scrolls.swap(pending_scrolls_);
++  for (const PendingScroll& scroll : scrolls) {
++    Node* node = NodeForId(scroll.node);
++    if (!node) {
++      continue;
++    }
++    auto* element = DynamicTo<Element>(node);
++    if (!element) {
++      element = document_->scrollingElement();
++    }
++    if (!element) {
++      continue;
++    }
++    if (scroll.left) {
++      element->setScrollLeft(*scroll.left +
++                             (scroll.relative ? element->scrollLeft() : 0));
++    }
++    if (scroll.top) {
++      element->setScrollTop(*scroll.top +
++                            (scroll.relative ? element->scrollTop() : 0));
++    }
++  }
++  // Repaint, so that the main thread commits (and presents) a frame.
++  InvalidateOverlay();
++}
++
++void RenderThreadJournal::DidUpdateStyle() {
++  if (!needs_timing_sync_ || detached_ ||
++      channel_->GetMode() != RenderThreadChannel::Mode::kHandBack) {
++    return;
++  }
++  needs_timing_sync_ = false;
++  // The first frame after a long task was requested while the task ran, so
++  // its frame time is stale. The render thread has shown the page up to now;
++  // continue from there.
++  document_->GetAnimationClock().UpdateTime(base::TimeTicks::Now());
++  SyncAnimationTimings();
++  document_->UpdateStyleAndLayoutTree();
++}
++
++void RenderThreadJournal::SyncAnimationTimings() {
++  TRACE_EVENT0("blink", "RenderThreadJournal::SyncAnimationTimings");
++  RenderThreadQuery query{.type = RenderThreadQuery::Type::kAnimationTimings};
++  if (!SendQuery(*document_, query)) {
++    return;
++  }
++  HashMap<String, double> replica_starts;
++  auto key = [](uint32_t node, bool is_transition, const String& name) {
++    return String::Number(node) + (is_transition ? "/t/" : "/a/") + name;
++  };
++  for (const RenderThreadAnimationTiming& timing : query.timings) {
++    replica_starts.Set(key(timing.node, timing.is_transition, timing.name),
++                       timing.start_ms);
++  }
++  int adjusted = 0;
++  int finished = 0;
++  for (Animation* animation :
++       document_->GetDocumentAnimations().getAnimations(*document_)) {
++    auto* transition = DynamicTo<CSSTransition>(animation);
++    auto* css_animation = DynamicTo<CSSAnimation>(animation);
++    if (!transition && !css_animation) {
++      continue;
++    }
++    Element* owner = transition ? transition->OwningElement()
++                                : css_animation->OwningElement();
++    auto* timeline = DynamicTo<DocumentTimeline>(animation->TimelineInternal());
++    const uint32_t id = owner ? IdOf(*owner) : 0;
++    if (!id || !timeline) {
++      continue;
++    }
++    const String name =
++        transition ? transition->TransitionCSSPropertyName().ToAtomicString()
++                   : css_animation->animationName();
++    auto it = replica_starts.find(key(id, !!transition, name));
++    if (it == replica_starts.end()) {
++      // The replica already finished this transition while the main thread
++      // was busy; do not play it again from the start.
++      if (transition && animation->CalculateAnimationPlayState() !=
++                            V8AnimationPlayState::Enum::kFinished) {
++        animation->finish(IGNORE_EXCEPTION);
++        ++finished;
++      }
++      continue;
++    }
++    const double start_ms = it->value - timeline->ZeroTime().InMillisecondsF();
++    std::optional<AnimationTimeDelta> current = animation->StartTimeInternal();
++    if (current && std::abs(current->InMillisecondsF() - start_ms) < 0.5) {
++      continue;
++    }
++    animation->setStartTime(MakeGarbageCollected<V8CSSNumberish>(start_ms),
++                            IGNORE_EXCEPTION);
++    ++adjusted;
++  }
++  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::AnimationTimingsAdopted",
++                      "adjusted", adjusted, "finished", finished);
++  if (takeovers_ < 10) {
++    LOG(INFO) << "[OMT] main thread adopted the render thread's animation "
++                 "timing ("
++              << query.timings.size() << " running, " << adjusted
++              << " adjusted, " << finished << " finished)";
++  }
++}
++
++void RenderThreadJournal::FinishHandBack() {
++  if (detached_ || !channel_->ChangeMode(RenderThreadChannel::Mode::kHandBack,
++                                         RenderThreadChannel::Mode::kMain)) {
++    return;
++  }
++  TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::HandBack");
++  if (takeovers_ <= 10 || takeovers_ % 100 == 0) {
++    LOG(INFO) << "[OMT] main thread took rendering back (hand-back #"
++              << takeovers_ << ")";
++  }
++  render_thread_->Wake();
++}
++
++// static
++void RenderThreadJournal::DidUpdateMainFrame(LocalFrameView& view) {
++  Document* document = view.GetFrame().GetDocument();
++  RenderThreadJournal* journal =
++      document ? document->GetRenderThreadJournal() : nullptr;
++  if (!journal || journal->detached_) {
++    return;
++  }
++  journal->SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
++  journal->SendScrollOffsets(view);
++  journal->UpdateTakeoverAllowed();
++  if (journal->style_sync_since_frame_ || journal->ops_since_style_sync_) {
++    // The main thread started pending animations at this frame's time.
++    journal->style_sync_since_frame_ = false;
++    journal->ops_since_style_sync_ = false;
++    journal->Push({.type = RenderThreadOp::Type::kStyleSync,
++                   .int_value = 1,
++                   .time = document->GetAnimationClock()
++                               .CurrentTime()
++                               .since_origin()
++                               .InMicrosecondsF()});
++  }
++  journal->CommitTask();
++  if (journal->channel_->GetMode() != RenderThreadChannel::Mode::kHandBack) {
++    return;
++  }
++  if (journal->needs_timing_sync_) {
++    // No style update ran in this frame; adopt the timing now and render the
++    // result in the next frame.
++    journal->DidUpdateStyle();
++    view.ScheduleAnimation();
++    return;
++  }
++  if (journal->hand_back_presentation_requested_) {
++    return;
++  }
++  journal->hand_back_presentation_requested_ = true;
++  ++journal->takeovers_;
++  // The render thread keeps presenting until this frame (rendered by the main
++  // thread, with the adopted timing) is on screen. A frame without damage may
++  // never be presented; nothing changed on screen then, so stop waiting after
++  // a while.
++  if (Page* page = view.GetFrame().GetPage()) {
++    page->GetChromeClient().NotifyPresentationTime(
++        view.GetFrame(),
++        BindOnce(
++            [](RenderThreadJournal* journal, const viz::FrameTimingDetails&) {
++              if (journal) {
++                journal->FinishHandBack();
++              }
++            },
++            WrapWeakPersistent(journal)));
++  }
++  document->GetTaskRunner(TaskType::kInternalDefault)
++      ->PostDelayedTask(FROM_HERE,
++                        BindOnce(&RenderThreadJournal::FinishHandBack,
++                                 WrapWeakPersistent(journal)),
++                        base::Milliseconds(250));
++}
++
++void RenderThreadJournal::SendScrollOffsets(const LocalFrameView& view) {
++  const float zoom = view.GetFrame().LayoutZoomFactor();
++  for (const auto& entry : view.ScrollableAreas()) {
++    PaintLayerScrollableArea* area = entry.value.Get();
++    LayoutBox* box = area ? area->GetLayoutBox() : nullptr;
++    Node* node = box ? box->GetNode() : nullptr;
++    const uint32_t id = node ? IdOf(*node) : 0;
++    if (!id) {
++      continue;
++    }
++    const ScrollOffset offset = area->GetScrollOffset();
++    const gfx::PointF css(offset.x() / zoom, offset.y() / zoom);
++    auto it = sent_scroll_offsets_.find(id);
++    if (it != sent_scroll_offsets_.end() && it->value == css) {
++      continue;
++    }
++    if (it == sent_scroll_offsets_.end() && css.IsOrigin()) {
++      continue;
++    }
++    sent_scroll_offsets_.Set(id, css);
++    Push({.type = RenderThreadOp::Type::kSetScrollOffset,
++          .node = id,
++          .float_value = css.x(),
++          .float_value2 = css.y()});
++  }
++}
++
++void RenderThreadJournal::UpdateTakeoverAllowed() {
++  // Script-driven animations, and CSS animations controlled through the Web
++  // Animations API, exist only on the main thread.
++  bool allowed = true;
++  for (Animation* animation : document_->Timeline().GetAnimations()) {
++    if (!animation) {
++      continue;
++    }
++    const V8AnimationPlayState::Enum state =
++        animation->CalculateAnimationPlayState();
++    if (state == V8AnimationPlayState::Enum::kIdle ||
++        state == V8AnimationPlayState::Enum::kFinished) {
++      continue;
++    }
++    auto* css_animation = DynamicTo<CSSAnimation>(animation);
++    if ((!css_animation && !IsA<CSSTransition>(animation)) ||
++        (css_animation && css_animation->GetIgnoreCSSPlayState()) ||
++        animation->playbackRate() != 1) {
++      allowed = false;
++      break;
++    }
++  }
++  if (allowed != channel_->TakeoverAllowed()) {
++    channel_->SetTakeoverAllowed(allowed);
++    TRACE_EVENT_INSTANT("blink", "RenderThreadJournal::TakeoverAllowed",
++                        "allowed", allowed);
++  }
++}
++
++// static
++void RenderThreadJournal::PaintOverlay(GraphicsContext& context,
++                                       const LocalFrameView& view) {
++  Document* document = view.GetFrame().GetDocument();
++  RenderThreadJournal* journal =
++      document ? document->GetRenderThreadJournal() : nullptr;
++  if (!journal || journal->detached_ || !journal->bridge_) {
++    return;
++  }
++  cc::Layer* layer = journal->bridge_->GetCcLayer();
++  if (!layer) {
++    return;
++  }
++  layer->SetBounds(view.Size());
++  layer->SetIsDrawable(true);
++  // Input and scrolling are hit tested against the main thread's layers.
++  layer->SetHitTestOpaqueness(cc::HitTestOpaqueness::kTransparent);
++  const PropertyTreeState root_state = PropertyTreeState::Root();
++  RecordForeignLayer(context, *journal, DisplayItem::kForeignLayerCanvas, layer,
++                     gfx::Point(), &root_state);
 +}
 +
 +namespace {
@@ -6203,6 +7024,26 @@ index 0000000000..2a5bc3b8e6
 +bool RenderThreadJournal::NoteMainThreadRendering(const char* phase,
 +                                                  int reason) {
 +  if (detached_) {
++    return true;
++  }
++  if (!IsRendering()) {
++    // The main thread renders. The replica updates its style at the same
++    // point, with the same animation time.
++    if (ops_since_style_sync_) {
++      ops_since_style_sync_ = false;
++      style_sync_since_frame_ = true;
++      Push({.type = RenderThreadOp::Type::kStyleSync,
++            .time = document_->GetAnimationClock()
++                        .CurrentTime()
++                        .since_origin()
++                        .InMicrosecondsF()});
++    }
++    // Forced layout updates style without going through
++    // Document::UpdateStyleAndLayoutTree(); adopt the render thread's
++    // animation timing first.
++    if (needs_timing_sync_ && std::string_view(phase) == "layout") {
++      document_->UpdateStyleAndLayoutTree();
++    }
 +    return true;
 +  }
 +  if (g_focus_scope_depth) {
@@ -6317,21 +7158,29 @@ index 0000000000..2a5bc3b8e6
 +// static
 +bool RenderThreadJournal::RunQuery(const Node& node, RenderThreadQuery& query) {
 +  RenderThreadJournal* journal = node.GetDocument().GetRenderThreadJournal();
-+  if (!journal || journal->detached_ || !journal->render_thread_) {
++  if (!journal || !journal->IsRendering()) {
 +    return false;
 +  }
-+  query.node = journal->IdOf(node);
++  return journal->SendQuery(node, query);
++}
++
++bool RenderThreadJournal::SendQuery(const Node& node,
++                                    RenderThreadQuery& query) {
++  if (detached_ || !render_thread_) {
++    return false;
++  }
++  query.node = IdOf(node);
 +  if (!query.node) {
 +    return false;
 +  }
 +  // The viewport may have been resized since the last frame (for example,
 +  // script in a resize event handler runs before the next frame is prepared).
-+  if (LocalFrameView* view = journal->document_->View()) {
-+    journal->SendViewport(view->Size(), view->GetFrame().LayoutZoomFactor());
++  if (LocalFrameView* view = document_->View()) {
++    SendViewport(view->Size(), view->GetFrame().LayoutZoomFactor());
 +  }
 +  // Everything the script did so far must be visible to the query.
-+  journal->channel_->Commit();
-+  journal->render_thread_->RunQuery(query);
++  channel_->Commit();
++  render_thread_->RunQuery(query);
 +  return query.answered;
 +}
 +
@@ -6521,6 +7370,7 @@ index 0000000000..2a5bc3b8e6
 +
 +void RenderThreadJournal::SerializeElement(const Element& element,
 +                                           uint32_t id) {
++  CheckReplicable(element);
 +  const bool is_style_link = IsStyleSheetLink(element);
 +  RenderThreadOp create{.type = RenderThreadOp::Type::kCreateElement,
 +                        .node = id};
@@ -6752,6 +7602,9 @@ index 0000000000..2a5bc3b8e6
 +        return;
 +      }
 +      if (uint32_t id = IdOf(*data)) {
++        if (container.HasTagName(html_names::kStyleTag)) {
++          CheckReplicableStyle(To<Element>(container), data->data());
++        }
 +        RenderThreadOp op{.type = RenderThreadOp::Type::kSetText, .node = id};
 +        op.text = data->data();
 +        Push(std::move(op));
@@ -6781,6 +7634,12 @@ index 0000000000..2a5bc3b8e6
 +  } else if (ShouldSkipAttribute(element, name)) {
 +    return;
 +  }
++  if (name == html_names::kStyleAttr) {
++    CheckReplicableStyle(element, new_value);
++  } else if (name == html_names::kTypeAttr ||
++             name == html_names::kPopoverAttr) {
++    CheckReplicable(element);
++  }
 +  RenderThreadOp op{.type = new_value.IsNull()
 +                                ? RenderThreadOp::Type::kRemoveAttribute
 +                                : RenderThreadOp::Type::kSetAttribute,
@@ -6802,6 +7661,7 @@ index 0000000000..2a5bc3b8e6
 +  op.local_name = html_names::kStyleAttr.LocalName();
 +  op.text =
 +      element.InlineStyle() ? element.InlineStyle()->AsText() : g_empty_string;
++  CheckReplicableStyle(element, op.text);
 +  Push(std::move(op));
 +}
 +
@@ -6811,13 +7671,15 @@ index 0000000000..2a5bc3b8e6
 +                                 std::optional<double> top,
 +                                 bool relative) {
 +  RenderThreadJournal* journal = element.GetDocument().GetRenderThreadJournal();
-+  if (!journal || journal->detached_ || !journal->render_thread_) {
++  if (!journal || !journal->IsRendering()) {
 +    return false;
 +  }
 +  const uint32_t id = journal->IdOf(element);
 +  if (!id) {
 +    return false;
 +  }
++  journal->pending_scrolls_.push_back(PendingScroll{
++      .node = id, .left = left, .top = top, .relative = relative});
 +  journal->Push(
 +      {.type = RenderThreadOp::Type::kScrollElement,
 +       .node = id,
@@ -6855,6 +7717,7 @@ index 0000000000..2a5bc3b8e6
 +  AppendSheetText(*sheet, document_->GetExecutionContext(), builder, 0);
 +  RenderThreadOp op{.type = RenderThreadOp::Type::kSetSheetText, .node = id};
 +  op.text = builder.ReleaseString();
++  CheckReplicableStyle(owner, op.text);
 +  Push(std::move(op));
 +}
 +
@@ -6875,6 +7738,7 @@ index 0000000000..2a5bc3b8e6
 +                  document_->GetExecutionContext(), builder, 0);
 +  RenderThreadOp op{.type = RenderThreadOp::Type::kSetSheetText, .node = id};
 +  op.text = builder.ReleaseString();
++  CheckReplicableStyle(*owner, op.text);
 +  Push(std::move(op));
 +}
 +
@@ -6897,87 +7761,20 @@ index 0000000000..2a5bc3b8e6
 +  CommitTask();
 +}
 +
-+cc::Layer* RenderThreadJournal::PrepareMainFrame(const LocalFrameView& view) {
-+  if (detached_ || !bridge_) {
-+    return nullptr;
-+  }
-+  SendViewport(view.Size(), view.GetFrame().LayoutZoomFactor());
-+  cc::Layer* layer = bridge_->GetCcLayer();
-+  if (layer) {
-+    layer->SetBounds(view.Size());
-+    layer->SetIsDrawable(true);
-+  }
-+  return layer;
-+}
-+
-+PaintControllerPersistentData& RenderThreadJournal::PaintData() {
-+  if (!paint_data_) {
-+    paint_data_ = MakeGarbageCollected<PaintControllerPersistentData>();
-+  }
-+  return *paint_data_;
-+}
-+
 +void RenderThreadJournal::OnWebLayerUpdated() {
-+  if (!detached_ && document_->View()) {
-+    document_->View()->ScheduleAnimation();
++  // The render thread's surface was (re)embedded; repaint the overlay layer.
++  if (!detached_) {
++    InvalidateOverlay();
 +  }
-+}
-+
-+// static
-+bool RenderThreadPresenter::UpdateMainFrame(LocalFrameView& view) {
-+  Document* document = view.GetFrame().GetDocument();
-+  RenderThreadJournal* journal =
-+      document ? document->GetRenderThreadJournal() : nullptr;
-+  if (!journal) {
-+    return false;
-+  }
-+  Page* page = view.GetFrame().GetPage();
-+  if (!page) {
-+    return false;
-+  }
-+  cc::Layer* layer = journal->PrepareMainFrame(view);
-+  if (!layer) {
-+    return false;
-+  }
-+
-+  if (!view.paint_artifact_compositor_) {
-+    view.paint_artifact_compositor_ =
-+        MakeGarbageCollected<PaintArtifactCompositor>(
-+            page->GetScrollingCoordinator()->GetScrollCallbacks());
-+    page->GetChromeClient().AttachRootLayer(
-+        view.paint_artifact_compositor_->RootLayer(), &view.GetFrame());
-+  }
-+
-+  PaintControllerPersistentData& data = journal->PaintData();
-+  const PropertyTreeState root_state = PropertyTreeState::Root();
-+  // The compositor update must happen while the PaintController is alive:
-+  // destroying it clears the previous artifact, which the compositor's old
-+  // pending layers still reference for layer matching.
-+  PaintController paint_controller(/*record_debug_info=*/false, &data);
-+  {
-+    GraphicsContext context(paint_controller);
-+    RecordForeignLayer(context, *journal, DisplayItem::kForeignLayerCanvas,
-+                       layer, gfx::Point(), &root_state);
-+  }
-+  paint_controller.CommitNewDisplayItems();
-+
-+  PaintArtifactCompositor& compositor = *view.paint_artifact_compositor_;
-+  compositor.SetDevicePixelRatio(document->DevicePixelRatio());
-+  compositor.SetNeedsUpdate();
-+  compositor.Update(data.GetPaintArtifact(),
-+                    PaintArtifactCompositor::ViewportProperties(),
-+                    StackTransformPaintPropertyNodeVector(),
-+                    Vector<std::unique_ptr<cc::ViewTransitionRequest>>());
-+  return true;
 +}
 +
 +}  // namespace blink
 diff --git a/third_party/blink/renderer/core/render_thread/render_thread_journal.h b/third_party/blink/renderer/core/render_thread/render_thread_journal.h
 new file mode 100644
-index 0000000000..f92d377dff
+index 0000000000..7d743898fd
 --- /dev/null
 +++ b/third_party/blink/renderer/core/render_thread/render_thread_journal.h
-@@ -0,0 +1,224 @@
+@@ -0,0 +1,274 @@
 +// Copyright 2026 The Chromium Authors
 +// Use of this source code is governed by a BSD-style license that can be
 +// found in the LICENSE file.
@@ -6999,6 +7796,8 @@ index 0000000000..f92d377dff
 +#include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 +#include "third_party/blink/renderer/platform/heap/member.h"
 +#include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
++#include "third_party/blink/renderer/platform/wtf/hash_map.h"
++#include "ui/gfx/geometry/point_f.h"
 +#include "ui/gfx/geometry/size.h"
 +
 +namespace cc {
@@ -7010,11 +7809,11 @@ index 0000000000..f92d377dff
 +class CSSStyleSheet;
 +class Document;
 +class Element;
++class GraphicsContext;
 +class HitTestLocation;
 +class HitTestResult;
 +class Range;
 +class LocalFrameView;
-+class PaintControllerPersistentData;
 +class QualifiedName;
 +class RenderThread;
 +class ShadowRoot;
@@ -7023,14 +7822,25 @@ index 0000000000..f92d377dff
 +
 +// Off-main-thread rendering (--enable-blink-features=OffMainThreadRendering).
 +//
-+// The main thread keeps running JavaScript against the real DOM. Every change
-+// to the DOM that can affect rendering is recorded here as a RenderThreadOp
-+// and sent to the render thread (see render_thread.h), which keeps a replica
-+// of the document and runs style, layout, paint and raster for it, producing
-+// compositor frames on its own. The main thread no longer paints: its
-+// BeginMainFrame only embeds the render thread's output surface.
++// The main thread renders the page exactly as without this feature. Every
++// change to the DOM that can affect rendering is also recorded here as a
++// RenderThreadOp and sent to the page's render thread (see render_thread.h),
++// which keeps a replica of the document with up-to-date style.
 +//
-+// One journal exists per outermost main frame document.
++// When a main-thread task runs for longer than a few frames while the page is
++// changing (a CSS transition is running, or the task mutated the DOM), the
++// render thread takes over: it lays out, paints and presents the replica on
++// its own, and the main thread's layout queries are answered by it. When the
++// task ends, the main thread takes rendering back, adopting the replica's
++// animation timing, and the render thread goes back to only following the
++// DOM. See RenderThreadChannel::Mode.
++//
++// The main thread's frames always contain the render thread's output surface
++// as the topmost layer; it is transparent unless the render thread renders.
++//
++// One journal exists per outermost main frame document. Pages whose content
++// the replica cannot reproduce (images, plugins, frames, form fields, web
++// fonts, CSS resources) detach it and render as usual.
 +class CORE_EXPORT RenderThreadJournal final
 +    : public GarbageCollected<RenderThreadJournal>,
 +      public DisplayItemClient,
@@ -7069,15 +7879,29 @@ index 0000000000..f92d377dff
 +  void StyleSheetChanged(const CSSStyleSheet& sheet);
 +  void CompatibilityModeChanged();
 +
-+  // Called at the end of every main thread task.
++  // Main thread task boundaries.
++  void WillProcessTask();
++  void DidProcessTask();
 +  void CommitTask();
 +
-+  // The main thread was asked to run style or layout for this document
-+  // anyway (by code other than the queries below). Returns false if the
-+  // update should be skipped because the render thread answers for it (see
-+  // FocusScope); otherwise the update is counted, traced and logged, so that
-+  // remaining main-thread rendering is visible, and true is returned.
++  // True while the render thread renders the page for the busy main thread.
++  bool IsRendering() const;
++  static bool IsRendering(const Document& document);
++
++  // Entry of Document::UpdateStyleAndLayoutTree (`phase` "style") and
++  // Document::UpdateStyleAndLayout ("layout"). While the render thread
++  // renders, main-thread style or layout is a fallback: it is counted, traced
++  // and logged, and false is returned if it should be skipped (see
++  // FocusScope). Otherwise returns true.
 +  bool NoteMainThreadRendering(const char* phase, int reason);
++  // End of Document::UpdateStyleAndLayoutTree.
++  void DidUpdateStyle();
++  // End of a BeginMainFrame lifecycle update.
++  static void DidUpdateMainFrame(LocalFrameView& view);
++  // Records the render thread's output surface as the topmost layer of the
++  // main frame's paint.
++  static void PaintOverlay(GraphicsContext& context,
++                           const LocalFrameView& view);
 +
 +  // While alive, focus changes on this thread skip main-thread style and
 +  // layout: focusability comes from the render thread instead.
@@ -7093,10 +7917,9 @@ index 0000000000..f92d377dff
 +
 +  // Synchronous layout and style queries from script (offsetWidth,
 +  // getBoundingClientRect(), getComputedStyle(), elementFromPoint(), ...).
-+  // The main thread does not lay out a document that has a render thread;
-+  // these ask the page's render thread and wait for its answer. They return
-+  // std::nullopt when the node is not part of a replicated document, in which
-+  // case the caller uses the regular main-thread path.
++  // While the render thread renders, these ask it and wait for its answer.
++  // They return std::nullopt otherwise (or when the node is not replicated),
++  // in which case the caller uses the regular main-thread path.
 +  static std::optional<double> QueryNumber(const Element& element,
 +                                           RenderThreadQuery::Type type);
 +  static std::optional<Element*> QueryOffsetParent(const Element& element);
@@ -7130,11 +7953,6 @@ index 0000000000..f92d377dff
 +                      const HitTestLocation& location,
 +                      HitTestResult& result);
 +
-+  // BeginMainFrame on the main thread. Pushes the viewport to the render
-+  // thread and returns the layer that shows the render thread's output.
-+  cc::Layer* PrepareMainFrame(const LocalFrameView& view);
-+  PaintControllerPersistentData& PaintData();
-+
 +  // WebSurfaceLayerBridgeObserver:
 +  void OnWebLayerUpdated() override;
 +  void RegisterContentsLayer(cc::Layer*) override {}
@@ -7148,8 +7966,25 @@ index 0000000000..f92d377dff
 + private:
 +  class CommitObserver;
 +
-+  // Returns false if `node` is not replicated by an active journal.
++  // Returns false if the render thread is not rendering or `node` is not
++  // replicated.
 +  static bool RunQuery(const Node& node, RenderThreadQuery& query);
++  // Sends `query` regardless of the rendering mode.
++  bool SendQuery(const Node& node, RenderThreadQuery& query);
++
++  // Rendering hand-off (see RenderThreadChannel::Mode).
++  void BeginHandBack();
++  void SyncAnimationTimings();
++  void FinishHandBack();
++  void SendScrollOffsets(const LocalFrameView& view);
++  void UpdateTakeoverAllowed();
++  // The replica cannot reproduce the page; stop the render thread at the end
++  // of the current task and render on the main thread only.
++  void MarkUnreplicable(const char* reason);
++  void DetachUnreplicable();
++  void CheckReplicable(const Element& element);
++  void CheckReplicableStyle(const Element& owner, const String& css_text);
++  void InvalidateOverlay();
 +  Element* ElementForId(uint32_t id) const;
 +  Node* NodeForId(uint32_t id) const;
 +
@@ -7170,6 +8005,13 @@ index 0000000000..f92d377dff
 +  void Push(RenderThreadOp op);
 +  void SendViewport(const gfx::Size& size, float zoom);
 +
++  struct PendingScroll {
++    uint32_t node;
++    std::optional<double> left;
++    std::optional<double> top;
++    bool relative;
++  };
++
 +  Member<Document> document_;
 +  scoped_refptr<RenderThreadChannel> channel_;
 +  std::unique_ptr<RenderThread> render_thread_;
@@ -7182,21 +8024,26 @@ index 0000000000..f92d377dff
 +  HeapHashSet<WeakMember<const Element>> converted_links_;
 +  std::unique_ptr<CommitObserver> commit_observer_;
 +  std::unique_ptr<SurfaceLayerBridge> bridge_;
-+  Member<PaintControllerPersistentData> paint_data_;
 +  gfx::Size viewport_size_;
 +  float viewport_zoom_ = 0;
 +  bool detached_ = false;
 +  uint64_t main_thread_rendering_count_ = 0;
-+};
-+
-+// Presents the render thread's output from the main thread's BeginMainFrame.
-+// Friend of LocalFrameView.
-+class CORE_EXPORT RenderThreadPresenter {
-+  STATIC_ONLY(RenderThreadPresenter);
-+
-+ public:
-+  // Returns true if the main frame update was handled.
-+  static bool UpdateMainFrame(LocalFrameView& view);
++  // Journal entries pushed since the last kStyleSync.
++  bool ops_since_style_sync_ = false;
++  // A kStyleSync was sent since the last frame marker.
++  bool style_sync_since_frame_ = false;
++  // Outermost task nesting on the main thread.
++  int task_depth_ = 0;
++  // Hand-back state.
++  bool needs_timing_sync_ = false;
++  bool hand_back_presentation_requested_ = false;
++  // Scrolls done by script while the render thread rendered; replayed on the
++  // main thread when it takes rendering back.
++  Vector<PendingScroll> pending_scrolls_;
++  // Last scroll offsets sent to the render thread, by node id.
++  HashMap<uint32_t, gfx::PointF> sent_scroll_offsets_;
++  const char* unreplicable_reason_ = nullptr;
++  uint64_t takeovers_ = 0;
 +};
 +
 +}  // namespace blink

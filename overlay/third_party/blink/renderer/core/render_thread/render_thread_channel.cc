@@ -29,6 +29,11 @@ bool RenderThreadChannel::MarkWakePending() {
   return !wake_pending_.exchange(true, std::memory_order_acq_rel);
 }
 
+bool RenderThreadChannel::HasOps() {
+  base::AutoLock locker(lock_);
+  return !ops_.empty();
+}
+
 void RenderThreadChannel::ClearWakePending() {
   wake_pending_.store(false, std::memory_order_release);
 }

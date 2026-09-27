@@ -12,7 +12,7 @@ document.head.append(smokeStyle);
 const smokeSheet = smokeStyle.sheet;
 
 function configure(nextKind, ms) {
-  if (!["height", "grid"].includes(nextKind) || ![3000, 10000].includes(ms)) {
+  if (!["height", "grid"].includes(nextKind) || ![1000, 3000, 10000].includes(ms)) {
     throw new Error("Unsupported test case");
   }
   panel.className = nextKind;
@@ -48,6 +48,22 @@ function runBlock(ms) {
   window.lastBlock = result;
   running = false;
   return result;
+}
+
+// BFCache-restored page: mutation + one synchronous block long enough for a
+// render-thread takeover; layout reads start 150ms in (after takeover).
+function restoredBlock(ms) {
+  panel.style.height = "96px";
+  const start = milestone("restored-mutation", { ms });
+  const reads = [];
+  let next = start.perfMs + 150;
+  while (performance.now() < start.perfMs + ms) {
+    if (reads.length < 2 && performance.now() >= next) {
+      reads.push(panel.offsetHeight);
+      next += 150;
+    }
+  }
+  return milestone("restored-block-end", { ms, reads, elapsedMs: performance.now() - start.perfMs });
 }
 
 function smoke(step) {
@@ -98,6 +114,7 @@ function smoke(step) {
 
 window.validation = {
   runBlock,
+  restoredBlock,
   smoke,
   geometry() {
     const rect = document.getElementById("proof").getBoundingClientRect();

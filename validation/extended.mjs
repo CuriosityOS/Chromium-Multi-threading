@@ -5,7 +5,24 @@ import { join } from "node:path";
 import { CDP } from "./cdp.mjs";
 import { findMilestone } from "./readiness.mjs";
 
-export async function procSnapshot(browser) {
+// Light trace for long cases: marks, TakeOver/hand-back instants, thread names.
+const LIGHT_TRACE = ["blink", "blink.user_timing"];
+
+function pssKb(pid) {
+  const match = /^Pss:\s+(\d+) kB$/m.exec(readFileSync(`/proc/${pid}/smaps_rollup`, "utf8"));
+  return match ? Number(match[1]) : null;
+}
+
+// Wait for a page milestone by occurrence time (console replay safe).
+async function awaitMilestone({ cdp, browser, chrome, waitFor }, name, from, notBeforeMs, timeout) {
+  return waitFor(() => {
+    if (chrome.exitCode !== null || chrome.signalCode !== null) throw new Error("Chromium exited");
+    if (cdp.failure || browser.failure) throw cdp.failure || browser.failure;
+    return findMilestone(cdp.events, { from, name, notBeforeMs });
+  }, timeout);
+}
+
+export async function procSnapshot(browser, { pss = false } = {}) {
   const { processInfo } = await browser.call("SystemInfo.getProcessInfo");
   const renderers = [];
   for (const process of processInfo.filter((entry) => entry.type === "renderer")) {
@@ -21,7 +38,7 @@ export async function procSnapshot(browser) {
           tasks.push({ pid, tid: Number(tid), comm, startTicks });
         } catch (error) { if (error.code !== "ENOENT" && error.code !== "ESRCH") throw error; }
       }
-      renderers.push({ pid, tasks });
+      renderers.push({ pid, tasks, ...(pss ? { pssKb: pssKb(pid) } : {}) });
     } catch (error) { if (error.code !== "ENOENT" && error.code !== "ESRCH") throw error; }
   }
   return { epochMs: Date.now(), renderers, renderThreads: renderers.flatMap((entry) => entry.tasks).filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)) };
@@ -227,7 +244,13 @@ export async function pageThreads(context) {
     assert.equal(result.bfcache.restored.height, 64, "Restored offsetHeight lost the cached DOM mutation");
     assert.equal(result.bfcache.restored.token, result.bfcache.expectedToken, "History navigation lost A's DOM identity");
     await panelShot("restored-a");
-    await cdp.evaluate("performance.mark('validation:restored-mutation'); document.getElementById('panel').style.height = '96px'; true");
+    // Idle restored pages render on main. Prove the NEW thread by a mutation +
+    // long synchronous task (timer task, not a debugger evaluation) => TakeOver.
+    const blockOffset = cdp.events.length;
+    const blockArmedMs = Date.now();
+    await cdp.evaluate("setTimeout(() => validation.restoredBlock(600), 0); true");
+    result.bfcache.block = await awaitMilestone(context, "restored-block-end", blockOffset, blockArmedMs, 15000);
+    assert.deepEqual(result.bfcache.block.reads, [96, 96], "Restored in-block offsetHeight reads wrong");
     result.bfcache.mutated = await panelState();
     assert.equal(result.bfcache.mutated.height, 96, "Restored page did not answer a fresh geometry mutation");
     await panelShot("restored-mutated-a");
@@ -243,5 +266,76 @@ export async function pageThreads(context) {
     result.finishedMs = Date.now();
     result.logEnd = statSync(log).size;
     save();
+  }
+}
+
+// OMT only: a page the replica cannot reproduce must detach and render stock.
+export async function unreplicable(context) {
+  const { cdp, browser, base, directory, display, mode, navigate, externalScreenshot, traceStart, traceStop } = context;
+  if (mode !== "omt") return;
+  const folder = join(directory, "unreplicable");
+  mkdirSync(folder);
+  const log = join(directory, "chrome.log");
+  const result = { startedMs: Date.now(), logStart: statSync(log).size, ms: 1000, completed: false };
+  let tracing = false;
+  try {
+    await traceStart(browser);
+    tracing = true;
+    await navigate(cdp, `${base}/unreplicable.html?mode=unreplicable&kind=height&ms=${result.ms}`);
+    result.before = await cdp.evaluate("validation.geometry()");
+    assert.equal(result.before.panelHeight, 24);
+    const offset = cdp.events.length;
+    const armedMs = Date.now();
+    await cdp.evaluate(`setTimeout(() => validation.runBlock(${result.ms}), 200); true`);
+    result.block = await awaitMilestone(context, "block-result", offset, armedMs, result.ms + 15000);
+    await new Promise((done) => setTimeout(done, result.ms * 0.8 + 600));
+    result.after = await cdp.evaluate("validation.geometry()");
+    assert(Math.abs(result.after.panelHeight - 264) < 1, "Unreplicable page final layout height missing");
+    assert(Math.abs(result.after.followerTop - result.before.followerTop - 240) < 1, "Unreplicable page sibling did not move");
+    externalScreenshot(display, join(folder, "after-x11.png"));
+    await traceStop(browser, folder);
+    tracing = false;
+    result.completed = true;
+  } catch (error) { result.error = String(error.stack || error); throw error; }
+  finally {
+    if (tracing) { try { await traceStop(browser, folder); } catch (error) { result.traceError = String(error); } }
+    result.finishedMs = Date.now();
+    result.logEnd = statSync(log).size;
+    writeFileSync(join(folder, "unreplicable.json"), JSON.stringify(result, null, 2));
+  }
+}
+
+// Short-task churn then idle; sample every renderer's PSS. The analyzer picks
+// the page's renderer by the trace-mark PID (no guessing while live).
+export async function memoryChurn(context) {
+  const { cdp, browser, base, directory, navigate, traceStart, traceStop } = context;
+  const folder = join(directory, "mem");
+  mkdirSync(folder);
+  const log = join(directory, "chrome.log");
+  const result = { startedMs: Date.now(), logStart: statSync(log).size, churnMs: 20000, idleMs: 25000, intervalMs: 2000, samples: [], completed: false };
+  let tracing = false;
+  try {
+    await traceStart(browser, LIGHT_TRACE);
+    tracing = true;
+    await navigate(cdp, `${base}/mem.html`);
+    const offset = cdp.events.length;
+    result.churnStart = await cdp.evaluate(`validation.startChurn(${result.churnMs})`);
+    for (let index = 0; index * result.intervalMs <= result.churnMs + result.idleMs; index++) {
+      const due = result.churnStart.epochMs + index * result.intervalMs;
+      await new Promise((done) => setTimeout(done, Math.max(0, due - Date.now())));
+      if (cdp.failure || browser.failure) throw cdp.failure || browser.failure;
+      const snapshot = await procSnapshot(browser, { pss: true });
+      result.samples.push({ epochMs: snapshot.epochMs, renderers: snapshot.renderers.map(({ pid, pssKb, tasks }) => ({ pid, pssKb, renderThreads: tasks.filter((task) => task.comm === "BlinkRenderThread".slice(0, 15)).length })) });
+    }
+    result.churnEnd = await awaitMilestone(context, "churn-end", offset, result.churnStart.epochMs, 5000);
+    await traceStop(browser, folder);
+    tracing = false;
+    result.completed = true;
+  } catch (error) { result.error = String(error.stack || error); throw error; }
+  finally {
+    if (tracing) { try { await traceStop(browser, folder); } catch (error) { result.traceError = String(error); } }
+    result.finishedMs = Date.now();
+    result.logEnd = statSync(log).size;
+    writeFileSync(join(folder, "memory.json"), JSON.stringify(result, null, 2));
   }
 }

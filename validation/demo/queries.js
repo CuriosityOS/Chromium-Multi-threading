@@ -2,6 +2,7 @@
 
 const queryParams = new URLSearchParams(location.search);
 const queryMs = Number(queryParams.get("ms") || 3000);
+const TAKEOVER_WAIT_MS = 150;
 if (![3000, 10000].includes(queryMs)) throw new Error("Invalid query block duration");
 const queryPanels = [document.getElementById("height-panel"), document.getElementById("grid-panel")];
 for (const element of queryPanels) element.style.setProperty("--duration", `${queryMs * 0.8}ms`);
@@ -156,6 +157,9 @@ function runQueryBlock(ms, viewport) {
   queryPanels[1].classList.toggle("open");
   performance.mark("validation:mutation");
   const start = milestone("block-start", { ms, heartbeat: beforeHeartbeat });
+  // Same synchronous wait in both modes: queries in the first ~50ms of a task
+  // are answered by main; after this the render thread has taken over (OMT).
+  while (performance.now() - start.perfMs < TAKEOVER_WAIT_MS);
   const { scope, ...assertions } = mutationQueries(viewport, start.perfMs);
   const samples = [];
   const deadline = start.perfMs + ms;

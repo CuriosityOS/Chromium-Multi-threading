@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed pixel + thread evidence. Python standard library and existing FFmpeg only."""
 import argparse
+import functools
 import hashlib
 import json
 import re
@@ -29,6 +30,24 @@ def load(path):
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+@functools.lru_cache(maxsize=1)
+def _trace_events(path, _mtime_ns, _size):
+    trace = load(Path(path))
+    return trace["traceEvents"] if isinstance(trace, dict) else trace
+
+
+def trace_events(directory):
+    """Parse each (large) trace once for the several analyses of one case."""
+    path = directory / "trace.json"
+    stat = path.stat()
+    return _trace_events(str(path), stat.st_mtime_ns, stat.st_size)
+
+
+def trace_occurrences(events, name):
+    # Count events, not the throttled textual counter. B/E slices count once.
+    return [event for event in events if event.get("name") == name and event.get("ph") in ("X", "B", "I", "i")]
 
 
 def ppm_image(data):
@@ -101,6 +120,12 @@ def pixel_verdict(samples, start_ms, end_ms, mode):
         require(summary["heightRangePx"] >= 30, "OMT: layout edge moved <30px during block")
         require(summary["changeSpanMs"] >= MIN_SPAN_MS, "OMT: only a jump / too short a change interval")
         require(all(b >= a - 1 for a, b in zip(heights, heights[1:])), "OMT: non-monotonic layout surface")
+        # Hand-back continuity: no jump back / flash from block start to the end of the recording.
+        tail = [sample["cyanHeight"] for sample in samples if sample["epochMs"] >= start_ms]
+        drops = [(index, a, b) for index, (a, b) in enumerate(zip(tail, tail[1:])) if b < a]
+        require(not drops, f"OMT: captured height decreased after block start (hand-back flash/jump back): first {drops[:3]}")
+        # The 264px end state is enforced for every mode in analyze_pixels.
+        summary["continuityFrames"] = len(tail)
     else:
         require(summary["heightRangePx"] == 0 and len(changes) == 0 and summary["uniqueRoiHashes"] == 1, "Baseline layout changed during block: invalid negative control")
     return summary
@@ -198,10 +223,9 @@ def trace_evidence(events, mode, thread_pattern, event_pattern, requested_ms):
 def analyze_trace(directory, case, run):
     complete = load(directory / "trace-complete.json")
     require(not complete.get("dataLossOccurred", True), "Missing/lost trace data")
-    trace = load(directory / "trace.json")
-    events = trace["traceEvents"] if isinstance(trace, dict) else trace
+    events = trace_events(directory)
     # Keep inventory even when strict event-name matching fails.
-    inventory = [event for event in events if event.get("name") == "thread_name" or re.search(r"OMT|OffMainThread|ReplicaPage::", event.get("name", ""), re.I)]
+    inventory = [event for event in events if event.get("name") == "thread_name" or re.search(r"OMT|OffMainThread|ReplicaPage::|RenderThreadJournal::(BeginHandBack|HandBack|AnimationTimingsAdopted|Unreplicable)", event.get("name", ""), re.I)]
     (directory / "trace-inventory.json").write_text(json.dumps(inventory, indent=2) + "\n")
     result = trace_evidence(events, case["mode"], run["traceThread"], run["traceEvent"], case["ms"])
     trace_ms = (result["blockTraceUs"][1] - result["blockTraceUs"][0]) / 1000
@@ -246,9 +270,10 @@ def smoke_pixels(directory, steps):
 
 
 def analyze_run(output):
-    from extended_analysis import analyze_fallbacks, analyze_queries, compare_extended, lifecycle_evidence, validate_input
+    from extended_analysis import analyze_fallbacks, analyze_handoff, analyze_queries, compare_extended, compare_memory, lifecycle_evidence, memory_evidence, smoke_trace_evidence, validate_input, validate_unreplicable
     run = load(output / "run.json")
     extended = run.get("schemaVersion", 1) >= 2
+    hybrid = run.get("schemaVersion", 1) >= 3
     kinds = ("height", "grid", "queries") if extended else ("height", "grid")
     report = {"passed": False, "failures": list(run.get("failures", [])), "cases": [], "limits": "Xvfb software-display validation, not physical GPU scanout/FPS or cross-platform correctness. CDP smoke screenshots are not block evidence."}
     expected = {(mode, kind, ms) for mode in ("baseline", "omt") for kind in kinds for ms in (3000, 10000)}
@@ -269,6 +294,8 @@ def analyze_run(output):
         analyses = [("pixels", pixels), ("trace", lambda: analyze_trace(directory, case, run))]
         if extended:
             analyses.append(("fallbacks", lambda: analyze_fallbacks(directory, case, run)))
+        if hybrid:
+            analyses.append(("handoff", lambda: analyze_handoff(directory, case)))
         if case["kind"] == "queries":
             analyses.append(("queries", lambda: analyze_queries(directory, case)))
         for label, function in analyses:
@@ -297,8 +324,11 @@ def analyze_run(output):
         except (OSError, ValueError, KeyError, RuntimeError, subprocess.TimeoutExpired) as error:
             report["failures"].append(f"{mode}: {error}")
     if extended:
+        checks = [("native-input", validate_input), ("page-threads", lifecycle_evidence)]
+        if hybrid:
+            checks += [("smoke-trace", smoke_trace_evidence), ("memory", memory_evidence), ("unreplicable", lambda directory, mode: validate_unreplicable(directory) if mode == "omt" else None)]
         for mode in ("baseline", "omt"):
-            for name, check in [("native-input", validate_input), ("page-threads", lifecycle_evidence)]:
+            for name, check in checks:
                 try:
                     report.setdefault("extended", {}).setdefault(mode, {})[name] = check(output / mode, mode)
                 except (OSError, ValueError, KeyError, RuntimeError) as error:
@@ -307,6 +337,13 @@ def analyze_run(output):
             report["comparisons"] = compare_extended(output, run["cases"])
         except (OSError, ValueError, KeyError) as error:
             report["failures"].append(f"baseline comparison: {error}")
+        if hybrid:
+            memory = {mode: report.get("extended", {}).get(mode, {}).get("memory") for mode in ("baseline", "omt")}
+            try:
+                require(all(memory.values()), "memory evidence missing for a mode")
+                report["memory"] = compare_memory(memory["baseline"], memory["omt"])
+            except ValueError as error:
+                report["failures"].append(f"memory comparison: {error}")
     # Explicit paired differential, not merely independent successful runs.
     pairs = []
     for kind in kinds:
@@ -320,12 +357,15 @@ def analyze_run(output):
                 report["failures"].append(f"{kind}/{ms}: missing OMT-versus-baseline differential")
     report["pairs"] = pairs
     report["passed"] = not report["failures"] and len(report["cases"]) == len(expected) and all(entry["passed"] for entry in report["cases"])
-    lines = ["# OMT validation", "", f"**{'PASS' if report['passed'] else 'FAIL'}**", "", "| Mode | Layout | Block | Pixel change steps | Height range | Render PID/TID | Result |", "|---|---|---:|---:|---:|---|---|"]
+    lines = ["# OMT validation", "", f"**{'PASS' if report['passed'] else 'FAIL'}**", "", "| Mode | Layout | Block | Pixel change steps | Height range | Render PID/TID | TakeOver after start | HandBack after end | Result |", "|---|---|---:|---:|---:|---|---:|---:|---|"]
     for entry in report["cases"]:
         pixels = entry.get("pixels", {})
         threads = entry.get("trace", {}).get("renderThreads", [])
         tids = ", ".join(f"{thread['pid']}/{thread['tid']}" for thread in threads) or "—"
-        lines.append(f"| {entry['mode']} | {entry['kind']} | {entry['ms']}ms | {pixels.get('heightChangeSteps', '—')} | {pixels.get('heightRangePx', '—')}px | {tids} | {'PASS' if entry['passed'] else 'FAIL'} |")
+        handoff = entry.get("handoff", {})
+        takeover = f"{handoff['takeoverLatencyMs']:.1f}ms" if "takeoverLatencyMs" in handoff else "—"
+        handback = f"{handoff['handBackAfterEndMs']:.1f}ms" if "handBackAfterEndMs" in handoff else "—"
+        lines.append(f"| {entry['mode']} | {entry['kind']} | {entry['ms']}ms | {pixels.get('heightChangeSteps', '—')} | {pixels.get('heightRangePx', '—')}px | {tids} | {takeover} | {handback} | {'PASS' if entry['passed'] else 'FAIL'} |")
         for failure in entry["failures"]:
             report["failures"].append(f"{entry['mode']}/{entry['kind']}/{entry['ms']}: {failure}")
     if extended:
@@ -349,6 +389,11 @@ def analyze_run(output):
             heights = "/".join(str(cached["pixels"]["frames"][name]["cyanHeight"]) for name in ("owner-a", "owner-b", "restored-a", "restored-mutated-a"))
             replica = life["replicaIdsByStage"][-1][0] if mode == "omt" else "none"
             lines.append(f"| {mode} | {counts} | {cached['pageshow']['persisted']} | {heights}px | {replica} | {cached.get('freshPaints', 'n/a')} |")
+    if hybrid:
+        lines += ["", "## Memory (renderer PSS, MB; medians)", "", "| Mode | Churn 5–10s | Churn last 5s | Idle last 10s | TakeOvers during churn |", "|---|---:|---:|---:|---:|"]
+        for mode in ("baseline", "omt"):
+            memory = report.get("extended", {}).get(mode, {}).get("memory")
+            lines.append(f"| {mode} | {memory['warmChurnMedianMb']:.1f} | {memory['lastChurnMedianMb']:.1f} | {memory['idleMedianMb']:.1f} | {memory['takeoversDuringChurn']} |" if memory else f"| {mode} | FAIL / incomplete | — | — | — |")
     lines += ["", "## Failures", *[f"- {failure}" for failure in report["failures"]], "", "## Interpretation", "", report["limits"], "", "See pixel-samples.json for absolute capture timestamps and external ROI hashes; trace-inventory.json and trace.json for thread attribution. Frame counts here are captured samples, never document timeline / JS animation counts."]
     (output / "analysis.json").write_text(json.dumps(report, indent=2) + "\n")
     (output / "REPORT.md").write_text("\n".join(lines) + "\n")

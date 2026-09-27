@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { CDP } from "./cdp.mjs";
 import { fingerprintBuild } from "./build.mjs";
 import { captureArgs } from "./media.mjs";
-import { nativeInput, pageThreads } from "./extended.mjs";
+import { memoryChurn, nativeInput, pageThreads, unreplicable } from "./extended.mjs";
 import { waitForResize } from "./readiness.mjs";
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -25,6 +25,7 @@ const output = resolve(option("--output", join(root, "results", new Date().toISO
 const traceThread = option("--render-thread", "^BlinkRenderThread$");
 const traceEvent = option("--render-event", "^ReplicaPage::(BeginFrame|Paint)$");
 const expectedVersion = "153.0.8010.55";
+const UNREPLICABLE_IMAGE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
 async function buildSnapshot(label) {
   const manifest = await fingerprintBuild(binary);
   writeFileSync(join(output, `build-${label}.json`), JSON.stringify(manifest, null, 2));
@@ -35,7 +36,8 @@ if (existsSync(join(output, "run.json"))) throw new Error("Output already contai
 // Parent-confirmed: unthrottled blink instant event at every journal-attached
 // main-thread style/layout entry, including calls when the lifecycle is clean.
 const fallbackTraceEvent = "RenderThreadJournal::MainThreadFallback";
-const run = { schemaVersion: 2, binary, expectedVersion, output, traceThread, traceEvent, fallbackTraceEvent, startedMs: Date.now(), cases: [], failures: [] };
+// Schema 3: hybrid hand-off / hand-back model (TakeOver, BeginHandBack, HandBack, StopPresenting).
+const run = { schemaVersion: 3, binary, expectedVersion, output, traceThread, traceEvent, fallbackTraceEvent, startedMs: Date.now(), cases: [], failures: [] };
 const save = () => writeFileSync(join(output, "run.json"), JSON.stringify(run, null, 2) + "\n");
 save();
 const children = new Set();
@@ -119,10 +121,11 @@ async function navigate(cdp, url) {
   await sleep(700); // BEFORE-state settling only; never between class change and block.
 }
 
-async function traceStart(browser) {
+const FULL_TRACE = ["toplevel", "blink", "blink.user_timing", "devtools.timeline", "cc", "viz", "gpu", "v8", "omt", "disabled-by-default-blink.debug", "disabled-by-default-devtools.timeline"];
+async function traceStart(browser, includedCategories = FULL_TRACE) {
   await browser.call("Tracing.start", {
     transferMode: "ReturnAsStream", streamFormat: "json",
-    traceConfig: { recordMode: "recordContinuously", includedCategories: ["toplevel", "blink", "blink.user_timing", "devtools.timeline", "cc", "viz", "gpu", "v8", "omt", "disabled-by-default-blink.debug", "disabled-by-default-devtools.timeline"] },
+    traceConfig: { recordMode: "recordContinuously", includedCategories },
   });
 }
 
@@ -150,25 +153,34 @@ async function smoke(cdp, browser, target, base, directory, display) {
   const results = [];
   await screenshot(cdp, join(directory, "smoke-before-cdp.png"));
   externalScreenshot(display, join(directory, "smoke-before-x11.png"));
-  for (const step of steps) {
-    const result = await cdp.evaluate(`validation.smoke(${JSON.stringify(step)})`);
-    results.push(result);
-    writeFileSync(join(directory, "smoke.json"), JSON.stringify(results, null, 2));
-    if (step === "insert") assert.equal(result.inserted, true);
-    if (step === "remove") assert.equal(result.inserted, false);
-    if (step === "text") assert.equal(result.text, "AFTER: text mutation");
-    if (step === "inline") {
-      assert.equal(result.inlineColor, "rgb(40, 200, 80)");
-      assert.equal(result.inlineHeight, 45);
+  // Idle mutations: main renders; the replica only follows (analyzed per mode).
+  const traceFolder = join(directory, "smoke-trace");
+  mkdirSync(traceFolder);
+  await traceStart(browser);
+  let tracing = true;
+  try {
+    for (const step of steps) {
+      const result = await cdp.evaluate(`validation.smoke(${JSON.stringify(step)})`);
+      results.push(result);
+      writeFileSync(join(directory, "smoke.json"), JSON.stringify(results, null, 2));
+      if (step === "insert") assert.equal(result.inserted, true);
+      if (step === "remove") assert.equal(result.inserted, false);
+      if (step === "text") assert.equal(result.text, "AFTER: text mutation");
+      if (step === "inline") {
+        assert.equal(result.inlineColor, "rgb(40, 200, 80)");
+        assert.equal(result.inlineHeight, 45);
+      }
+      if (step.startsWith("cssom")) {
+        assert.equal(result.ruleCount, step === "cssom-insert" ? 1 : 0);
+        assert.equal(result.cssomColor, step === "cssom-insert" ? "rgb(130, 80, 220)" : "rgb(60, 50, 40)");
+      }
+      await sleep(250);
+      await screenshot(cdp, join(directory, `smoke-${step}-cdp.png`));
+      externalScreenshot(display, join(directory, `smoke-${step}-x11.png`));
     }
-    if (step.startsWith("cssom")) {
-      assert.equal(result.ruleCount, step === "cssom-insert" ? 1 : 0);
-      assert.equal(result.cssomColor, step === "cssom-insert" ? "rgb(130, 80, 220)" : "rgb(60, 50, 40)");
-    }
-    await sleep(250);
-    await screenshot(cdp, join(directory, `smoke-${step}-cdp.png`));
-    externalScreenshot(display, join(directory, `smoke-${step}-x11.png`));
-  }
+    await traceStop(browser, traceFolder);
+    tracing = false;
+  } finally { if (tracing) await traceStop(browser, traceFolder).catch(() => {}); }
   const before = await cdp.evaluate("validation.geometry()");
   const window = await browser.call("Browser.getWindowForTarget", { targetId: target.id });
   const eventOffset = cdp.events.length;
@@ -303,10 +315,13 @@ try {
   run.binarySha256 = initialBuild.files.find((file) => file.name === basename(binary)).sha256;
   server = createServer((request, response) => {
     const name = new URL(request.url, "http://localhost").pathname;
-    const files = { "/index.html": "text/html", "/a.html": "text/html", "/b.html": "text/html", "/queries.html": "text/html", "/demo.js": "text/javascript", "/queries.js": "text/javascript", "/common.js": "text/javascript", "/demo.css": "text/css", "/queries.css": "text/css" };
+    const files = { "/index.html": "text/html", "/a.html": "text/html", "/b.html": "text/html", "/unreplicable.html": "text/html", "/queries.html": "text/html", "/mem.html": "text/html", "/demo.js": "text/javascript", "/queries.js": "text/javascript", "/mem.js": "text/javascript", "/common.js": "text/javascript", "/demo.css": "text/css", "/queries.css": "text/css" };
     if (!files[name]) { response.writeHead(404); response.end(); return; }
     response.writeHead(200, { "Content-Type": files[name], "Cache-Control": "no-store" });
-    response.end(readFileSync(join(root, "demo", ["/a.html", "/b.html"].includes(name) ? "index.html" : name.slice(1))));
+    const aliased = ["/a.html", "/b.html", "/unreplicable.html"].includes(name);
+    const body = readFileSync(join(root, "demo", aliased ? "index.html" : name.slice(1)), "utf8");
+    // The same demo plus one <img>: an element the replica cannot reproduce.
+    response.end(name === "/unreplicable.html" ? body.replace("</aside>", `<img id="unreplicable" alt="" width="1" height="1" src="${UNREPLICABLE_IMAGE}"></aside>`) : body);
   });
   await new Promise((done) => server.listen(0, "127.0.0.1", done));
   const base = `http://127.0.0.1:${server.address().port}`;
@@ -356,7 +371,7 @@ try {
         if (cdp.failure || browser.failure) throw cdp.failure || browser.failure;
       }
       const context = { cdp, browser, chrome, base, directory, display, root, port, mode, sockets, navigate, screenshot, externalScreenshot, traceStart, traceStop, waitFor };
-      const checks = [["smoke", () => smoke(cdp, browser, target, base, directory, display)], ["native-input", nativeInput], ["page-threads", pageThreads]];
+      const checks = [["smoke", () => smoke(cdp, browser, target, base, directory, display)], ["native-input", nativeInput], ["page-threads", pageThreads], ["unreplicable", unreplicable], ["memory", memoryChurn]];
       for (const [name, check] of checks) {
         try { await check(context); } catch (error) { run.failures.push(`${mode}/${name}: ${error.stack || error}`); save(); }
         // Every stage navigates to a fresh fixture. An assertion failure remains
@@ -381,7 +396,7 @@ try {
 } catch (error) { run.failures.push(String(error.stack || error)); }
 finally { await cleanup(); run.finishedMs = Date.now(); save(); }
 
-const analysis = spawnSync("python3", [join(root, "analyze.py"), output], { stdio: "inherit", timeout: 180000 });
+const analysis = spawnSync("python3", [join(root, "analyze.py"), output], { stdio: "inherit", timeout: 300000 });
 if (analysis.error) run.failures.push(String(analysis.error));
 save();
 console.log(`Results retained: ${output}`);

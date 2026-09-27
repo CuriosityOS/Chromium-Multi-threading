@@ -19,6 +19,8 @@
 #include "third_party/blink/renderer/platform/heap/garbage_collected.h"
 #include "third_party/blink/renderer/platform/heap/member.h"
 #include "third_party/blink/renderer/platform/wtf/allocator/allocator.h"
+#include "third_party/blink/renderer/platform/wtf/hash_map.h"
+#include "ui/gfx/geometry/point_f.h"
 #include "ui/gfx/geometry/size.h"
 
 namespace cc {
@@ -30,11 +32,11 @@ namespace blink {
 class CSSStyleSheet;
 class Document;
 class Element;
+class GraphicsContext;
 class HitTestLocation;
 class HitTestResult;
 class Range;
 class LocalFrameView;
-class PaintControllerPersistentData;
 class QualifiedName;
 class RenderThread;
 class ShadowRoot;
@@ -43,14 +45,25 @@ class TreeScope;
 
 // Off-main-thread rendering (--enable-blink-features=OffMainThreadRendering).
 //
-// The main thread keeps running JavaScript against the real DOM. Every change
-// to the DOM that can affect rendering is recorded here as a RenderThreadOp
-// and sent to the render thread (see render_thread.h), which keeps a replica
-// of the document and runs style, layout, paint and raster for it, producing
-// compositor frames on its own. The main thread no longer paints: its
-// BeginMainFrame only embeds the render thread's output surface.
+// The main thread renders the page exactly as without this feature. Every
+// change to the DOM that can affect rendering is also recorded here as a
+// RenderThreadOp and sent to the page's render thread (see render_thread.h),
+// which keeps a replica of the document with up-to-date style.
 //
-// One journal exists per outermost main frame document.
+// When a main-thread task runs for longer than a few frames while the page is
+// changing (a CSS transition is running, or the task mutated the DOM), the
+// render thread takes over: it lays out, paints and presents the replica on
+// its own, and the main thread's layout queries are answered by it. When the
+// task ends, the main thread takes rendering back, adopting the replica's
+// animation timing, and the render thread goes back to only following the
+// DOM. See RenderThreadChannel::Mode.
+//
+// The main thread's frames always contain the render thread's output surface
+// as the topmost layer; it is transparent unless the render thread renders.
+//
+// One journal exists per outermost main frame document. Pages whose content
+// the replica cannot reproduce (images, plugins, frames, form fields, web
+// fonts, CSS resources) detach it and render as usual.
 class CORE_EXPORT RenderThreadJournal final
     : public GarbageCollected<RenderThreadJournal>,
       public DisplayItemClient,
@@ -89,15 +102,29 @@ class CORE_EXPORT RenderThreadJournal final
   void StyleSheetChanged(const CSSStyleSheet& sheet);
   void CompatibilityModeChanged();
 
-  // Called at the end of every main thread task.
+  // Main thread task boundaries.
+  void WillProcessTask();
+  void DidProcessTask();
   void CommitTask();
 
-  // The main thread was asked to run style or layout for this document
-  // anyway (by code other than the queries below). Returns false if the
-  // update should be skipped because the render thread answers for it (see
-  // FocusScope); otherwise the update is counted, traced and logged, so that
-  // remaining main-thread rendering is visible, and true is returned.
+  // True while the render thread renders the page for the busy main thread.
+  bool IsRendering() const;
+  static bool IsRendering(const Document& document);
+
+  // Entry of Document::UpdateStyleAndLayoutTree (`phase` "style") and
+  // Document::UpdateStyleAndLayout ("layout"). While the render thread
+  // renders, main-thread style or layout is a fallback: it is counted, traced
+  // and logged, and false is returned if it should be skipped (see
+  // FocusScope). Otherwise returns true.
   bool NoteMainThreadRendering(const char* phase, int reason);
+  // End of Document::UpdateStyleAndLayoutTree.
+  void DidUpdateStyle();
+  // End of a BeginMainFrame lifecycle update.
+  static void DidUpdateMainFrame(LocalFrameView& view);
+  // Records the render thread's output surface as the topmost layer of the
+  // main frame's paint.
+  static void PaintOverlay(GraphicsContext& context,
+                           const LocalFrameView& view);
 
   // While alive, focus changes on this thread skip main-thread style and
   // layout: focusability comes from the render thread instead.
@@ -113,10 +140,9 @@ class CORE_EXPORT RenderThreadJournal final
 
   // Synchronous layout and style queries from script (offsetWidth,
   // getBoundingClientRect(), getComputedStyle(), elementFromPoint(), ...).
-  // The main thread does not lay out a document that has a render thread;
-  // these ask the page's render thread and wait for its answer. They return
-  // std::nullopt when the node is not part of a replicated document, in which
-  // case the caller uses the regular main-thread path.
+  // While the render thread renders, these ask it and wait for its answer.
+  // They return std::nullopt otherwise (or when the node is not replicated),
+  // in which case the caller uses the regular main-thread path.
   static std::optional<double> QueryNumber(const Element& element,
                                            RenderThreadQuery::Type type);
   static std::optional<Element*> QueryOffsetParent(const Element& element);
@@ -150,11 +176,6 @@ class CORE_EXPORT RenderThreadJournal final
                       const HitTestLocation& location,
                       HitTestResult& result);
 
-  // BeginMainFrame on the main thread. Pushes the viewport to the render
-  // thread and returns the layer that shows the render thread's output.
-  cc::Layer* PrepareMainFrame(const LocalFrameView& view);
-  PaintControllerPersistentData& PaintData();
-
   // WebSurfaceLayerBridgeObserver:
   void OnWebLayerUpdated() override;
   void RegisterContentsLayer(cc::Layer*) override {}
@@ -168,8 +189,25 @@ class CORE_EXPORT RenderThreadJournal final
  private:
   class CommitObserver;
 
-  // Returns false if `node` is not replicated by an active journal.
+  // Returns false if the render thread is not rendering or `node` is not
+  // replicated.
   static bool RunQuery(const Node& node, RenderThreadQuery& query);
+  // Sends `query` regardless of the rendering mode.
+  bool SendQuery(const Node& node, RenderThreadQuery& query);
+
+  // Rendering hand-off (see RenderThreadChannel::Mode).
+  void BeginHandBack();
+  void SyncAnimationTimings();
+  void FinishHandBack();
+  void SendScrollOffsets(const LocalFrameView& view);
+  void UpdateTakeoverAllowed();
+  // The replica cannot reproduce the page; stop the render thread at the end
+  // of the current task and render on the main thread only.
+  void MarkUnreplicable(const char* reason);
+  void DetachUnreplicable();
+  void CheckReplicable(const Element& element);
+  void CheckReplicableStyle(const Element& owner, const String& css_text);
+  void InvalidateOverlay();
   Element* ElementForId(uint32_t id) const;
   Node* NodeForId(uint32_t id) const;
 
@@ -190,6 +228,13 @@ class CORE_EXPORT RenderThreadJournal final
   void Push(RenderThreadOp op);
   void SendViewport(const gfx::Size& size, float zoom);
 
+  struct PendingScroll {
+    uint32_t node;
+    std::optional<double> left;
+    std::optional<double> top;
+    bool relative;
+  };
+
   Member<Document> document_;
   scoped_refptr<RenderThreadChannel> channel_;
   std::unique_ptr<RenderThread> render_thread_;
@@ -202,21 +247,26 @@ class CORE_EXPORT RenderThreadJournal final
   HeapHashSet<WeakMember<const Element>> converted_links_;
   std::unique_ptr<CommitObserver> commit_observer_;
   std::unique_ptr<SurfaceLayerBridge> bridge_;
-  Member<PaintControllerPersistentData> paint_data_;
   gfx::Size viewport_size_;
   float viewport_zoom_ = 0;
   bool detached_ = false;
   uint64_t main_thread_rendering_count_ = 0;
-};
-
-// Presents the render thread's output from the main thread's BeginMainFrame.
-// Friend of LocalFrameView.
-class CORE_EXPORT RenderThreadPresenter {
-  STATIC_ONLY(RenderThreadPresenter);
-
- public:
-  // Returns true if the main frame update was handled.
-  static bool UpdateMainFrame(LocalFrameView& view);
+  // Journal entries pushed since the last kStyleSync.
+  bool ops_since_style_sync_ = false;
+  // A kStyleSync was sent since the last frame marker.
+  bool style_sync_since_frame_ = false;
+  // Outermost task nesting on the main thread.
+  int task_depth_ = 0;
+  // Hand-back state.
+  bool needs_timing_sync_ = false;
+  bool hand_back_presentation_requested_ = false;
+  // Scrolls done by script while the render thread rendered; replayed on the
+  // main thread when it takes rendering back.
+  Vector<PendingScroll> pending_scrolls_;
+  // Last scroll offsets sent to the render thread, by node id.
+  HashMap<uint32_t, gfx::PointF> sent_scroll_offsets_;
+  const char* unreplicable_reason_ = nullptr;
+  uint64_t takeovers_ = 0;
 };
 
 }  // namespace blink

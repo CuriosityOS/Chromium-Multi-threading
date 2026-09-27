@@ -57,7 +57,9 @@ struct RenderThreadOp {
     // int_value = width, int_value2 = height (physical pixels),
     // float_value = layout zoom factor (includes the device scale factor).
     kSetViewport,
-    // float_value = x, float_value2 = y (root scroll offset)
+    // The main thread rendered with this scroll offset. Applied when the
+    // render thread takes over. node (the document for the viewport),
+    // float_value = x, float_value2 = y in CSS pixels.
     kSetScrollOffset,
     // int_value = Document::CompatibilityMode
     kSetCompatMode,
@@ -66,6 +68,14 @@ struct RenderThreadOp {
     // node, float_value = left, float_value2 = top,
     // int_value = bit 0: has left, bit 1: has top, bit 2: relative (scrollBy).
     kScrollElement,
+    // The main thread is about to update style. `time` = its animation clock
+    // (microseconds since the TimeTicks origin). While the main thread
+    // renders, the render thread updates the replica's style at the same
+    // points and with the same animation time, so CSS transitions and
+    // animations start identically on both threads. int_value = 1 marks the
+    // end of a main-thread frame, where pending animations get their start
+    // time.
+    kStyleSync,
   };
 
   enum class ElementState : int32_t {
@@ -83,17 +93,29 @@ struct RenderThreadOp {
   int32_t int_value2 = 0;
   float float_value = 0;
   float float_value2 = 0;
+  double time = 0;
   String ns;
   String prefix;
   String local_name;
   String text;
 };
 
+// A running CSS transition or animation on the replica, reported when the
+// render thread hands rendering back to the main thread.
+struct RenderThreadAnimationTiming {
+  uint32_t node = 0;
+  bool is_transition = false;
+  // Transition property name or animation name.
+  String name;
+  // Absolute start time (milliseconds since the TimeTicks origin).
+  double start_ms = 0;
+};
+
 // A synchronous layout or style query made by main-thread script (element
-// geometry, computed style, hit testing). The main thread never lays out a
-// document that has a render thread: it commits the journal, sends the query
-// to the page's render thread and blocks until the render thread has brought
-// the replica's style and layout up to date and filled in the answer.
+// geometry, computed style, hit testing) while the render thread renders the
+// page. The main thread commits the journal, sends the query to the page's
+// render thread and blocks until the render thread has brought the replica's
+// style and layout up to date and filled in the answer.
 struct RenderThreadQuery {
   enum class Type : uint8_t {
     // Answer in `number`. `node` is an element.
@@ -148,6 +170,9 @@ struct RenderThreadQuery {
     kInnerHeight,
     kWindowScrollX,
     kWindowScrollY,
+    // Hand-back: running CSS transitions and animations. `node` is the
+    // document. Answer in `timings`.
+    kAnimationTimings,
   };
 
   Type type;
@@ -166,10 +191,20 @@ struct RenderThreadQuery {
   double result_y = 0;
   Vector<uint32_t> result_nodes;
   Vector<gfx::RectF> rects;
+  Vector<RenderThreadAnimationTiming> timings;
 };
 
 // Thread-safe queue of journal entries between the main thread (producer)
-// and the render thread (consumer).
+// and the render thread (consumer), plus the page's rendering mode.
+//
+// The main thread renders the page as usual (kMain). The render thread only
+// keeps its replica's DOM and style current. If the main thread stays inside
+// one task for longer than kTakeoverDelay while something on the page is
+// changing, the render thread takes over (kRender): it lays out, paints and
+// presents the page and answers the main thread's layout queries. When that
+// task ends, the main thread takes rendering back (kHandBack) with the
+// replica's animation timing, and once its first frame is presented the
+// render thread stops producing frames again (kMain).
 //
 // The main thread marks a "commit point" at the end of every task so the
 // render thread never shows the DOM in the middle of a task. If the main
@@ -198,6 +233,39 @@ class CORE_EXPORT RenderThreadChannel
                                       bool* has_uncommitted);
   // Render thread.
   void ClearWakePending();
+  // Render thread. Returns false if nothing is queued.
+  bool HasOps();
+
+  enum class Mode : int { kMain, kRender, kHandBack };
+  Mode GetMode() const { return mode_.load(std::memory_order_acquire); }
+  // Returns true if the mode was `from` and is now `to`.
+  bool ChangeMode(Mode from, Mode to) {
+    return mode_.compare_exchange_strong(from, to, std::memory_order_acq_rel);
+  }
+
+  // Main thread: the start of the current outermost task, or null between
+  // tasks.
+  void SetMainTaskStart(base::TimeTicks start) {
+    main_task_start_us_.store(start.since_origin().InMicroseconds(),
+                              std::memory_order_release);
+  }
+  // Render thread. How long the main thread has been inside its current task.
+  base::TimeDelta MainTaskDuration(base::TimeTicks now) const {
+    const int64_t start = main_task_start_us_.load(std::memory_order_acquire);
+    if (!start) {
+      return base::TimeDelta();
+    }
+    return now - (base::TimeTicks() + base::Microseconds(start));
+  }
+
+  // Main thread: whether the replica can currently reproduce the page (for
+  // example, no script-driven animations are running).
+  void SetTakeoverAllowed(bool allowed) {
+    takeover_allowed_.store(allowed, std::memory_order_release);
+  }
+  bool TakeoverAllowed() const {
+    return takeover_allowed_.load(std::memory_order_acquire);
+  }
 
  private:
   friend class ThreadSafeRefCounted<RenderThreadChannel>;
@@ -208,6 +276,9 @@ class CORE_EXPORT RenderThreadChannel
   wtf_size_t committed_ GUARDED_BY(lock_) = 0;
   base::TimeTicks oldest_uncommitted_ GUARDED_BY(lock_);
   std::atomic<bool> wake_pending_{false};
+  std::atomic<Mode> mode_{Mode::kMain};
+  std::atomic<int64_t> main_task_start_us_{0};
+  std::atomic<bool> takeover_allowed_{true};
 };
 
 }  // namespace blink

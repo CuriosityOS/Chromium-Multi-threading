@@ -1,0 +1,16 @@
+<!DOCTYPE html><html><head><style>
+body{margin:0;font:14px sans-serif}
+#p{position:relative;left:40px;top:40px;width:200px;height:24px;background:#0ff;overflow:hidden;transition:height 2.4s linear}
+#p.open{height:264px}
+#y{position:relative;left:40px;top:40px;width:200px;height:40px;background:#ff0}
+#s{position:absolute;left:400px;top:40px;width:60px;height:60px;background:#f0f;animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+</style></head><body><div id=p></div><div id=y></div>
+<script>
+const p=document.getElementById('p');
+function busy(ms){const t0=performance.now();let n=0;while(performance.now()-t0<ms){if(performance.now()-t0>n*300){console.log('IN t='+Math.round(performance.now()-t0)+' h='+p.offsetHeight+' cs='+getComputedStyle(p).height);n++;}}}
+setTimeout(()=>{p.classList.add('open');console.log('BLOCK start');busy(+(new URLSearchParams(location.search).get('block')||3000));console.log('BLOCK end h='+p.offsetHeight);
+  requestAnimationFrame(()=>{console.log('RAF first h='+p.offsetHeight);const d=()=>document.getAnimations().map(a=>a.playState+'/'+Math.round(a.startTime)+'/'+Math.round(a.currentTime)+'/'+a.transitionProperty).join(',');console.log('RAF anims-before '+d());console.log('RAF after h='+p.offsetHeight+' '+d()+' tl='+Math.round(document.timeline.currentTime));setTimeout(()=>console.log('LATER h='+p.offsetHeight+' '+d()),100);});},1500);
+setTimeout(()=>{p.classList.remove('open');console.log('CLOSE idle');},7000);
+setTimeout(()=>{console.log('END h='+p.offsetHeight)},10000);
+</script></body></html>

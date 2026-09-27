@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html><head><style>
+.item{padding:2px;margin:1px;border:1px solid #888;transition:height .3s;height:14px}
+.item.big{height:24px}
+#box{height:30px;background:teal;transition:height 1s}
+#box.open{height:300px}
+</style></head><body>
+<div id=box></div><div id=list></div>
+<script>
+const params = new URLSearchParams(location.search);
+const churnMs = +(params.get("churn") || 60000);
+const t0 = performance.now(); let n = 0;
+function tick() {
+  if (performance.now() - t0 > churnMs) { console.log("CHURN-DONE " + n); return; }
+  const list = document.getElementById("list");
+  let html = "";
+  for (let i = 0; i < 300; i++) html += `<div class="item ${(i+n)%2?"big":""}">item ${n}-${i} ${Math.random().toString(36).slice(2)}</div>`;
+  list.innerHTML = html;
+  document.getElementById("box").classList.toggle("open");
+  const s = document.createElement("style"); s.textContent = `.x${n}{color:red}`; document.head.appendChild(s); s.remove();
+  list.firstChild.offsetHeight;
+  n++; setTimeout(tick, 16);
+}
+tick();
+</script></body></html>

@@ -79,6 +79,25 @@ Every OMT case passes all of these gates:
   16 ms tasks never reach the 50 ms threshold.
 * Resize, navigation and DOM/CSSOM smoke tests pass, with no crash or fatal log signatures.
 
+### On a real GPU (RTX 4090)
+
+The validation matrix above runs on Xvfb with software raster. The same binary was also run on the build machine's
+**RTX 4090** (NVIDIA 595 driver, X11 on a 3840×2160 @ 60 Hz virtual monitor, captured at 60 fps). There the render thread's
+raster provider is GPU-backed (`raster provider … (gpu)`). Scripts are in [`smoke/gpu/`](smoke/gpu).
+
+| `h.html` (2.4 s height transition, busy loop at 1.5 s) | stock | OMT |
+|---|---|---|
+| 3 s block: distinct panel heights while the transition runs | frozen, then jumps to 264 px | **144 steps in 145 display frames (60 Hz)** |
+| 1.2 s block: takeover / hand-back | — | takeover after 64 ms, hand-back 13 ms after the block, no backwards step, max 2-frame gap |
+| hand-back after the block (3 runs) | — | 13–38 ms |
+| renderer PSS, churn → idle | 139 → 84 MB | 219 → 93 MB |
+| GPU process PSS / total VRAM while open | 153 MB / 1188 MiB | 197 MB / 1200 MiB |
+
+The first GPU runs showed a 250 ms hand-back (the fallback timer) and only about 1 captured frame per second. The cause was the
+virtual monitor being in DPMS "off": the NVIDIA driver then presents about once a second for *every* window, so presentation
+feedback never arrived in time. Forcing the monitor on (`xset dpms force on`) gives the numbers above. A page on a screen that is
+actually off still hands back correctly, just after the 250 ms fallback.
+
 ### v1 → hybrid
 
 The first release rendered *every* frame on the render thread, and main never painted. That had two problems. The main thread
@@ -158,8 +177,8 @@ Making Blink run a second document lifecycle concurrently on another thread requ
   `:focus-visible` styling can differ on the replica.
 * **Memory.** Idle cost is about 25 MB per page, and heavy DOM churn costs about 80 MB extra while it lasts (a second heap and
   isolate per page).
-* Linux/X11 only. It was validated on Xvfb with software raster, not physical GPU scanout. This is a research prototype, not an
-  upstreamable change.
+* Linux/X11 only. The full matrix runs on Xvfb with software raster; the GPU runs above are smoke tests on one NVIDIA card, not
+  the full harness. This is a research prototype, not an upstreamable change.
 
 ## Repository layout
 
